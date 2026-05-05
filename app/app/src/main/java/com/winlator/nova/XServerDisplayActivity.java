@@ -36,6 +36,7 @@ import com.winlator.nova.container.Shortcut;
 import com.winlator.nova.contentdialog.ActiveWindowsDialog;
 import com.winlator.nova.contentdialog.AudioDriverConfigDialog;
 import com.winlator.nova.contentdialog.ContentDialog;
+import com.winlator.nova.contents.AdrenotoolsManager;
 import com.winlator.nova.contentdialog.DXVKConfigDialog;
 import com.winlator.nova.contentdialog.DebugDialog;
 import com.winlator.nova.contentdialog.ScreenEffectDialog;
@@ -749,6 +750,15 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         }
         else if (graphicsDriver[0].equals(GraphicsDrivers.VORTEK) && (changed || MainActivity.DEBUG_MODE)) {
             TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/vortek-" + DefaultVersion.VORTEK + ".tzst", rootDir);
+        }
+        else if (graphicsDriver[0].equals(GraphicsDrivers.ADRENOTOOLS)) {
+            envVars.put("MESA_VK_WSI_PRESENT_MODE", "mailbox");
+            // Extract Adrenotools driver and set env vars
+            String driverId = graphicsDriverConfig[0].get("driverId", "");
+            if (!driverId.isEmpty()) {
+                AdrenotoolsManager adrenotoolsManager = new AdrenotoolsManager(this);
+                adrenotoolsManager.setDriverById(envVars, rootFS, driverId);
+            }
         }
 
         switch (graphicsDriver[1]) {

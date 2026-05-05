@@ -154,6 +154,14 @@ public class ContentDialog extends Dialog {
         dialog.show();
     }
 
+    public static void confirm(Context context, String message, Runnable callback) {
+        ContentDialog dialog = new ContentDialog(context);
+        dialog.setCancelable(false);
+        dialog.setMessage(message, R.drawable.content_dialog_type_confirm);
+        dialog.setOnConfirmCallback(callback);
+        dialog.show();
+    }
+
     public static void prompt(Context context, int titleResId, String defaultText, Callback<String> callback) {
         ContentDialog dialog = new ContentDialog(context);
 

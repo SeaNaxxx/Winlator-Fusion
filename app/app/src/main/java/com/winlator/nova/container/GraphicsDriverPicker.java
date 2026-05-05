@@ -64,6 +64,9 @@ public class GraphicsDriverPicker {
             case GraphicsDrivers.VORTEK:
                 (new VortekConfigDialog(anchor)).show();
                 break;
+            case GraphicsDrivers.ADRENOTOOLS:
+                // Adrenotools driver configuration is managed via AdrenotoolsFragment
+                break;
             case GraphicsDrivers.VIRGL:
                 (new VirGLConfigDialog(anchor)).show();
                 break;
