@@ -418,6 +418,9 @@ public class Container {
                 case "fexcorePreset" :
                     setFEXCorePreset(data.getString(key));
                     break;
+                case "emulator" :
+                    setEmulator(data.getString(key));
+                    break;
                 case "audioDriver" :
                     setAudioDriver(data.getString(key));
                     break;

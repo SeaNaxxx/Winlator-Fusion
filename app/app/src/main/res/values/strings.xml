@@ -402,6 +402,7 @@
     <string name="fexcore_emulator" translatable="false">FEX-Core</string>
     <string name="fexcore_preset">FEX-Core Preset</string>
     <string name="fexcore_version">FEX-Core Version</string>
+    <string name="fexcore_config">FEX-Core Config</string>
     <string name="emulator">Emulator</string>
     <string name="compatibility">Compatibility</string>
     <string name="fexcore_env_var_help__tsoenabled" translatable="false"><![CDATA[

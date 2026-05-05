@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.View;
 import android.widget.LinearLayout;
 
+import com.winlator.nova.contentdialog.AdrenotoolsConfigDialog;
 import com.winlator.nova.contentdialog.TurnipConfigDialog;
 import com.winlator.nova.contentdialog.VirGLConfigDialog;
 import com.winlator.nova.contentdialog.VortekConfigDialog;
@@ -65,7 +66,7 @@ public class GraphicsDriverPicker {
                 (new VortekConfigDialog(anchor)).show();
                 break;
             case GraphicsDrivers.ADRENOTOOLS:
-                // Adrenotools driver configuration is managed via AdrenotoolsFragment
+                (new AdrenotoolsConfigDialog(anchor)).show();
                 break;
             case GraphicsDrivers.VIRGL:
                 (new VirGLConfigDialog(anchor)).show();

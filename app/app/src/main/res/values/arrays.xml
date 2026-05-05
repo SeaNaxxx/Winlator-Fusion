@@ -157,4 +157,9 @@
         <item>DMA Buffer</item>
         <item>Native Hardware Buffer</item>
     </string-array>
+    <string-array name="emulator_entries">
+        <item>Box64</item>
+        <item>FEXCore</item>
+        <item>WOWBox64</item>
+    </string-array>
 </resources>
