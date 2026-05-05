@@ -18,10 +18,10 @@ jobs:
           submodules: false
           fetch-depth: 0
 
-      - name: Set up JDK 11
+      - name: Set up JDK 17 (for SDK manager)
         uses: actions/setup-java@v4
         with:
-          java-version: '11'
+          java-version: '17'
           distribution: 'temurin'
 
       - name: Setup Android SDK
@@ -33,6 +33,12 @@ jobs:
           sdkmanager --install "build-tools;34.0.0"
           sdkmanager --install "ndk;24.0.8215888"
           sdkmanager --install "cmake;3.22.1"
+
+      - name: Switch to JDK 11 (for Gradle build)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -48,7 +54,7 @@ jobs:
 
       - name: Build Debug APK
         working-directory: app
-        run: ./gradlew assembleDebug --no-dalet --stacktrace
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
