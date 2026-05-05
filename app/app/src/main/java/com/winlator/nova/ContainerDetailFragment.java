@@ -40,6 +40,8 @@ import com.winlator.nova.contentdialog.AddEnvVarDialog;
 import com.winlator.nova.contentdialog.AudioDriverConfigDialog;
 import com.winlator.nova.contentdialog.ContentDialog;
 import com.winlator.nova.contentdialog.VortekConfigDialog;
+import com.winlator.nova.fexcore.FEXCorePreset;
+import com.winlator.nova.fexcore.FEXCorePresetManager;
 import com.winlator.nova.core.AppUtils;
 import com.winlator.nova.core.Callback;
 import com.winlator.nova.container.DXWrapperPicker;
@@ -166,6 +168,30 @@ public class ContainerDetailFragment extends Fragment {
         final Spinner sBox64Preset = view.findViewById(R.id.SBox64Preset);
         Box64PresetManager.loadSpinner(sBox64Preset, isEditMode() ? container.getBox64Preset() : preferences.getString("box64_preset", Box64Preset.DEFAULT));
 
+        final Spinner sEmulator = view.findViewById(R.id.SEmulator);
+        final View fexCoreFrame = view.findViewById(R.id.FEXCoreFrame);
+        final Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
+
+        String currentEmulator = isEditMode() ? container.getEmulator() : Container.DEFAULT_EMULATOR;
+        AppUtils.setSpinnerSelectionFromIdentifier(sEmulator, currentEmulator);
+        FEXCorePresetManager.loadSpinner(sFEXCorePreset, isEditMode() ? container.getFEXCorePreset() : preferences.getString("fexcore_preset", FEXCorePreset.INTERMEDIATE));
+
+        // Show/hide FEX-Core preset spinner based on emulator selection
+        sEmulator.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View v, int position, long id) {
+                String selectedEmulator = StringUtils.parseIdentifier(sEmulator.getSelectedItem());
+                boolean isFEXCore = selectedEmulator.equals(Container.EMULATOR_FEXCORE);
+                fexCoreFrame.setVisibility(isFEXCore ? View.VISIBLE : View.GONE);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        // Initial visibility
+        fexCoreFrame.setVisibility(currentEmulator.equals(Container.EMULATOR_FEXCORE) ? View.VISIBLE : View.GONE);
+
         final CPUListView cpuListView = view.findViewById(R.id.CPUListView);
         final CPUListView cpuListViewWoW64 = view.findViewById(R.id.CPUListViewWoW64);
 
@@ -199,6 +225,8 @@ public class ContainerDetailFragment extends Fragment {
                 String cpuListWoW64 = cpuListViewWoW64.getCheckedCPUListAsString();
                 byte startupSelection = (byte)sStartupSelection.getSelectedItemPosition();
                 String box64Preset = Box64PresetManager.getSpinnerSelectedId(sBox64Preset);
+                String emulator = StringUtils.parseIdentifier(sEmulator.getSelectedItem());
+                String fexcorePreset = FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset);
                 String desktopTheme = getDesktopTheme(view);
 
                 if (isEditMode()) {
@@ -218,6 +246,8 @@ public class ContainerDetailFragment extends Fragment {
                     container.setHUDMode(hudMode);
                     container.setStartupSelection(startupSelection);
                     container.setBox64Preset(box64Preset);
+                    container.setEmulator(emulator);
+                    container.setFEXCorePreset(fexcorePreset);
                     container.setDesktopTheme(desktopTheme);
                     container.saveData();
 
@@ -246,6 +276,8 @@ public class ContainerDetailFragment extends Fragment {
                     data.put("hudMode", hudMode);
                     data.put("startupSelection", startupSelection);
                     data.put("box64Preset", box64Preset);
+                    data.put("emulator", emulator);
+                    data.put("fexcorePreset", fexcorePreset);
                     data.put("desktopTheme", desktopTheme);
 
                     if (wineInfos.size() > 1) {

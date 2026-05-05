@@ -176,7 +176,14 @@ public class AdrenotoolsManager {
             }
             zis.close();
             if (new File(tmpDir, "meta.json").exists()) {
-                name = getDriverName(tmpDir.getName());
+                // Read the driver name directly from meta.json in the tmp directory
+                File metaProfile = new File(tmpDir, "meta.json");
+                try {
+                    JSONObject jsonObject = new JSONObject(FileUtils.readString(metaProfile));
+                    name = jsonObject.getString("name");
+                } catch (JSONException e) {
+                    Log.e(TAG, "Failed to read name from meta.json", e);
+                }
                 File dst = new File(adrenotoolsContentDir, name);
                 if (!dst.exists() && !name.equals(""))
                     tmpDir.renameTo(dst);
