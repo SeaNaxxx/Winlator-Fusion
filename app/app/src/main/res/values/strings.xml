@@ -347,4 +347,27 @@
     <string name="full">Full</string>
     <string name="ddraw_wrapper" translatable="false">DDraw Wrapper</string>
     <string name="renderer">Renderer</string>
+    <string name="adrenotools_gpu_drivers">GPU Drivers (Adrenotools)</string>
+    <string name="install_drivers">Install Driver</string>
+    <string name="install_drivers_message">Do you want to install a custom GPU driver?</string>
+    <string name="install_drivers_warning">The driver must be a ZIP file containing meta.json and the driver .so file.</string>
+    <string name="download">Download</string>
+    <string name="back">Back</string>
+    <string name="available_drivers">Available Drivers</string>
+    <string name="select_variant">Select Variant</string>
+    <string name="downloading">Downloading</string>
+    <string name="installed">Installed</string>
+    <string name="installation_failed">Installation failed! Invalid ZIP.</string>
+    <string name="download_failed">Download failed!</string>
+    <string name="connection_failed">Connection failed!</string>
+    <string name="no_drivers_found">No drivers found.</string>
+    <string name="driver_sources">Driver Sources</string>
+    <string name="add_source">Add Source</string>
+    <string name="close">Close</string>
+    <string name="add_repository">Add Repository</string>
+    <string name="edit_repository">Edit Repository</string>
+    <string name="repo_name_hint">Name (e.g. Kimchi Turnip)</string>
+    <string name="github_api_url">GitHub API URL</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
 </resources>

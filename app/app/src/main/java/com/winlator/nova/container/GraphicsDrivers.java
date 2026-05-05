@@ -8,6 +8,7 @@ import com.winlator.nova.core.KeyValueSet;
 public abstract class GraphicsDrivers {
     public static final String TURNIP = "turnip";
     public static final String VORTEK = "vortek";
+    public static final String ADRENOTOOLS = "adrenotools";
     public static final String ZINK = "zink";
     public static final String VIRGL = "virgl";
     public static final String GLADIO = "gladio";
@@ -18,6 +19,7 @@ public abstract class GraphicsDrivers {
         switch (identifier) {
             case TURNIP: return "Turnip";
             case VORTEK: return "Vortek";
+            case ADRENOTOOLS: return "Adrenotools";
             case ZINK: return "Zink";
             case VIRGL: return "VirGL";
             case GLADIO: return "Gladio";
@@ -26,7 +28,7 @@ public abstract class GraphicsDrivers {
     }
 
     public static boolean isVulkanDriver(String identifier) {
-        return identifier != null && (identifier.equals(TURNIP) || identifier.equals(VORTEK));
+        return identifier != null && (identifier.equals(TURNIP) || identifier.equals(VORTEK) || identifier.equals(ADRENOTOOLS));
     }
 
     public static boolean isOpenGLDriver(String identifier) {
@@ -35,7 +37,7 @@ public abstract class GraphicsDrivers {
 
     public static String[] getItems(String apiName) {
         if (apiName.equalsIgnoreCase("VULKAN")) {
-            return new String[]{getName(TURNIP), getName(VORTEK)};
+            return new String[]{getName(TURNIP), getName(VORTEK), getName(ADRENOTOOLS)};
         }
         else if (apiName.equalsIgnoreCase("OPENGL")) {
             return new String[]{getName(ZINK), getName(VIRGL), getName(GLADIO)};

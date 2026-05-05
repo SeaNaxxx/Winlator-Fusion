@@ -194,6 +194,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 preferences.edit().putBoolean("show_shortcuts_first", false).apply();
                 showFragment(new ContainersFragment());
                 break;
+            case R.id.menu_item_gpu_drivers:
+                showFragment(new AdrenotoolsFragment());
+                break;
             case R.id.menu_item_input_controls:
                 showFragment(new InputControlsFragment(selectedProfileId));
                 break;
