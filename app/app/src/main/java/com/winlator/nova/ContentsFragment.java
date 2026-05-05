@@ -176,15 +176,22 @@ public class ContentsFragment extends Fragment {
 
                     @Override
                     public void onFailed(ContentsManager.InstallFailedReason reason, Exception e) {
-                        int msgId = switch (reason) {
-                            case ERROR_BADTAR -> R.string.file_cannot_be_recognied;
-                            case ERROR_NOPROFILE -> R.string.profile_not_found_in_content;
-                            case ERROR_BADPROFILE -> R.string.profile_cannot_be_recognized;
-                            case ERROR_EXIST -> R.string.content_already_exist;
-                            case ERROR_MISSINGFILES -> R.string.content_is_incomplete;
-                            case ERROR_UNTRUSTPROFILE -> R.string.content_cannot_be_trusted;
-                            default -> R.string.unable_to_install_content;
-                        };
+                        int msgId;
+                        if (reason == ContentsManager.InstallFailedReason.ERROR_BADTAR) {
+                            msgId = R.string.file_cannot_be_recognied;
+                        } else if (reason == ContentsManager.InstallFailedReason.ERROR_NOPROFILE) {
+                            msgId = R.string.profile_not_found_in_content;
+                        } else if (reason == ContentsManager.InstallFailedReason.ERROR_BADPROFILE) {
+                            msgId = R.string.profile_cannot_be_recognized;
+                        } else if (reason == ContentsManager.InstallFailedReason.ERROR_EXIST) {
+                            msgId = R.string.content_already_exist;
+                        } else if (reason == ContentsManager.InstallFailedReason.ERROR_MISSINGFILES) {
+                            msgId = R.string.content_is_incomplete;
+                        } else if (reason == ContentsManager.InstallFailedReason.ERROR_UNTRUSTPROFILE) {
+                            msgId = R.string.content_cannot_be_trusted;
+                        } else {
+                            msgId = R.string.unable_to_install_content;
+                        }
                         requireActivity().runOnUiThread(() -> ContentDialog.alert(getContext(), getString(R.string.install_failed) + ": " + getString(msgId), preloaderDialog::closeOnUiThread));
                     }
 
@@ -288,11 +295,14 @@ public class ContentsFragment extends Fragment {
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             final ContentProfile profile = data.get(position);
 
-            int iconId = switch (profile.type) {
-                case CONTENT_TYPE_WINE -> R.drawable.icon_wine;
-                case CONTENT_TYPE_PROTON -> R.drawable.icon_wine;
-                default -> R.drawable.icon_settings;
-            };
+            int iconId;
+            if (profile.type == ContentProfile.ContentType.CONTENT_TYPE_WINE) {
+                iconId = R.drawable.icon_wine;
+            } else if (profile.type == ContentProfile.ContentType.CONTENT_TYPE_PROTON) {
+                iconId = R.drawable.icon_wine;
+            } else {
+                iconId = R.drawable.icon_settings;
+            }
             holder.ivIcon.setBackground(getContext().getDrawable(iconId));
 
             holder.tvVersionName.setText(getContext().getString(R.string.version) + ": " + profile.verName);
