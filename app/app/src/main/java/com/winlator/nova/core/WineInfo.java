@@ -89,4 +89,12 @@ public class WineInfo implements Parcelable {
     public static boolean isMainWineVersion(String wineVersion) {
         return wineVersion == null ||wineVersion.equals(MAIN_WINE_INFO.identifier());
     }
+
+    public boolean isProton() {
+        return path != null && path.contains("Proton");
+    }
+
+    public boolean isArm64EC() {
+        return path != null && path.contains("arm64ec");
+    }
 }

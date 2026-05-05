@@ -396,4 +396,7 @@
     <string name="do_you_want_to_remove_this_content">Do you want to remove this content?</string>
     <string name="unable_to_remove_content_since_container_using">Unable to remove this content, because a container is currently using this Wine.</string>
     <string name="get_more_contents_form_github">You can access https://github.com/StevenMXZ/Winlator-Contents to get more contents.</string>
+    <string name="proton_wine">Proton Wine</string>
+    <string name="wine_official">Wine Official</string>
+    <string name="wine_proton">Wine Proton</string>
 </resources>
