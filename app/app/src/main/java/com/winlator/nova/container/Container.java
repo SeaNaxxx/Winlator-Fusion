@@ -2,11 +2,13 @@ package com.winlator.nova.container;
 
 import com.winlator.nova.box64.Box64Preset;
 import com.winlator.nova.core.AppUtils;
+import com.winlator.nova.core.DefaultVersion;
 import com.winlator.nova.core.EnvVars;
 import com.winlator.nova.core.FileUtils;
 import com.winlator.nova.core.KeyValueSet;
 import com.winlator.nova.core.WineInfo;
 import com.winlator.nova.core.WineThemeManager;
+import com.winlator.nova.fexcore.FEXCorePreset;
 import com.winlator.nova.widget.FrameRating;
 import com.winlator.nova.xenvironment.RootFS;
 
@@ -28,6 +30,10 @@ public class Container {
     public static final byte STARTUP_SELECTION_ESSENTIAL = 1;
     public static final byte STARTUP_SELECTION_AGGRESSIVE = 2;
     public static final byte MAX_DRIVE_LETTERS = 8;
+    public static final String EMULATOR_BOX64 = "box64";
+    public static final String EMULATOR_FEXCORE = "fexcore";
+    public static final String EMULATOR_WOWBOX64 = "wowbox64";
+    public static final String DEFAULT_EMULATOR = EMULATOR_BOX64;
     public final int id;
     private String name;
     private String screenSize = DEFAULT_SCREEN_SIZE;
@@ -47,6 +53,7 @@ public class Container {
     private String cpuListWoW64;
     private String desktopTheme = WineThemeManager.DEFAULT_DESKTOP_THEME;
     private String box64Preset = Box64Preset.DEFAULT;
+    private String fexcorePreset = FEXCorePreset.DEFAULT;
     private File rootDir;
     private JSONObject extraData;
 
@@ -191,6 +198,34 @@ public class Container {
         this.box64Preset = box64Preset;
     }
 
+    public String getFEXCorePreset() {
+        return fexcorePreset;
+    }
+
+    public void setFEXCorePreset(String fexcorePreset) {
+        this.fexcorePreset = fexcorePreset;
+    }
+
+    public String getEmulator() {
+        return getExtra("emulator", DEFAULT_EMULATOR);
+    }
+
+    public void setEmulator(String emulator) {
+        putExtra("emulator", emulator);
+    }
+
+    public String getFEXCoreVersion() {
+        return getExtra("fexcoreVersion", DefaultVersion.FEXCORE);
+    }
+
+    public void setFEXCoreVersion(String fexcoreVersion) {
+        putExtra("fexcoreVersion", fexcoreVersion);
+    }
+
+    public boolean isFEXCoreMode() {
+        return getEmulator().equals(EMULATOR_FEXCORE);
+    }
+
     public File getRootDir() {
         return rootDir;
     }
@@ -302,6 +337,7 @@ public class Container {
             data.put("hudMode", hudMode);
             data.put("startupSelection", startupSelection);
             data.put("box64Preset", box64Preset);
+            data.put("fexcorePreset", fexcorePreset);
             data.put("desktopTheme", desktopTheme);
             data.put("extraData", extraData);
 
@@ -378,6 +414,9 @@ public class Container {
                     break;
                 case "box64Preset" :
                     setBox64Preset(data.getString(key));
+                    break;
+                case "fexcorePreset" :
+                    setFEXCorePreset(data.getString(key));
                     break;
                 case "audioDriver" :
                     setAudioDriver(data.getString(key));
