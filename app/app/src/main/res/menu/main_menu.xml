@@ -4,6 +4,7 @@
     <group android:checkableBehavior="single">
         <item android:icon="@drawable/icon_shortcut" android:id="@+id/menu_item_shortcuts" android:title="@string/shortcuts" />
         <item android:icon="@drawable/icon_container" android:id="@+id/menu_item_containers" android:title="@string/containers" />
+        <item android:icon="@drawable/icon_install" android:id="@+id/menu_item_contents" android:title="@string/contents" />
         <item android:icon="@drawable/icon_display_settings" android:id="@+id/menu_item_gpu_drivers" android:title="@string/adrenotools_gpu_drivers" />
         <item android:icon="@drawable/icon_input_controls" android:id="@+id/menu_item_input_controls" android:title="@string/input_controls" />
         <item android:icon="@drawable/icon_settings" android:id="@+id/menu_item_settings" android:title="@string/settings" />
