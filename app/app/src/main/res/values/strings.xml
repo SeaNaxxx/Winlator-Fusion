@@ -399,4 +399,60 @@
     <string name="proton_wine">Proton Wine</string>
     <string name="wine_official">Wine Official</string>
     <string name="wine_proton">Wine Proton</string>
+    <string name="fexcore_emulator" translatable="false">FEX-Core</string>
+    <string name="fexcore_preset">FEX-Core Preset</string>
+    <string name="fexcore_version">FEX-Core Version</string>
+    <string name="emulator">Emulator</string>
+    <string name="compatibility">Compatibility</string>
+    <string name="fexcore_env_var_help__tsoenabled" translatable="false"><![CDATA[
+        Enables Total Store Ordering (TSO) behavior<br /><br />
+        <b>0</b> : Disabled - May improve performance but can break some applications<br />
+        <b>1</b> : Enabled - Ensures x86 memory ordering semantics (recommended for compatibility)
+    ]]></string>
+    <string name="fexcore_env_var_help__vectortsoenabled" translatable="false"><![CDATA[
+        Enables vector TSO behavior<br /><br />
+        <b>0</b> : Disabled<br />
+        <b>1</b> : Enabled - Ensures vector operations follow TSO ordering
+    ]]></string>
+    <string name="fexcore_env_var_help__halfbarriertsoenabled" translatable="false"><![CDATA[
+        Enables half-barrier TSO behavior<br /><br />
+        <b>0</b> : Disabled<br />
+        <b>1</b> : Enabled - Uses half-barrier for TSO, reducing overhead while maintaining ordering
+    ]]></string>
+    <string name="fexcore_env_var_help__memcpysettsoenabled" translatable="false"><![CDATA[
+        Enables TSO for memcpy/memset operations<br /><br />
+        <b>0</b> : Disabled - memcpy/memset don\'t enforce TSO<br />
+        <b>1</b> : Enabled - memcpy/memset enforce TSO ordering
+    ]]></string>
+    <string name="fexcore_env_var_help__x87reducedprecision" translatable="false"><![CDATA[
+        Reduces x87 FPU precision<br /><br />
+        <b>0</b> : Full x87 precision (80-bit)<br />
+        <b>1</b> : Reduced precision - Improves performance, may break some applications
+    ]]></string>
+    <string name="fexcore_env_var_help__multiblock" translatable="false"><![CDATA[
+        Enables multiblock code compilation<br /><br />
+        <b>0</b> : Single block compilation - More stable<br />
+        <b>1</b> : Multiblock compilation - Better performance by compiling multiple blocks together
+    ]]></string>
+    <string name="fexcore_env_var_help__maxinst" translatable="false">Maximum number of instructions per compiled block</string>
+    <string name="fexcore_env_var_help__hostfeatures" translatable="false"><![CDATA[
+        Host feature control<br /><br />
+        <b>enablesve</b> : Enable SVE support<br />
+        <b>disablesve</b> : Disable SVE support<br />
+        <b>enableavx</b> : Enable AVX support<br />
+        <b>disableavx</b> : Disable AVX support<br />
+        <b>off</b> : Auto-detect (default)
+    ]]></string>
+    <string name="fexcore_env_var_help__smalltsscale" translatable="false">Use smaller TSC scale factor for timing</string>
+    <string name="fexcore_env_var_help__smc_checks" translatable="false"><![CDATA[
+        Self-modifying code check mode<br /><br />
+        <b>none</b> : No SMC checks - Fastest but unsafe for SMC apps<br />
+        <b>mtrack</b> : Memory tracking - Good balance of performance and safety<br />
+        <b>full</b> : Full SMC checks - Slowest but most compatible
+    ]]></string>
+    <string name="fexcore_env_var_help__volatilemetadata" translatable="false">Enable volatile metadata for memory operations</string>
+    <string name="fexcore_env_var_help__monohacks" translatable="false">Enable Mono framework compatibility hacks</string>
+    <string name="fexcore_env_var_help__hidehypervisorbit" translatable="false">Hide the hypervisor CPUID bit from guest</string>
+    <string name="fexcore_env_var_help__disablel2cache" translatable="false">Disable L2 cache for code compilation</string>
+    <string name="fexcore_env_var_help__dynamicl1cache" translatable="false">Enable dynamic L1 cache sizing</string>
 </resources>

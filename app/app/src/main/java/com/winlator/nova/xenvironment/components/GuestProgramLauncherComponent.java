@@ -8,6 +8,7 @@ import androidx.preference.PreferenceManager;
 
 import com.winlator.nova.box64.Box64Preset;
 import com.winlator.nova.box64.Box64PresetManager;
+import com.winlator.nova.container.Container;
 import com.winlator.nova.core.Callback;
 import com.winlator.nova.core.DefaultVersion;
 import com.winlator.nova.core.EnvVars;
@@ -15,6 +16,8 @@ import com.winlator.nova.core.FileUtils;
 import com.winlator.nova.core.GeneralComponents;
 import com.winlator.nova.core.LocaleHelper;
 import com.winlator.nova.core.ProcessHelper;
+import com.winlator.nova.fexcore.FEXCorePreset;
+import com.winlator.nova.fexcore.FEXCorePresetManager;
 import com.winlator.nova.widget.LogView;
 import com.winlator.nova.xconnector.UnixSocketConfig;
 import com.winlator.nova.xenvironment.EnvironmentComponent;
@@ -28,6 +31,8 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
     private static int pid = -1;
     private EnvVars envVars;
     private String box64Preset = Box64Preset.CONSERVATIVE;
+    private String fexcorePreset = FEXCorePreset.DEFAULT;
+    private String emulator = Container.EMULATOR_BOX64;
     private Callback<Integer> terminationCallback;
     private static final Object lock = new Object();
 
@@ -35,8 +40,12 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
     public void start() {
         synchronized (lock) {
             stop();
-            extractBox64File();
-            copyDefaultBox64RCFile();
+            if (emulator.equals(Container.EMULATOR_FEXCORE)) {
+                extractFEXCoreFiles();
+            } else {
+                extractBox64File();
+                copyDefaultBox64RCFile();
+            }
             pid = execGuestProgram();
         }
     }
@@ -83,12 +92,34 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
         this.box64Preset = box64Preset;
     }
 
+    public String getFEXCorePreset() {
+        return fexcorePreset;
+    }
+
+    public void setFEXCorePreset(String fexcorePreset) {
+        this.fexcorePreset = fexcorePreset;
+    }
+
+    public String getEmulator() {
+        return emulator;
+    }
+
+    public void setEmulator(String emulator) {
+        this.emulator = emulator;
+    }
+
     private int execGuestProgram() {
         RootFS rootFS = environment.getRootFS();
         File rootDir = rootFS.getRootDir();
 
         EnvVars envVars = new EnvVars();
-        addBox64EnvVars(envVars);
+        boolean isFEXCore = emulator.equals(Container.EMULATOR_FEXCORE);
+
+        if (isFEXCore) {
+            addFEXCoreEnvVars(envVars);
+        } else {
+            addBox64EnvVars(envVars);
+        }
         LocaleHelper.setEnvVars(envVars);
 
         envVars.put("HOME", rootDir+RootFS.HOME_PATH);
@@ -97,7 +128,11 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
         envVars.put("DISPLAY", ":0");
         envVars.put("PATH", rootDir+rootFS.getWinePath()+"/bin:"+rootDir+"/usr/local/bin:"+rootDir+"/usr/bin");
         envVars.put("LD_LIBRARY_PATH", rootFS.getLibDir().getPath());
-        envVars.put("BOX64_LD_LIBRARY_PATH", rootDir+"/lib/x86_64-linux-gnu");
+
+        if (!isFEXCore) {
+            envVars.put("BOX64_LD_LIBRARY_PATH", rootDir+"/lib/x86_64-linux-gnu");
+        }
+
         envVars.put("ANDROID_SYSVSHM_SERVER", rootDir+UnixSocketConfig.SYSVSHM_SERVER_PATH);
 
         if (this.envVars != null) envVars.putAll(this.envVars);
@@ -105,7 +140,12 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
         File shmDir = new File(rootDir, "/tmp/shm");
         if (!shmDir.isDirectory()) shmDir.mkdirs();
 
-        String command = rootDir+"/usr/local/bin/box64 "+guestExecutable;
+        String command;
+        if (isFEXCore) {
+            command = guestExecutable;
+        } else {
+            command = rootDir+"/usr/local/bin/box64 "+guestExecutable;
+        }
 
         return ProcessHelper.exec(command, envVars, rootDir, (status) -> {
             synchronized (lock) {
@@ -131,6 +171,22 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
         Context context = environment.getContext();
         RootFS rootFS = environment.getRootFS();
         FileUtils.copy(context, "box64/default.box64rc", new File(rootFS.getRootDir(), "/etc/config.box64rc"));
+    }
+
+    private void extractFEXCoreFiles() {
+        // FEX-Core files are extracted via the contents system
+        // The FEX-Core shared libraries (libwow64fex.dll, libarm64ecfex.dll)
+        // are installed to the Windows system directory through ContentManager.applyContent()
+    }
+
+    private void addFEXCoreEnvVars(EnvVars envVars) {
+        Context context = environment.getContext();
+
+        // Set HODLL for ARM64EC Wine when using FEX-Core
+        envVars.put("HODLL", "libwow64fex.dll");
+
+        // Apply FEX-Core preset env vars
+        envVars.putAll(FEXCorePresetManager.getEnvVars(context, fexcorePreset));
     }
 
     private void addBox64EnvVars(EnvVars envVars) {
