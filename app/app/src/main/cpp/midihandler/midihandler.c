@@ -109,56 +109,56 @@ static void MIDIHandler_loadSoundFont(MIDIHandler* midiHandler, const char* path
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_winlator_winhandler_MIDIHandler_nativeAllocate(JNIEnv *env, jobject obj) {
+Java_com_winlator_nova_winhandler_MIDIHandler_nativeAllocate(JNIEnv *env, jobject obj) {
     MIDIHandler* midiHandler = MIDIHandler_allocate();
     return (jlong)midiHandler;
 }
 
 JNIEXPORT void JNICALL
-Java_com_winlator_winhandler_MIDIHandler_destroy(JNIEnv *env, jobject obj,
+Java_com_winlator_nova_winhandler_MIDIHandler_destroy(JNIEnv *env, jobject obj,
                                                  jlong nativePtr) {
     MIDIHandler_destroy((MIDIHandler*)nativePtr);
 }
 
 JNIEXPORT void JNICALL
-Java_com_winlator_winhandler_MIDIHandler_noteOn(JNIEnv *env, jobject obj, jlong nativePtr,
+Java_com_winlator_nova_winhandler_MIDIHandler_noteOn(JNIEnv *env, jobject obj, jlong nativePtr,
                                                 jint channel, jint note, jint velocity) {
     MIDIHandler_noteOn((MIDIHandler*)nativePtr, channel, note, velocity);
 }
 
 JNIEXPORT void JNICALL
-Java_com_winlator_winhandler_MIDIHandler_noteOff(JNIEnv *env, jobject obj, jlong nativePtr,
+Java_com_winlator_nova_winhandler_MIDIHandler_noteOff(JNIEnv *env, jobject obj, jlong nativePtr,
                                                  jint channel, jint note) {
     MIDIHandler_noteOff((MIDIHandler*)nativePtr, channel, note);
 }
 
 JNIEXPORT void JNICALL
-Java_com_winlator_winhandler_MIDIHandler_loadSoundFont(JNIEnv *env, jobject obj, jlong nativePtr,
+Java_com_winlator_nova_winhandler_MIDIHandler_loadSoundFont(JNIEnv *env, jobject obj, jlong nativePtr,
                                                        jstring soundfontPath) {
     const char* path = (*env)->GetStringUTFChars(env, soundfontPath, NULL);
     MIDIHandler_loadSoundFont((MIDIHandler*)nativePtr, path);
 }
 
 JNIEXPORT void JNICALL
-Java_com_winlator_winhandler_MIDIHandler_programChange(JNIEnv *env, jobject obj, jlong nativePtr,
+Java_com_winlator_nova_winhandler_MIDIHandler_programChange(JNIEnv *env, jobject obj, jlong nativePtr,
                                                        jint channel, jint program) {
     MIDIHandler_programChange((MIDIHandler*)nativePtr, channel, program);
 }
 
 JNIEXPORT void JNICALL
-Java_com_winlator_winhandler_MIDIHandler_controlChange(JNIEnv *env, jobject obj, jlong nativePtr,
+Java_com_winlator_nova_winhandler_MIDIHandler_controlChange(JNIEnv *env, jobject obj, jlong nativePtr,
                                                        jint channel, jint control, jint value) {
     MIDIHandler_controlChange((MIDIHandler*)nativePtr, channel, control, value);
 }
 
 JNIEXPORT void JNICALL
-Java_com_winlator_winhandler_MIDIHandler_pitchBend(JNIEnv *env, jobject obj, jlong nativePtr,
+Java_com_winlator_nova_winhandler_MIDIHandler_pitchBend(JNIEnv *env, jobject obj, jlong nativePtr,
                                                    jint channel, jint value) {
     MIDIHandler_pitchBend((MIDIHandler*)nativePtr, channel, value);
 }
 
 JNIEXPORT void JNICALL
-Java_com_winlator_winhandler_MIDIHandler_keyPressure(JNIEnv *env, jobject obj, jlong nativePtr,
+Java_com_winlator_nova_winhandler_MIDIHandler_keyPressure(JNIEnv *env, jobject obj, jlong nativePtr,
                                                      jint channel, jint key, jint value) {
     MIDIHandler_keyPressure((MIDIHandler*)nativePtr, channel, key, value);
 }

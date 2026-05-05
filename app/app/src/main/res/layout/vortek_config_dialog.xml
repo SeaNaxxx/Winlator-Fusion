@@ -81,7 +81,7 @@
             android:layout_height="wrap_content"
             android:text="@string/exposed_extensions" />
 
-        <com.winlator.widget.MultiSelectionComboBox
+        <com.winlator.nova.widget.MultiSelectionComboBox
             style="@style/ComboBox"
             android:layout_width="match_parent"
             android:id="@+id/MSCBExposedExtensions" />

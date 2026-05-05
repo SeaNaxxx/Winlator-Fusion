@@ -26,7 +26,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/brightness" />
 
-                    <com.winlator.widget.SeekBar
+                    <com.winlator.nova.widget.SeekBar
                         android:id="@+id/SBBrightness"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -38,7 +38,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/contrast" />
 
-                    <com.winlator.widget.SeekBar
+                    <com.winlator.nova.widget.SeekBar
                         android:id="@+id/SBContrast"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -50,7 +50,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/gamma" />
 
-                    <com.winlator.widget.SeekBar
+                    <com.winlator.nova.widget.SeekBar
                         android:id="@+id/SBGamma"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

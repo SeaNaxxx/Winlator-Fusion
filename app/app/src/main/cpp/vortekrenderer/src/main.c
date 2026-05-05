@@ -40,7 +40,7 @@ static void* openVulkanLibrary(JNIEnv* env, jstring nativeLibraryDir, jstring li
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_winlator_xenvironment_components_VortekRendererComponent_createVkContext(JNIEnv *env,
+Java_com_winlator_nova_xenvironment_components_VortekRendererComponent_createVkContext(JNIEnv *env,
                                                                                   jobject obj,
                                                                                   jint clientFd,
                                                                                   jobject options) {
@@ -49,14 +49,14 @@ Java_com_winlator_xenvironment_components_VortekRendererComponent_createVkContex
 }
 
 JNIEXPORT void JNICALL
-Java_com_winlator_xenvironment_components_VortekRendererComponent_destroyVkContext(JNIEnv *env,
+Java_com_winlator_nova_xenvironment_components_VortekRendererComponent_destroyVkContext(JNIEnv *env,
                                                                                    jobject obj,
                                                                                    jlong contextPtr) {
     destroyVkContext(env, (VkContext*)contextPtr);
 }
 
 JNIEXPORT void JNICALL
-Java_com_winlator_xenvironment_components_VortekRendererComponent_initVulkanWrapper(JNIEnv *env,
+Java_com_winlator_nova_xenvironment_components_VortekRendererComponent_initVulkanWrapper(JNIEnv *env,
                                                                                     jobject obj,
                                                                                     jstring nativeLibraryDir,
                                                                                     jstring libvulkanPath) {
@@ -65,7 +65,7 @@ Java_com_winlator_xenvironment_components_VortekRendererComponent_initVulkanWrap
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_winlator_xenvironment_components_VortekRendererComponent_handleExtraDataRequest(JNIEnv *env,
+Java_com_winlator_nova_xenvironment_components_VortekRendererComponent_handleExtraDataRequest(JNIEnv *env,
                                                                                          jobject obj,
                                                                                          jlong contextPtr,
                                                                                          int requestId,

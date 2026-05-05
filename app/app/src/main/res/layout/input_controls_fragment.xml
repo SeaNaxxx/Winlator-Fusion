@@ -57,7 +57,7 @@
             android:layout_height="wrap_content"
             android:text="@string/cursor_speed"/>
 
-        <com.winlator.widget.SeekBar
+        <com.winlator.nova.widget.SeekBar
             android:id="@+id/SBCursorSpeed"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -70,7 +70,7 @@
             android:layout_height="wrap_content"
             android:text="@string/overlay_opacity"/>
 
-        <com.winlator.widget.SeekBar
+        <com.winlator.nova.widget.SeekBar
             android:id="@+id/SBOverlayOpacity"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
