@@ -15,7 +15,7 @@
 EGLContext globalEGLContext = EGL_NO_CONTEXT;
 
 JNIEXPORT jobjectArray JNICALL
-Java_com_winlator_core_GPUHelper_vkGetDeviceExtensions(JNIEnv *env, jclass obj) {
+Java_com_winlator_nova_core_GPUHelper_vkGetDeviceExtensions(JNIEnv *env, jclass obj) {
     VkInstanceCreateInfo createInfo = {0};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     VkExtensionProperties* properties = NULL;
@@ -62,7 +62,7 @@ done:
 }
 
 JNIEXPORT jint JNICALL
-Java_com_winlator_core_GPUHelper_vkGetApiVersion() {
+Java_com_winlator_nova_core_GPUHelper_vkGetApiVersion() {
     int version = 0;
     char* content = fileGetContents(APP_CACHE_DIR "/.vk-api-version", NULL, NULL);
     if (content) {
@@ -125,6 +125,6 @@ done:
 }
 
 JNIEXPORT void JNICALL
-Java_com_winlator_core_GPUHelper_setGlobalEGLContext(JNIEnv *env, jclass obj) {
+Java_com_winlator_nova_core_GPUHelper_setGlobalEGLContext(JNIEnv *env, jclass obj) {
     globalEGLContext = eglGetCurrentContext();
 }

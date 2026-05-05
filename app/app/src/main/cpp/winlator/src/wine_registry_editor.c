@@ -33,7 +33,7 @@ static bool lineHasName(wchar_t* line) {
 }
 
 JNIEXPORT jintArray JNICALL
-Java_com_winlator_core_WineRegistryEditor_getKeyLocation(JNIEnv *env, jobject obj,
+Java_com_winlator_nova_core_WineRegistryEditor_getKeyLocation(JNIEnv *env, jobject obj,
                                                          jstring filename, jstring key) {
     const char* filenamePtr = (*env)->GetStringUTFChars(env, filename, 0);
     wchar_t* wkey = jstringToWChars(env, key);
@@ -84,7 +84,7 @@ Java_com_winlator_core_WineRegistryEditor_getKeyLocation(JNIEnv *env, jobject ob
 }
 
 JNIEXPORT jintArray JNICALL
-Java_com_winlator_core_WineRegistryEditor_getValueLocation(JNIEnv *env, jobject obj,
+Java_com_winlator_nova_core_WineRegistryEditor_getValueLocation(JNIEnv *env, jobject obj,
                                                            jstring filename, jintArray keyLocationArr,
                                                            jstring name) {
     const char* filenamePtr = (*env)->GetStringUTFChars(env, filename, 0);

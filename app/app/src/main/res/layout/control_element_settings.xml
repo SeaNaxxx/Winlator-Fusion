@@ -42,7 +42,7 @@
             android:layout_height="wrap_content"
             android:text="@string/scale"/>
 
-        <com.winlator.widget.SeekBar
+        <com.winlator.nova.widget.SeekBar
             android:id="@+id/SBScale"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -56,7 +56,7 @@
             android:layout_height="wrap_content"
             android:text="@string/opacity" />
 
-        <com.winlator.widget.SeekBar
+        <com.winlator.nova.widget.SeekBar
             android:id="@+id/SBOpacity"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -110,7 +110,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/columns" />
 
-            <com.winlator.widget.NumberPicker
+            <com.winlator.nova.widget.NumberPicker
                 android:id="@+id/NPColumns"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -146,7 +146,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/bindings" />
 
-            <com.winlator.widget.NumberPicker
+            <com.winlator.nova.widget.NumberPicker
                 android:id="@+id/NPBindings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
