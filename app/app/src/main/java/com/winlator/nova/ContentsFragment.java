@@ -1,3 +1,4 @@
+// Authored by SeaNaxxx
 package com.winlator.nova;
 
 import android.annotation.SuppressLint;
@@ -254,7 +255,7 @@ public class ContentsFragment extends Fragment {
     private class ContentItemAdapter extends RecyclerView.Adapter<ContentItemAdapter.ViewHolder> {
         private final List<ContentProfile> data;
 
-        private static class ViewHolder extends RecyclerView.ViewHolder {
+        private class ViewHolder extends RecyclerView.ViewHolder {
             private final ImageView ivIcon;
             private final TextView tvVersionName;
             private final TextView tvVersionCode;
@@ -323,7 +324,7 @@ public class ContentsFragment extends Fragment {
                                 ContainerManager containerManager = new ContainerManager(getContext());
                                 for (Container container : containerManager.getContainers()) {
                                     if (container.getWineVersion().equals(ContentsManager.getEntryName(profile))) {
-                                        ContentDialog.alert(getContext(), String.format(getString(R.string.unable_to_remove_content_since_container_using), container.getName()), null);
+                                        ContentDialog.alert(getContext(), getString(R.string.unable_to_remove_content_since_container_using) + " " + container.getName(), null);
                                         return;
                                     }
                                 }
