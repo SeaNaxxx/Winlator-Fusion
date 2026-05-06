@@ -146,6 +146,14 @@ public class ContentDialog extends Dialog {
         dialog.show();
     }
 
+    public static void alert(Context context, String message, Runnable callback) {
+        ContentDialog dialog = new ContentDialog(context);
+        dialog.setMessage(message, R.drawable.content_dialog_type_alert);
+        dialog.setOnConfirmCallback(callback);
+        dialog.findViewById(R.id.BTCancel).setVisibility(View.GONE);
+        dialog.show();
+    }
+
     public static void confirm(Context context, int msgResId, Runnable callback) {
         ContentDialog dialog = new ContentDialog(context);
         dialog.setCancelable(false);
