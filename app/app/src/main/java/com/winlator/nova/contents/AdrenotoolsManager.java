@@ -1,3 +1,4 @@
+// Authored by SeaNaxxx
 package com.winlator.nova.contents;
 
 import android.content.Context;
@@ -100,7 +101,7 @@ public class AdrenotoolsManager {
                 container.saveData();
             }
         }
-        for (Shortcut shortcut : containerManager.loadShortcuts()) {
+        for (Shortcut shortcut : containerManager.loadShortcuts(null)) {
             String graphicsDriver = shortcut.getExtra("graphicsDriver", shortcut.container.getGraphicsDriver());
             if (graphicsDriver.contains("adrenotools-" + adrenoToolsDriverId)) {
                 String defaultDriver = GPUHelper.isAdreno(mContext) ? "turnip,gladio" : "vortek,gladio";
