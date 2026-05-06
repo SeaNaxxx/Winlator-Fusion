@@ -6,6 +6,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import com.winlator.nova.core.FileUtils;
 import com.winlator.nova.core.TarCompressorUtils;
+import com.winlator.nova.xenvironment.RootFS;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -161,7 +162,7 @@ public class ContentsManager {
             callback.onFailed(InstallFailedReason.ERROR_BADPROFILE, null);
             return;
         }
-        String imagefsPath = context.getFilesDir().getAbsolutePath() + "/imagefs";
+        String rootfsPath = RootFS.find(context).getRootDir().getAbsolutePath();
         for (ContentProfile.ContentFile contentFile : profile.fileList) {
             File tmpFile = new File(file, contentFile.source);
             if (!tmpFile.exists() || !tmpFile.isFile() || !isSubPath(file.getAbsolutePath(), tmpFile.getAbsolutePath())) {
@@ -169,7 +170,7 @@ public class ContentsManager {
                 return;
             }
             String realPath = getPathFromTemplate(contentFile.target);
-            if (!isSubPath(imagefsPath, realPath) || isSubPath(ContentsManager.getContentDir(context).getAbsolutePath(), realPath) || realPath.contains("dosdevices")) {
+            if (!isSubPath(rootfsPath, realPath) || isSubPath(ContentsManager.getContentDir(context).getAbsolutePath(), realPath) || realPath.contains("dosdevices")) {
                 callback.onFailed(InstallFailedReason.ERROR_UNTRUSTPROFILE, null);
                 return;
             }
@@ -274,13 +275,13 @@ public class ContentsManager {
     private void createDirTemplateMap() {
         if (dirTemplateMap == null) {
             dirTemplateMap = new HashMap<>();
-            String imagefsPath = context.getFilesDir().getAbsolutePath() + "/imagefs";
-            String drivecPath = imagefsPath + "/home/xuser/.wine/drive_c";
-            dirTemplateMap.put("${libdir}", imagefsPath + "/usr/lib");
+            String rootfsPath = RootFS.find(context).getRootDir().getAbsolutePath();
+            String drivecPath = rootfsPath + "/home/xuser/.wine/drive_c";
+            dirTemplateMap.put("${libdir}", rootfsPath + "/usr/lib");
             dirTemplateMap.put("${system32}", drivecPath + "/windows/system32");
             dirTemplateMap.put("${syswow64}", drivecPath + "/windows/syswow64");
-            dirTemplateMap.put("${bindir}", imagefsPath + "/usr/bin");
-            dirTemplateMap.put("${sharedir}", imagefsPath + "/usr/share");
+            dirTemplateMap.put("${bindir}", rootfsPath + "/usr/bin");
+            dirTemplateMap.put("${sharedir}", rootfsPath + "/usr/share");
         }
     }
     private void createTrustedFilesMap() {

@@ -249,6 +249,10 @@ public class ContainerDetailFragment extends Fragment {
                     container.setEmulator(emulator);
                     container.setFEXCorePreset(fexcorePreset);
                     container.setDesktopTheme(desktopTheme);
+                    // Save Wine version selection in edit mode
+                    if (wineInfos.size() > 1) {
+                        container.setWineVersion(wineInfos.get(sWineVersion.getSelectedItemPosition()).identifier());
+                    }
                     container.saveData();
 
                     saveWineRegistryKeys(view);
@@ -577,7 +581,7 @@ public class ContainerDetailFragment extends Fragment {
 
     private void loadWineVersionSpinner(final View view, Spinner sWineVersion, final ArrayList<WineInfo> wineInfos) {
         final Context context = getContext();
-        sWineVersion.setEnabled(!isEditMode());
+        sWineVersion.setEnabled(true);
         view.findViewById(R.id.LLWineVersion).setVisibility(View.VISIBLE);
         sWineVersion.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, wineInfos));
         if (isEditMode()) AppUtils.setSpinnerSelectionFromValue(sWineVersion, WineInfo.fromIdentifier(context, container.getWineVersion()).toString());
