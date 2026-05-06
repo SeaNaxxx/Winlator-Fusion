@@ -13,6 +13,7 @@ import com.winlator.nova.core.AppUtils;
 import com.winlator.nova.core.DownloadProgressDialog;
 import com.winlator.nova.core.FileUtils;
 import com.winlator.nova.core.PreloaderDialog;
+import com.winlator.nova.core.RootFSPatcher;
 import com.winlator.nova.core.TarCompressorUtils;
 import com.winlator.nova.core.WineInfo;
 
@@ -68,6 +69,8 @@ public abstract class RootFSInstaller {
             });
 
             if (success) {
+                // Patch hardcoded paths from com.winlator to com.winlator.nova
+                RootFSPatcher.patch(rootDir);
                 rootFS.createRFSVersionFile(LATEST_VERSION);
                 resetContainerRFSVersions(activity);
             }

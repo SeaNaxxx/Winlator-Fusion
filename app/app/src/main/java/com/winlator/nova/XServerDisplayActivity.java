@@ -53,6 +53,7 @@ import com.winlator.nova.core.KeyValueSet;
 import com.winlator.nova.core.LocaleHelper;
 import com.winlator.nova.core.PreloaderDialog;
 import com.winlator.nova.core.ProcessHelper;
+import com.winlator.nova.core.RootFSPatcher;
 import com.winlator.nova.core.StringUtils;
 import com.winlator.nova.core.TarCompressorUtils;
 import com.winlator.nova.core.Win32AppWorkarounds;
@@ -753,10 +754,15 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             if (changed) {
                 String version = graphicsDriverConfig[0].get("version", DefaultVersion.TURNIP);
                 GeneralComponents.extractFile(GeneralComponents.Type.TURNIP, this, version, DefaultVersion.TURNIP);
+                // Patch Vulkan ICD JSON with correct package path
+                RootFSPatcher.patch(rootDir);
             }
         }
         else if (graphicsDriver[0].equals(GraphicsDrivers.VORTEK) && (changed || MainActivity.DEBUG_MODE)) {
             TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/vortek-" + DefaultVersion.VORTEK + ".tzst", rootDir);
+            // Patch Vortek ICD JSON and .so files with correct package path
+            RootFSPatcher.patch(rootDir);
+            RootFSPatcher.patchElfRpath(new File(rootDir, "usr/lib/libvulkan_vortek.so"));
         }
         else if (graphicsDriver[0].equals(GraphicsDrivers.ADRENOTOOLS)) {
             envVars.put("MESA_VK_WSI_PRESENT_MODE", "mailbox");
@@ -766,6 +772,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 AdrenotoolsManager adrenotoolsManager = new AdrenotoolsManager(this);
                 adrenotoolsManager.setDriverById(envVars, rootFS, driverId);
             }
+            // Patch any extracted .so files with correct package path
+            RootFSPatcher.patchElfRpath(new File(rootDir, "usr/lib/libvulkan_wrapper.so"));
+            RootFSPatcher.patchElfRpath(new File(rootDir, "usr/lib/libadrenotools.so"));
+            RootFSPatcher.patchElfRpath(new File(rootDir, "usr/lib/libhook_impl.so"));
+            RootFSPatcher.patchElfRpath(new File(rootDir, "usr/lib/libmain_hook.so"));
+            RootFSPatcher.patchElfRpath(new File(rootDir, "usr/lib/libgsl_alloc_hook.so"));
+            RootFSPatcher.patchElfRpath(new File(rootDir, "usr/lib/libfile_redirect_hook.so"));
+            RootFSPatcher.patch(rootDir);
         }
 
         switch (graphicsDriver[1]) {
@@ -774,7 +788,10 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 envVars.put("ZINK_CONTEXT_THREADED", "1");
                 if (graphicsDriver[0].equals(GraphicsDrivers.VORTEK)) envVars.put("MESA_GL_VERSION_OVERRIDE", "3.3");
 
-                if (changed) TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/zink-"+DefaultVersion.ZINK+".tzst", rootDir);
+                if (changed) {
+                    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/zink-"+DefaultVersion.ZINK+".tzst", rootDir);
+                    RootFSPatcher.patchElfRpath(new File(rootDir, "usr/lib/libGL.so.1.7.0"));
+                }
                 break;
             case GraphicsDrivers.VIRGL:
                 envVars.put("GALLIUM_DRIVER", "virpipe");
@@ -782,12 +799,20 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 envVars.put("VIRGL_SERVER_PATH", rootDir+UnixSocketConfig.VIRGL_SERVER_PATH);
                 VirGLConfigDialog.setEnvVars(graphicsDriverConfig[1], envVars);
 
-                if (changed) TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/virgl-"+DefaultVersion.VIRGL+".tzst", rootDir);
+                if (changed) {
+                    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/virgl-"+DefaultVersion.VIRGL+".tzst", rootDir);
+                    RootFSPatcher.patch(rootDir);
+                    RootFSPatcher.patchElfRpath(new File(rootDir, "usr/lib/libGL.so.1.7.0"));
+                }
                 break;
             case GraphicsDrivers.GLADIO:
                 envVars.put("GLADIO_NO_ERROR", "1");
 
-                if (changed || MainActivity.DEBUG_MODE) TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/gladio-"+DefaultVersion.GLADIO+".tzst", rootDir);
+                if (changed || MainActivity.DEBUG_MODE) {
+                    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/gladio-"+DefaultVersion.GLADIO+".tzst", rootDir);
+                    RootFSPatcher.patch(rootDir);
+                    RootFSPatcher.patchElfRpath(new File(rootDir, "usr/lib/libGL.so.1.7.0"));
+                }
                 break;
         }
     }
@@ -1074,6 +1099,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         File rootDir = rootFS.getRootDir();
         FileUtils.delete(new File(rootDir, "/opt/apps"));
         TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "rootfs_patches.tzst", rootDir);
+        // Patch ALSA module and other .so files with correct package path
+        RootFSPatcher.patchElfRpath(new File(rootDir, "usr/lib/alsa-lib/libasound_module_pcm_android_aserver.so"));
         TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "pulseaudio.tzst", new File(getFilesDir(), "pulseaudio"));
         WineUtils.applySystemTweaks(this, wineInfo);
         container.putExtra("graphicsDriver", null);

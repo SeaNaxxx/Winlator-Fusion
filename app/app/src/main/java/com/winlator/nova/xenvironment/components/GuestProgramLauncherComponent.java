@@ -16,6 +16,7 @@ import com.winlator.nova.core.FileUtils;
 import com.winlator.nova.core.GeneralComponents;
 import com.winlator.nova.core.LocaleHelper;
 import com.winlator.nova.core.ProcessHelper;
+import com.winlator.nova.core.RootFSPatcher;
 import com.winlator.nova.fexcore.FEXCorePreset;
 import com.winlator.nova.fexcore.FEXCorePresetManager;
 import com.winlator.nova.widget.LogView;
@@ -127,7 +128,11 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
         envVars.put("TMPDIR", rootDir+"/tmp");
         envVars.put("DISPLAY", ":0");
         envVars.put("PATH", rootDir+rootFS.getWinePath()+"/bin:"+rootDir+"/usr/local/bin:"+rootDir+"/usr/bin");
-        envVars.put("LD_LIBRARY_PATH", rootFS.getLibDir().getPath());
+
+        // Set LD_LIBRARY_PATH to include all library directories
+        // This is critical because ld.so.cache has been deleted and we need
+        // the linker to find libraries by path
+        envVars.put("LD_LIBRARY_PATH", rootDir+"/lib:"+rootDir+"/usr/lib:"+rootDir+"/usr/lib/aarch64-linux-gnu");
 
         if (!isFEXCore) {
             envVars.put("BOX64_LD_LIBRARY_PATH", rootDir+"/lib/x86_64-linux-gnu");
@@ -144,7 +149,15 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
         if (isFEXCore) {
             command = guestExecutable;
         } else {
-            command = rootDir+"/usr/local/bin/box64 "+guestExecutable;
+            // Use explicit dynamic linker invocation to bypass broken INTERP header
+            // in box64 binary (which points to /data/data/com.winlator/... instead of
+            // /data/data/com.winlator.nova/...). By invoking the linker directly with
+            // --library-path, we ensure correct library resolution regardless of the
+            // binary's embedded INTERP/RPATH values.
+            String linker = rootDir+"/lib/ld-linux-aarch64.so.1";
+            String libraryPath = rootDir+"/lib:"+rootDir+"/usr/lib";
+            String box64Path = rootDir+"/usr/local/bin/box64";
+            command = linker+" --library-path "+libraryPath+" "+box64Path+" "+guestExecutable;
         }
 
         return ProcessHelper.exec(command, envVars, rootDir, (status) -> {
@@ -164,6 +177,36 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
         if (!box64Version.equals(currentBox64Version)) {
             GeneralComponents.extractFile(GeneralComponents.Type.BOX64, context, box64Version, DefaultVersion.BOX64);
             preferences.edit().putString("current_box64_version", box64Version).apply();
+
+            // Patch the box64 binary to fix hardcoded RPATH/INTERP paths
+            // The binary in the tarball was built for com.winlator but we use com.winlator.nova
+            RootFS rootFS = environment.getRootFS();
+            File box64Bin = new File(rootFS.getRootDir(), "/usr/local/bin/box64");
+            if (box64Bin.exists()) {
+                RootFSPatcher.patchElfRpath(box64Bin);
+            }
+
+            // Also patch any .so files extracted from wrapper.tzst or adrenotools drivers
+            patchSharedLibraries(rootFS.getRootDir());
+        }
+    }
+
+    /**
+     * Patches shared library .so files in the rootfs that may contain
+     * hardcoded package paths (e.g., from Ludashi/Cmod wrapper.tzst).
+     */
+    private void patchSharedLibraries(File rootDir) {
+        File[] dirs = {new File(rootDir, "usr/lib"), new File(rootDir, "lib")};
+        for (File dir : dirs) {
+            if (!dir.isDirectory()) continue;
+            File[] files = dir.listFiles();
+            if (files == null) continue;
+            for (File file : files) {
+                String name = file.getName();
+                if (name.endsWith(".so") || (name.startsWith("lib") && name.contains(".so."))) {
+                    RootFSPatcher.patchElfRpath(file);
+                }
+            }
         }
     }
 
