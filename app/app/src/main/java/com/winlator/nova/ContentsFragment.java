@@ -1,4 +1,3 @@
-// Authored by SeaNaxxx
 package com.winlator.nova;
 
 import android.annotation.SuppressLint;
@@ -348,7 +347,7 @@ public class ContentsFragment extends Fragment {
                     long timestamp = System.currentTimeMillis();
                     File output = new File(getContext().getCacheDir(), "temp_" + timestamp);
                     if (Downloader.downloadFile(profile.remoteUrl, output)) {
-                        intent.setData(Uri.parse(output.getAbsolutePath()));
+                        intent.setData(Uri.fromFile(output));
                     }
                     getActivity().runOnUiThread(() -> {
                         holder.progressBar.setVisibility(View.GONE);
