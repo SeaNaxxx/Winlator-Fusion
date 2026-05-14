@@ -644,6 +644,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         envVars.put("MESA_DEBUG", "silent");
         envVars.put("MESA_NO_ERROR", "1");
         envVars.put("WINEPREFIX", imageFs.wineprefix);
+        envVars.put("WINE_DO_NOT_CREATE_DXGI_DEVICE_MANAGER", "1");
 
         boolean enableWineDebug = preferences.getBoolean("enable_wine_debug", false);
         String wineDebugChannels = preferences.getString("wine_debug_channels", SettingsFragment.DEFAULT_WINE_DEBUG_CHANNELS);

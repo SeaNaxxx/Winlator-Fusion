@@ -1,5 +1,5 @@
 [steam.exe]
-BOX64_ENV=WINEARGS=-noshaders -nooverlay -nocrashmonitor -no-shared-textures -cef-disable-gpu -cef-disable-gpu-compositing -cef-disable-gpu-sandbox -cef-disable-d3d11 -cef-disable-sandbox -no-cef-sandbox -cef-disable-seccomp-sandbox -disable-winh264 -noreactlogin -no-dwrite
+BOX64_ENV=WINEARGS=-noshaders -nooverlay -nocrashmonitor -no-shared-textures -cef-disable-gpu -cef-disable-gpu-compositing -cef-disable-gpu-sandbox -cef-disable-d3d11 -cef-disable-sandbox -no-cef-sandbox -cef-disable-seccomp-sandbox
 BOX64_ENV1=WINEDLLOVERRIDES=gameoverlayrenderer,gameoverlayrenderer64,gameoverlayui.exe,gameoverlayui64.exe,x86launcher.exe,x64launcher.exe,dxsetup.exe=d
 
 [steamwebhelper.exe]
