@@ -8,6 +8,8 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -108,6 +110,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.concurrent.Executors;
 
 import cn.sherlock.com.sun.media.sound.SF2Soundbank;
@@ -157,6 +160,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
     private String screenEffectProfile;
 
     private boolean useOldVirGL;
+
+    private final static int HANDLER_DELAY = 10000;
 
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
@@ -1370,6 +1375,45 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         //SettingsFragment.resetBox86_64Version(this);
     }
 
+    private void restoreProcessAffinityDelayed(int processId, int processAffinity) {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                winHandler.setProcessAffinity(processId, processAffinity);
+            }
+        }, HANDLER_DELAY);
+    }
+
+    private void applyWin32Workaround(int processId, String className, int processAffinity) {
+        String appIdentifier = className.toLowerCase(Locale.ENGLISH);
+
+        switch (appIdentifier) {
+            case "prototype2.exe":
+                winHandler.setProcessAffinity(processId, 0b10000000);
+                restoreProcessAffinityDelayed(processId, processAffinity);
+                winHandler.bringToFront(className);
+                break;
+            case "steam.exe":
+            case "farcry2.exe":
+                if (container.getStartupSelection() != Container.STARTUP_SELECTION_AGGRESSIVE) {
+                    winHandler.killProcess("services.exe");
+                }
+                winHandler.bringToFront(className);
+                break;
+            case "farcry3.exe":
+                winHandler.bringToFront(className);
+                break;
+            case "blacklist_game.exe":
+            case "blacklist_dx11_game.exe":
+                winHandler.setProcessAffinity(processId, taskAffinityMaskWoW64);
+                winHandler.bringToFront(className);
+                break;
+            default:
+                break;
+        }
+    }
+
     private void assignTaskAffinity(Window window) {
         if (taskAffinityMask == 0) return;
         int processId = window.getProcessId();
@@ -1378,6 +1422,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
         if (processId > 0) {
             winHandler.setProcessAffinity(processId, processAffinity);
+            applyWin32Workaround(processId, className, processAffinity);
         }
         else if (!className.isEmpty()) {
             winHandler.setProcessAffinity(window.getClassName(), processAffinity);
