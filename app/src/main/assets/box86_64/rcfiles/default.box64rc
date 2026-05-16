@@ -74,6 +74,9 @@ BOX64_ENV=WINEESYNC=0
 [valkyria.exe]
 BOX64_ENV=WINEESYNC=0
 
+[prototype2.exe]
+BOX64_ENV=WINEDLLOVERRIDES=xaudio2_0,xaudio2_1,xaudio2_2,xaudio2_3,xaudio2_4,xaudio2_5,xaudio2_6,xaudio2_7=b
+
 #.NET Framework installers
 [*dotnetfx35*]
 BOX64_EXIT=1
