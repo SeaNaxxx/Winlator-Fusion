@@ -1,9 +1,5 @@
 package com.winlator.contentdialog;
 
-/* Decompiled from Winlator 10 Final
- * https://github.com/brunodev85/winlator/releases/tag/v10.0.0
- */
-
 import android.content.Context;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -46,7 +42,7 @@ public class VirGLConfigDialog extends ContentDialog {
     loadVirGLVersionSpinner(contentsManager, sVersion);
 
     KeyValueSet config = new KeyValueSet(anchor.getTag().toString());
-    AppUtils.setSpinnerSelectionFromIdentifier(sVersion, config.get("version", DefaultVersion.VIRGL));
+    AppUtils.setSpinnerSelectionFromIdentifier(sVersion, config.get("virglVersion", DefaultVersion.VIRGL));
     AppUtils.setSpinnerSelectionFromIdentifier(SOpenglVersion, config.get("glVersion", "3.1"));
     CBdisableVertexArrayBGRA.setChecked(config.getBoolean("disableVertexArrayBGRA", true));
     CBdisableKHRdebug.setChecked(config.getBoolean("disableKHRdebug", false));
@@ -55,7 +51,7 @@ public class VirGLConfigDialog extends ContentDialog {
     setOnConfirmCallback(() -> {
       useOldVirGL = (sVersion.getSelectedItem().toString()).equals(OLD_VIRGL_VERSION);
 
-      config.put("version", sVersion.getSelectedItem().toString());
+      config.put("virglVersion", sVersion.getSelectedItem().toString());
       config.put("glVersion", SOpenglVersion.getSelectedItem().toString());
       config.put("disableVertexArrayBGRA", CBdisableVertexArrayBGRA.isChecked());
       config.put("disableKHRdebug", CBdisableKHRdebug.isChecked());

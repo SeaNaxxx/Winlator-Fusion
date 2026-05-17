@@ -1301,9 +1301,9 @@ public class X11Activity extends AppCompatActivity implements View.OnApplyWindow
         String cacheOldVirGL = container.getExtra("useOldVirGL", "false");
 
         if (graphicsDriver.startsWith("turnip"))
-            graphicsDriver += "-"+graphicsDriverConfig.get("version", DefaultVersion.TURNIP);
+            graphicsDriver += "-"+graphicsDriverConfig.get("turnipVersion", DefaultVersion.TURNIP);
         else if (graphicsDriver.startsWith("virgl"))
-            graphicsDriver += "-"+graphicsDriverConfig.get("version", DefaultVersion.VIRGL);
+            graphicsDriver += "-"+graphicsDriverConfig.get("virglVersion", DefaultVersion.VIRGL);
 
         boolean changed = (!cacheDriverId.equals(graphicsDriver)) || (cacheContainerId != container.id) ||
                 (!cacheOldVirGL.equals(String.valueOf(useOldVirGL)));
@@ -1349,7 +1349,7 @@ public class X11Activity extends AppCompatActivity implements View.OnApplyWindow
                 if (profile != null) {
                     contentsManager.applyContent(profile);
                 } else {
-                    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/turnip-" + graphicsDriverConfig.get("version", DefaultVersion.TURNIP) + ".tzst", rootDir);
+                    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/turnip-" + graphicsDriverConfig.get("turnipVersion", DefaultVersion.TURNIP) + ".tzst", rootDir);
                     TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/zink-" + DefaultVersion.ZINK + ".tzst", rootDir);
                 }
             }
@@ -1366,7 +1366,7 @@ public class X11Activity extends AppCompatActivity implements View.OnApplyWindow
                     contentsManager.applyContent(profile);
                 else {
                     if (!useOldVirGL)
-                        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/virgl-" + graphicsDriverConfig.get("version", DefaultVersion.VIRGL) + ".tzst", rootDir);
+                        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/virgl-" + graphicsDriverConfig.get("virglVersion", DefaultVersion.VIRGL) + ".tzst", rootDir);
                     else
                         TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/virgl-old-" + DefaultVersion.VIRGL + ".tzst", rootDir);
                 }

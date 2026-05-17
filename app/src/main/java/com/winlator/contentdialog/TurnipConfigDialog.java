@@ -44,13 +44,13 @@ public class TurnipConfigDialog extends ContentDialog {
         loadTurnipVersionSpinner(contentsManager, sVersion);
 
         KeyValueSet config = parseConfig(context, anchor.getTag());
-        AppUtils.setSpinnerSelectionFromIdentifier(sVersion, config.get("version", DefaultVersion.TURNIP));
+        AppUtils.setSpinnerSelectionFromIdentifier(sVersion, config.get("turnipVersion", DefaultVersion.TURNIP));
         AppUtils.setSpinnerSelectionFromNumber(sMaxDeviceMemory, config.get("maxTurnipMemory", "4096"));
         AppUtils.setSpinnerSelectionFromIdentifier(sPresentMode, config.get("presentMode", "mailbox"));
         loadDebugOptions(config.get("tuDebug", "noconform"));
 
         setOnConfirmCallback(() -> {
-            config.put("version", sVersion.getSelectedItem().toString());
+            config.put("turnipVersion", sVersion.getSelectedItem().toString());
             config.put("maxTurnipMemory", StringUtils.parseNumber(sMaxDeviceMemory.getSelectedItem()));
             config.put("presentMode", sPresentMode.getSelectedItem().toString());
             config.put("tuDebug", getDebugOptions());
@@ -59,7 +59,7 @@ public class TurnipConfigDialog extends ContentDialog {
     }
 
     private static String getDefaultConfig(Context context) {
-        return "version="+DefaultVersion.TURNIP+",tuDebug=noconform,maxTurnipMemory=4096,presentMode=mailbox";
+        return "turnipVersion="+DefaultVersion.TURNIP+",tuDebug=noconform,maxTurnipMemory=4096,presentMode=mailbox";
     }
 
     private String getDebugOptions() {

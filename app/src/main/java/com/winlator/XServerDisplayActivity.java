@@ -283,8 +283,6 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             winHandler.setInputType((byte) container.getInputType());
             lc_all = container.getLC_ALL();
 
-            useOldVirGL = graphicsDriverConfig.getBoolean("useOldVirGL", false);
-
             if (shortcut != null) {
                 graphicsDriver = shortcut.getExtra("graphicsDriver", container.getGraphicsDriver());
                 audioDriver = shortcut.getExtra("audioDriver", container.getAudioDriver());
@@ -298,6 +296,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 String inputType = shortcut.getExtra("inputType");
                 if (!inputType.isEmpty()) winHandler.setInputType(Byte.parseByte(inputType));
             }
+
+            useOldVirGL = graphicsDriverConfig.getBoolean("useOldVirGL", false);
 
             if (dxwrapper.contains("dxvk") || dxwrapper.contains("vkd3d") || dxwrapper.contains("wined3d"))
                 this.dxwrapperConfig = DXVK_VKD3DConfigDialog.parseConfig(dxwrapperConfig);
@@ -922,9 +922,9 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         String cacheOldVirGL = container.getExtra("useOldVirGL", "false");
 
         if (graphicsDriver.startsWith("turnip"))
-            graphicsDriver += "-"+graphicsDriverConfig.get("version", DefaultVersion.TURNIP);
+            graphicsDriver += "-"+graphicsDriverConfig.get("turnipVersion", DefaultVersion.TURNIP);
         else if (graphicsDriver.startsWith("virgl"))
-            graphicsDriver += "-"+graphicsDriverConfig.get("version", DefaultVersion.VIRGL);
+            graphicsDriver += "-"+graphicsDriverConfig.get("virglVersion", DefaultVersion.VIRGL);
 
         boolean changed = (!cacheDriverId.equals(graphicsDriver)) || (cacheContainerId != container.id) ||
                 (!cacheOldVirGL.equals(String.valueOf(useOldVirGL)));
@@ -970,7 +970,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 if (profile != null) {
                     contentsManager.applyContent(profile);
                 } else {
-                    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/turnip-" + graphicsDriverConfig.get("version", DefaultVersion.TURNIP) + ".tzst", rootDir);
+                    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/turnip-" + graphicsDriverConfig.get("turnipVersion", DefaultVersion.TURNIP) + ".tzst", rootDir);
                     TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/zink-" + DefaultVersion.ZINK + ".tzst", rootDir);
                 }
             }
@@ -987,7 +987,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                     contentsManager.applyContent(profile);
                 else {
                     if (!useOldVirGL)
-                        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/virgl-" + graphicsDriverConfig.get("version", DefaultVersion.VIRGL) + ".tzst", rootDir);
+                        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/virgl-" + graphicsDriverConfig.get("virglVersion", DefaultVersion.VIRGL) + ".tzst", rootDir);
                     else
                         TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/virgl-old-" + DefaultVersion.VIRGL + ".tzst", rootDir);
                 }
