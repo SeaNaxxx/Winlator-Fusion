@@ -100,3 +100,11 @@ BOX64_DYNAREC_SAFEFLAGS=2
 
 [POWERPNT.EXE]
 BOX64_DYNAREC_SAFEFLAGS=2
+
+# Java Runtime Environment installers
+[*jre-*]
+BOX64_ENV=WINEARGS=/s
+
+# Java Runtime Environment
+[javaw.exe]
+BOX64_ENV=WINEDLLOVERRIDES=ddraw,d3d9=b
