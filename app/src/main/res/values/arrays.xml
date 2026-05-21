@@ -176,6 +176,7 @@
 
     <string-array name="wine_entries">
         <item>wine-10.10-x86_64</item>
+        <item>wine-10.10-arm64ec</item>
         <item>proton-9.0-x86_64</item>
         <item>proton-9.0-arm64ec</item>
     </string-array>
