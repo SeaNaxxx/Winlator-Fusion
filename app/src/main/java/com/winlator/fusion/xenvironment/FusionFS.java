@@ -59,13 +59,15 @@ public class FusionFS {
     }
 
     public boolean isValid() {
-        return rootDir.isDirectory() && bionicDir.isDirectory() && getVersionFile().exists();
+        return rootDir.isDirectory() && bionicDir.isDirectory() && (getVersionFile().exists() || getLegacyVersionFile().exists());
     }
 
     public int getVersion() {
         try {
             File versionFile = getVersionFile();
             if (versionFile.exists()) return Integer.parseInt(FileUtils.readLines(versionFile).get(0));
+            File legacyFile = getLegacyVersionFile();
+            if (legacyFile.exists()) return Integer.parseInt(FileUtils.readLines(legacyFile).get(0));
         } catch (Exception e) {}
         return 0;
     }
@@ -91,6 +93,10 @@ public class FusionFS {
 
     public File getVersionFile() {
         return new File(getConfigDir(), ".fusionfs_version");
+    }
+
+    public File getLegacyVersionFile() {
+        return new File(getConfigDir(), ".ffs_version");
     }
 
     public boolean isBionicInstalled() {

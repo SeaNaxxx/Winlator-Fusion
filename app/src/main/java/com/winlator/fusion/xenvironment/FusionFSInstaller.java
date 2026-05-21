@@ -95,15 +95,12 @@ public abstract class FusionFSInstaller {
                 });
             } catch (Exception e) { success = false; }
 
-            if (success && assetExists(activity, FusionFS.ASSET_FUSIONFS_PATCHES)) {
-                try {
-                    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, activity, FusionFS.ASSET_FUSIONFS_PATCHES, rootDir);
-                } catch (Exception e) {}
-            }
-
             if (success) {
+                renameExtractedDirs(rootDir);
+                applyPatches(activity, rootDir);
                 activity.runOnUiThread(() -> dialog.setProgress(100));
                 createWineSymlink(fusionFS);
+                createCompatibilitySymlinks(activity, fusionFS);
                 installWineFromAssets(activity, fusionFS);
                 installContainerPatternsFromAssets(activity, fusionFS);
                 installDriversFromAssets(activity);
@@ -265,6 +262,7 @@ public abstract class FusionFSInstaller {
         new File(glibcDir, "/etc").mkdirs();
 
         createWineSymlink(fusionFS);
+        createCompatibilitySymlinks(context, fusionFS);
 
         boolean hasProton = hasProtonInstalled(context);
         boolean hasWine = fusionFS.isWineInstalled();
@@ -280,6 +278,43 @@ public abstract class FusionFSInstaller {
             if ((hasProtonInstalled(context) || fusionFS.isWineInstalled()) && fusionFS.getVersion() == 0) {
                 fusionFS.createVersionFile(LATEST_VERSION);
             }
+        }
+    }
+
+    private static void renameExtractedDirs(File rootDir) {
+        File rootfsDir = new File(rootDir, "rootfs");
+        File glibcDir = new File(rootDir, "glibc");
+        if (rootfsDir.isDirectory() && !glibcDir.isDirectory()) {
+            rootfsDir.renameTo(glibcDir);
+        }
+
+        File imagefsDir = new File(rootDir, "imagefs");
+        File bionicDir = new File(rootDir, "bionic");
+        if (imagefsDir.isDirectory() && !bionicDir.isDirectory()) {
+            imagefsDir.renameTo(bionicDir);
+        }
+    }
+
+    private static void applyPatches(Context context, File rootDir) {
+        if (!assetExists(context, FusionFS.ASSET_FUSIONFS_PATCHES)) return;
+        try {
+            File glibcDir = new File(rootDir, "glibc");
+            if (glibcDir.isDirectory()) {
+                TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FusionFS.ASSET_FUSIONFS_PATCHES, glibcDir);
+            }
+        } catch (Exception e) {}
+    }
+
+    private static void createCompatibilitySymlinks(Context context, FusionFS fusionFS) {
+        File filesDir = context.getFilesDir();
+        File imagefsLink = new File(filesDir, "imagefs");
+        File rootfsLink = new File(filesDir, "rootfs");
+
+        if (!imagefsLink.exists()) {
+            FileUtils.symlink(fusionFS.getBionicDir().getAbsolutePath(), imagefsLink.getAbsolutePath());
+        }
+        if (!rootfsLink.exists()) {
+            FileUtils.symlink(fusionFS.getGlibcDir().getAbsolutePath(), rootfsLink.getAbsolutePath());
         }
     }
 
@@ -313,7 +348,7 @@ public abstract class FusionFSInstaller {
                 for (File file : files) {
                     if (file.isDirectory()) {
                         String name = file.getName();
-                        if (name.equals("home") || name.equals("opt") || name.equals("installed-wine")) continue;
+                        if (name.equals("home") || name.equals("opt") || name.equals("installed-wine") || name.equals("bionic") || name.equals("glibc") || name.equals("wine")) continue;
                     }
                     FileUtils.delete(file);
                 }
