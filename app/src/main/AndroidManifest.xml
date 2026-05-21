@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+
+    <application
+        android:icon="@mipmap/ic_launcher"
+        android:appCategory="game"
+        android:isGame="true"
+        android:extractNativeLibs="true"
+        android:allowAudioPlaybackCapture="true"
+        android:label="@string/app_name">
+
+        <activity android:name="com.winlator.fusion.MainActivity"
+            android:theme="@style/AppThemeDark"
+            android:exported="true"
+            android:screenOrientation="sensor"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|density|navigation">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name="com.winlator.fusion.XServerDisplayActivity"
+            android:exported="false"
+            android:theme="@style/AppThemeFullscreenDark"
+            android:supportsPictureInPicture="true"
+            android:launchMode="singleTask"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|density|navigation"
+            android:screenOrientation="sensorLandscape" />
+
+        <activity android:name="com.winlator.fusion.ControlsEditorActivity"
+            android:exported="false"
+            android:theme="@style/AppThemeFullscreenDark"
+            android:screenOrientation="sensorLandscape" />
+
+        <activity android:name="com.winlator.fusion.ExternalControllerBindingsActivity"
+            android:theme="@style/AppThemeDark"
+            android:exported="false"
+            android:screenOrientation="sensor" />
+
+        <activity android:name="com.winlator.fusion.TerminalActivity"
+            android:theme="@style/AppThemeDark"
+            android:exported="false"
+            android:screenOrientation="sensor" />
+
+        <activity android:name="com.winlator.fusion.BigPictureActivity"
+            android:theme="@style/AppThemeFullscreenDark"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|density|navigation" />
+
+        <receiver
+            android:name="com.winlator.fusion.ShortcutBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.winlator.fusion.SHORTCUT_ADDED"/>
+            </intent-filter>
+        </receiver>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.winlator.fusion.FileProvider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"/>
+        </provider>
+    </application>
+</manifest>

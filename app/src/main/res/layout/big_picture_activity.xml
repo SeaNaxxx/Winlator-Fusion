@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <com.winlator.fusion.bigpicture.TiledBackgroundView
+        android:id="@+id/parallaxBackgroundView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:id="@+id/mainLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="24dp">
+
+        <!-- Top bar with settings and back buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <ImageButton
+                android:id="@+id/backButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/icon_hide"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/back"
+                android:layout_marginEnd="8dp" />
+
+            <ImageButton
+                android:id="@+id/settingsButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/icon_settings"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/settings" />
+        </LinearLayout>
+
+        <!-- Game info section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/IVCoverArt"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:scaleType="centerCrop"
+                android:background="#99000000"
+                android:contentDescription="@string/cover_art" />
+
+            <TextView
+                android:id="@+id/TVGameTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"
+                android:shadowColor="#000000"
+                android:shadowDx="2"
+                android:shadowDy="2"
+                android:shadowRadius="4" />
+
+            <TextView
+                android:id="@+id/TVPlayCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#CCCCCC"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/TVPlaytime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#CCCCCC"
+                android:textSize="14sp"
+                android:layout_marginTop="4dp" />
+
+            <ImageButton
+                android:id="@+id/playButton"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/icon_run"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/play"
+                android:layout_marginTop="16dp" />
+
+        </LinearLayout>
+
+        <!-- Shortcut carousel -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/RecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginTop="16dp"
+            android:clipToPadding="false"
+            android:paddingStart="40dp"
+            android:paddingEnd="40dp" />
+
+        <TextView
+            android:id="@+id/TVEmptyState"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#CCCCCC"
+            android:textSize="18sp"
+            android:visibility="gone"
+            android:text="@string/no_shortcuts" />
+
+    </LinearLayout>
+
+    <!-- Settings panel -->
+    <LinearLayout
+        android:id="@+id/settingsLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="#CC000000"
+        android:padding="24dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/settings"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Animation type -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/animation_type"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:layout_marginTop="8dp" />
+
+        <RadioGroup
+            android:id="@+id/animationSelectorGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/rbDefaultAnimation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/default_animation"
+                android:textColor="#FFFFFF"
+                android:buttonTint="#FFFFFF" />
+
+            <RadioButton
+                android:id="@+id/rbGearAnimation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/gear"
+                android:textColor="#FFFFFF"
+                android:buttonTint="#FFFFFF" />
+
+            <RadioButton
+                android:id="@+id/rbQuiltAnimation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/quilt"
+                android:textColor="#FFFFFF"
+                android:buttonTint="#FFFFFF" />
+
+            <RadioButton
+                android:id="@+id/rbNoAnimation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/none"
+                android:textColor="#FFFFFF"
+                android:buttonTint="#FFFFFF" />
+
+        </RadioGroup>
+
+        <!-- Frame speed -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/animation_speed"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:layout_marginTop="16dp" />
+
+        <SeekBar
+            android:id="@+id/frameSpeedSeekBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="200"
+            android:progress="33"
+            android:progressTint="#FFFFFF"
+            android:thumbTint="#FFFFFF" />
+
+        <!-- Parallax mode -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/parallax_mode"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:layout_marginTop="16dp" />
+
+        <RadioGroup
+            android:id="@+id/parallaxModeGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/rbParallaxDefault"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/default_parallax"
+                android:textColor="#FFFFFF"
+                android:buttonTint="#FFFFFF" />
+
+            <RadioButton
+                android:id="@+id/rbParallaxOff"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/off"
+                android:textColor="#FFFFFF"
+                android:buttonTint="#FFFFFF" />
+
+            <RadioButton
+                android:id="@+id/rbParallaxSlow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/slow"
+                android:textColor="#FFFFFF"
+                android:buttonTint="#FFFFFF" />
+
+            <RadioButton
+                android:id="@+id/rbParallaxFast"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/fast"
+                android:textColor="#FFFFFF"
+                android:buttonTint="#FFFFFF" />
+
+        </RadioGroup>
+
+    </LinearLayout>
+
+</FrameLayout>

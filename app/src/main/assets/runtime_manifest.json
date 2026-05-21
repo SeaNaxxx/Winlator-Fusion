@@ -1,0 +1,133 @@
+{
+  "version": 3,
+  "runtimes": {
+    "glibc": {
+      "display_name": "GLIBC",
+      "filesystem_root": "fusionfs/glibc",
+      "version_file": ".winlator/.rfs_version",
+      "container_variant": "glibc",
+      "box64": {
+        "version": "0.4.0",
+        "asset": "box64/box64-0.4.0.tzst",
+        "binary_path": "/usr/local/bin/box64",
+        "pref_key": "current_box64_version",
+        "has_ld_library_path": true,
+        "ld_library_path_value": "/usr/lib:/usr/lib/x86_64-linux-gnu"
+      },
+      "wine": {
+        "install_path": "/opt/wine",
+        "container_pattern": "wine-10.10-x86_64_container_pattern.tzst"
+      },
+      "graphics_drivers": {
+        "vulkan": ["Turnip", "Vortek"],
+        "opengl": ["Gladio", "Zink", "VirGL"],
+        "unsupported": ["Wrapper"]
+      },
+      "ld_preload": ["libandroid-sysvshm.so"],
+      "env_vars_default": "ZINK_DESCRIPTORS=lazy ZINK_DEBUG=compact MESA_SHADER_CACHE_DISABLE=false MESA_SHADER_CACHE_MAX_SIZE=512MB mesa_glthread=true WINEESYNC=1",
+      "features": {
+        "vortek": true,
+        "adrenotools": false,
+        "fexcore": false,
+        "arm64ec": false,
+        "evshim_patching": false,
+        "gladio": true
+      },
+      "paths": {
+        "tmp": "/tmp",
+        "home": "/home/xuser",
+        "lib": "/usr/lib",
+        "bin": "/usr/local/bin",
+        "wineprefix": "/home/xuser/.wine"
+      }
+    },
+    "bionic": {
+      "display_name": "BIONIC",
+      "filesystem_root": "fusionfs/bionic",
+      "version_file": ".winlator/.img_version",
+      "container_variant": "bionic",
+      "box64": {
+        "version": "0.4.1",
+        "asset": "box64/box64-0.4.1.tzst",
+        "binary_path": "/usr/bin/box64",
+        "pref_key": "current_box64_bionic_version",
+        "has_ld_library_path": false,
+        "ld_library_path_value": null
+      },
+      "wine": {
+        "install_path": "/opt/proton-9.0-x86_64",
+        "container_pattern": "proton-9.0-x86_64_container_pattern.tzst",
+        "container_pattern_common": "container_pattern_common.tzst",
+        "arm64ec_pattern": "proton-9.0-arm64ec_container_pattern.tzst"
+      },
+      "graphics_drivers": {
+        "vulkan": ["Turnip", "Wrapper"],
+        "opengl": ["Gladio", "VirGL"],
+        "unsupported": ["Vortek", "Zink"]
+      },
+      "ld_preload": ["libfile_redirect_hook.so", "libandroid-sysvshm.so", "libhook_impl.so", "libmain_hook.so"],
+      "env_vars_default": "TU_DEBUG=noconform WRAPPER_MAX_IMAGE_COUNT=0 RENDERER_SWAPCHAIN=0 VKD3D_SHADER_MODEL=6_6 MESA_SHADER_CACHE_DISABLE=false MESA_SHADER_CACHE_MAX_SIZE=512MB mesa_glthread=true WINEESYNC=1 MESA_GL_VERSION_OVERRIDE=4.3COMPAT DXVK_HUD=/0",
+      "features": {
+        "vortek": false,
+        "adrenotools": true,
+        "fexcore": true,
+        "arm64ec": true,
+        "evshim_patching": true,
+        "gladio": true,
+        "fakeinput": true,
+        "wowbox64": true
+      },
+      "paths": {
+        "tmp": "/usr/tmp",
+        "home": "/home/xuser",
+        "lib": "/usr/lib",
+        "bin": "/usr/bin",
+        "wineprefix": "/home/xuser/.wine",
+        "extra_ld_library": "/system/lib64"
+      },
+      "emulators": {
+        "fexcore": {
+          "asset": "fexcore/fexcore-{version}.tzst",
+          "version": "2601",
+          "dll": "libwow64fex.dll"
+        },
+        "wowbox64": {
+          "asset": "wowbox64/wowbox64-{version}.tzst",
+          "version": "0.4.1",
+          "dll": "wowbox64.dll"
+        }
+      }
+    }
+  },
+  "assets": {
+    "fusionfs": {
+      "primary": "fusionfs.tzst",
+      "patches": "fusionfs_patches.tzst"
+    },
+    "wine": [
+      "wine-10.10-x86_64",
+      "wine-10.10-arm64ec",
+      "proton-9.0-x86_64",
+      "proton-9.0-arm64ec"
+    ],
+    "container_patterns": [
+      "wine-10.10-x86_64_container_pattern.tzst",
+      "wine-10.10-arm64ec_container_pattern.tzst",
+      "proton-9.0-x86_64_container_pattern.tzst",
+      "proton-9.0-arm64ec_container_pattern.tzst",
+      "container_pattern_common.tzst"
+    ],
+    "audio": "pulseaudio.tzst",
+    "input": "input_dlls.tzst",
+    "debug": "layers.tzst"
+  },
+  "compatibility_rules": [
+    "Vortek is GLIBC-only",
+    "Adrenotools is BIONIC-only",
+    "FEXCore is BIONIC-only",
+    "Wrapper is BIONIC-only",
+    "ARM64EC DXVK variants only available for bionic containers",
+    "Gladio renderer available for both GLIBC and BIONIC",
+    "container_pattern_common.tzst is shared across all container types"
+  ]
+}

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:clickable="false"
+    android:focusable="false">
+
+    <LinearLayout
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="24dp"
+        android:paddingBottom="20dp"
+        android:paddingLeft="28dp"
+        android:paddingRight="28dp"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:background="?attr/preloaderBackground">
+
+        <TextView
+            android:id="@+id/TextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18dp"
+            android:textColor="?attr/colorPrimaryText"
+            android:text="@string/downloading_file"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/TVStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12dp"
+            android:textColor="?attr/colorSecondaryText"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/ProgressBar"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:max="100"
+            android:progress="0"
+            android:progressDrawable="@drawable/progress_bar_horizontal" />
+
+        <TextView
+            android:id="@+id/TVProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12dp"
+            android:textColor="?attr/colorSecondaryText"
+            android:layout_gravity="end"
+            android:layout_marginTop="4dp" />
+
+        <LinearLayout
+            android:id="@+id/LLBottomBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginTop="12dp">
+
+            <View style="@style/HorizontalLine" />
+
+            <Button
+                style="@style/ButtonNeutral"
+                android:text="@string/cancel"
+                android:id="@+id/BTCancel" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

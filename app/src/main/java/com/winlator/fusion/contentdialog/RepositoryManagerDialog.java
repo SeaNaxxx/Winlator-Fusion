@@ -1,0 +1,179 @@
+package com.winlator.fusion.contentdialog;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.PopupMenu;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.winlator.fusion.R;
+
+import org.json.JSONArray;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class RepositoryManagerDialog {
+    private final Context context;
+    private AlertDialog dialog;
+    private RecyclerView recyclerView;
+    private RepoAdapter adapter;
+    private final List<DriverRepo> repos = new ArrayList<>();
+    private Runnable onGlobalDismissCallback;
+
+    public RepositoryManagerDialog(Context context) {
+        this.context = context;
+        loadRepos();
+    }
+
+    public void setOnDismissCallback(Runnable callback) {
+        this.onGlobalDismissCallback = callback;
+    }
+
+    public void show() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(R.string.driver_sources);
+        recyclerView = new RecyclerView(context);
+        recyclerView.setLayoutManager(new LinearLayoutManager(context));
+        recyclerView.addItemDecoration(new DividerItemDecoration(context, DividerItemDecoration.VERTICAL));
+        recyclerView.setPadding(0, 10, 0, 10);
+        adapter = new RepoAdapter();
+        recyclerView.setAdapter(adapter);
+        builder.setView(recyclerView);
+        builder.setPositiveButton(R.string.add_source, (d, w) -> showRepoDialog(null, -1));
+        builder.setNegativeButton(android.R.string.cancel, null);
+        dialog = builder.create();
+        dialog.show();
+    }
+
+    private void showRepoDialog(DriverRepo repoToEdit, int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(repoToEdit == null ? R.string.add_repository : R.string.edit_repository);
+        final EditText inputName = new EditText(context);
+        inputName.setHint("Name (e.g. Kimchi Turnip)");
+        if (repoToEdit != null) inputName.setText(repoToEdit.name);
+        final EditText inputUrl = new EditText(context);
+        inputUrl.setHint("GitHub API URL");
+        if (repoToEdit != null) inputUrl.setText(repoToEdit.apiUrl);
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(context);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.setPadding(50, 30, 50, 30);
+        layout.addView(inputName);
+        layout.addView(inputUrl);
+        builder.setView(layout);
+        builder.setPositiveButton(android.R.string.ok, (d, w) -> {
+            String name = inputName.getText().toString().trim();
+            String url = inputUrl.getText().toString().trim();
+            if (url.startsWith("https://github.com/") && !url.contains("api.github.com")) {
+                url = url.replace("https://github.com/", "https://api.github.com/repos/");
+                if (!url.endsWith("/releases")) url += "/releases";
+            }
+            if (!name.isEmpty() && !url.isEmpty()) {
+                if (repoToEdit == null) {
+                    repos.add(new DriverRepo(name, url));
+                } else {
+                    repoToEdit.name = name;
+                    repoToEdit.apiUrl = url;
+                    repos.set(position, repoToEdit);
+                }
+                saveRepos();
+                adapter.notifyDataSetChanged();
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, null);
+        builder.show();
+    }
+
+    private void loadRepos() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        String jsonStr = prefs.getString("custom_driver_repos", "");
+        repos.clear();
+        if (jsonStr.isEmpty()) {
+            repos.add(new DriverRepo("K11MCH1 Turnip Drivers", "https://api.github.com/repos/K11MCH1/AdrenoToolsDrivers/releases"));
+            repos.add(new DriverRepo("StevenMX Turnip Drivers", "https://api.github.com/repos/StevenMXZ/freedreno_turnip-CI/releases"));
+            repos.add(new DriverRepo("Snapdragon Elite Drivers", "https://api.github.com/repos/StevenMXZ/Adrenotools-Drivers/releases"));
+            repos.add(new DriverRepo("Weab-Chan Turnip Drivers", "https://api.github.com/repos/Weab-chan/freedreno_turnip-CI/releases"));
+        } else {
+            try {
+                JSONArray array = new JSONArray(jsonStr);
+                for (int i = 0; i < array.length(); i++) {
+                    repos.add(DriverRepo.fromJson(array.getJSONObject(i)));
+                }
+            } catch (Exception e) { }
+        }
+    }
+
+    private void saveRepos() {
+        try {
+            JSONArray array = new JSONArray();
+            for (DriverRepo repo : repos) {
+                array.put(repo.toJson());
+            }
+            PreferenceManager.getDefaultSharedPreferences(context)
+                    .edit()
+                    .putString("custom_driver_repos", array.toString())
+                    .apply();
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    private class RepoAdapter extends RecyclerView.Adapter<RepoAdapter.ViewHolder> {
+        @Override
+        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.adrenotools_list_item, parent, false);
+            return new ViewHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(ViewHolder holder, int position) {
+            DriverRepo repo = repos.get(position);
+            holder.title.setText(repo.name);
+            holder.subtitle.setText(repo.apiUrl);
+            holder.actionButton.setImageResource(R.drawable.icon_settings);
+            holder.itemView.setOnClickListener(v -> {
+                DriverDownloadDialog driverDialog = new DriverDownloadDialog(context, repo.apiUrl);
+                driverDialog.setOnDismissCallback(onGlobalDismissCallback);
+                driverDialog.show();
+            });
+            holder.actionButton.setOnClickListener(v -> {
+                PopupMenu popup = new PopupMenu(context, holder.actionButton);
+                popup.getMenu().add(R.string.edit);
+                popup.getMenu().add(R.string.delete);
+                popup.setOnMenuItemClickListener(item -> {
+                    if (item.getTitle().equals(context.getString(R.string.edit))) {
+                        showRepoDialog(repo, position);
+                    } else if (item.getTitle().equals(context.getString(R.string.delete))) {
+                        repos.remove(position);
+                        saveRepos();
+                        notifyDataSetChanged();
+                    }
+                    return true;
+                });
+                popup.show();
+            });
+        }
+
+        @Override
+        public int getItemCount() { return repos.size(); }
+
+        class ViewHolder extends RecyclerView.ViewHolder {
+            TextView title, subtitle;
+            ImageButton actionButton;
+            ViewHolder(View v) {
+                super(v);
+                title = v.findViewById(R.id.TVName);
+                subtitle = v.findViewById(R.id.TVVersion);
+                actionButton = v.findViewById(R.id.BTMenu);
+            }
+        }
+    }
+}

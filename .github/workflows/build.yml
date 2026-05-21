@@ -1,0 +1,93 @@
+name: Build
+
+on:
+  push:
+    branches: [ dev ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Install Android SDK components
+      run: |
+        sdkmanager --install "platforms;android-34"
+        sdkmanager --install "build-tools;34.0.0"
+        sdkmanager --install "ndk;24.0.8215888"
+        sdkmanager --install "cmake;3.22.1"
+
+    - name: Install Shader Compiler
+      run: sudo apt-get update && sudo apt-get install -y glslang-tools
+
+    - name: Download large assets
+      run: |
+        ASSET_DIR=app/src/main/assets
+        BASE_URL="https://github.com/SeaNaxxx/wine-10.10-custom/releases/download/fusionfs-v4"
+        
+        mkdir -p "$ASSET_DIR"
+        
+        download() {
+          local filename="$1"
+          local minsize="$2"
+          local target="$ASSET_DIR/$filename"
+          
+          if [ -f "$target" ] && [ "$(stat -c%s "$target" 2>/dev/null || echo 0)" -ge "$minsize" ]; then
+            echo "$filename already present ($(stat -c%s "$target") bytes), skipping."
+            return 0
+          fi
+          
+          echo "Downloading $filename..."
+          curl -fSL --retry 3 -o "$target" "$BASE_URL/$filename"
+          actual_size=$(stat -c%s "$target" 2>/dev/null || echo 0)
+          if [ "$actual_size" -lt "$minsize" ]; then
+            echo "ERROR: $filename is only $actual_size bytes (expected >= $minsize)"
+            rm -f "$target"
+            return 1
+          fi
+          echo "$filename download complete ($actual_size bytes)."
+        }
+        
+        FAILED=0
+        download "fusionfs.tzst" 100000000 || FAILED=1
+        download "fusionfs_patches.tzst" 500000 || FAILED=1
+        download "container_pattern_common.tzst" 5000000 || FAILED=1
+        download "wine-10.10-x86_64.txz" 10000000 || FAILED=1
+        download "wine-10.10-arm64ec.txz" 10000000 || FAILED=1
+        download "proton-9.0-x86_64.txz" 10000000 || FAILED=1
+        download "proton-9.0-arm64ec.txz" 10000000 || FAILED=1
+        
+        if [ "$FAILED" -ne 0 ]; then
+          echo "ERROR: Some required assets failed to download"
+          exit 1
+        fi
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Build with Gradle
+      run: ./gradlew assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: winlator-fusion-debug
+        path: app/build/outputs/apk/debug/*.apk
