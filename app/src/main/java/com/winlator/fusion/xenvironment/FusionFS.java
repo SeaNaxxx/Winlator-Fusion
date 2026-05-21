@@ -92,11 +92,11 @@ public class FusionFS {
     }
 
     public File getVersionFile() {
-        return new File(getConfigDir(), ".fusionfs_version");
+        return new File(getConfigDir(), ".ffs_version");
     }
 
     public File getLegacyVersionFile() {
-        return new File(getConfigDir(), ".ffs_version");
+        return new File(getConfigDir(), ".fusionfs_version");
     }
 
     public boolean isBionicInstalled() {

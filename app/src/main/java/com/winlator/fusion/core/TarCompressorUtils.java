@@ -153,6 +153,8 @@ public abstract class TarCompressorUtils {
              ArchiveInputStream tar = new TarArchiveInputStream(inStream)) {
             TarArchiveEntry entry;
             while ((entry = (TarArchiveEntry)tar.getNextEntry()) != null) {
+                if (entry.getName() == null || entry.getName().isEmpty()) continue;
+                if (entry.getName().startsWith("../") || entry.getName().contains("/..")) continue;
                 if (!tar.canReadEntryData(entry)) continue;
                 File file = new File(destination, entry.getName());
 
@@ -211,8 +213,9 @@ public abstract class TarCompressorUtils {
              ArchiveInputStream tar = new TarArchiveInputStream(inStream)) {
             TarArchiveEntry entry;
             while ((entry = (TarArchiveEntry)tar.getNextEntry()) != null) {
-                if (!tar.canReadEntryData(entry)) continue;
                 String entryName = entry.getName();
+                if (entryName == null || entryName.isEmpty()) continue;
+                if (!tar.canReadEntryData(entry)) continue;
                 boolean match = pathIsSuffix ? entryName.endsWith(localPath) : (pathIsPrefix ? entryName.startsWith(localPath) : entryName.equals(localPath));
 
                 if (match && !entry.isDirectory() && !entry.isSymbolicLink()) {
@@ -262,7 +265,10 @@ public abstract class TarCompressorUtils {
         try (TarArchiveInputStream tais = new TarArchiveInputStream(new BufferedInputStream(new FileInputStream(inputFile), StreamUtils.BUFFER_SIZE))) {
             TarArchiveEntry entry;
             while ((entry = tais.getNextTarEntry()) != null) {
-                File outputFile = new File(destDir, entry.getName());
+                String entryName = entry.getName();
+                if (entryName == null || entryName.isEmpty()) continue;
+                if (entryName.startsWith("../") || entryName.contains("/..")) continue;
+                File outputFile = new File(destDir, entryName);
                 if (entry.isDirectory()) {
                     if (!outputFile.isDirectory()) outputFile.mkdirs();
                 } else {

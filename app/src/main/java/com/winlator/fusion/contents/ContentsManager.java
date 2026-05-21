@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 
 import com.winlator.fusion.core.FileUtils;
 import com.winlator.fusion.core.TarCompressorUtils;
+import com.winlator.fusion.xenvironment.FusionFS;
 import com.winlator.fusion.xenvironment.ImageFs;
 
 import org.json.JSONArray;
@@ -80,13 +81,22 @@ public class ContentsManager {
     public ContentsManager(Context context) {
         this.context = context;
         this.preferences = context.getSharedPreferences("contents_manager_prefs", Context.MODE_PRIVATE);
-        this.currentFsRoot = "rootfs";
+        FusionFS fusionFS = FusionFS.find(context);
+        this.currentFsRoot = fusionFS.getGlibcDir().getAbsolutePath();
     }
 
     public ContentsManager(Context context, String fsRoot) {
         this.context = context;
         this.preferences = context.getSharedPreferences("contents_manager_prefs", Context.MODE_PRIVATE);
-        this.currentFsRoot = fsRoot;
+        if (fsRoot.equals("rootfs")) {
+            FusionFS fusionFS = FusionFS.find(context);
+            this.currentFsRoot = fusionFS.getGlibcDir().getAbsolutePath();
+        } else if (fsRoot.equals("imagefs")) {
+            FusionFS fusionFS = FusionFS.find(context);
+            this.currentFsRoot = fusionFS.getBionicDir().getAbsolutePath();
+        } else {
+            this.currentFsRoot = fsRoot;
+        }
     }
 
     public void setFileSystemRoot(String fsRoot) {
@@ -194,7 +204,7 @@ public class ContentsManager {
             return;
         }
 
-        String fsRootPath = context.getFilesDir().getAbsolutePath() + "/" + currentFsRoot;
+        String fsRootPath = currentFsRoot;
         for (ContentProfile.ContentFile contentFile : profile.fileList) {
             File tmpFile = new File(file, contentFile.source);
             if (!tmpFile.exists() || !tmpFile.isFile() || !isSubPath(file.getAbsolutePath(), tmpFile.getAbsolutePath())) {
@@ -346,7 +356,7 @@ public class ContentsManager {
     private void createDirTemplateMap() {
         if (dirTemplateMap == null) {
             dirTemplateMap = new HashMap<>();
-            String fsRootPath = context.getFilesDir().getAbsolutePath() + "/" + currentFsRoot;
+            String fsRootPath = currentFsRoot;
             String drivecPath = fsRootPath + "/home/xuser/.wine/drive_c";
             dirTemplateMap.put("${libdir}", fsRootPath + "/usr/lib");
             dirTemplateMap.put("${system32}", drivecPath + "/windows/system32");
@@ -444,7 +454,7 @@ public class ContentsManager {
         if (profile.type == ContentProfile.ContentType.CONTENT_TYPE_WINE || profile.type == ContentProfile.ContentType.CONTENT_TYPE_PROTON) {
             String dirName = profile.type.toString().toLowerCase() + "-" + profile.verName;
 
-            File fsRootDir = new File(context.getFilesDir(), currentFsRoot);
+            File fsRootDir = new File(currentFsRoot);
             File targetDir = new File(fsRootDir, "/opt/" + dirName);
             File sourceDir = getInstallDir(context, profile);
             if (!targetDir.isDirectory()) targetDir.mkdirs();

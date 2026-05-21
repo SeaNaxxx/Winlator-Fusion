@@ -236,41 +236,51 @@ public abstract class WineInstaller {
         boolean glibcOnly = Container.GLIBC.equals(containerVariant);
 
         if (!bionicOnly) {
-            com.winlator.fusion.xenvironment.FusionFS fusionFS = com.winlator.fusion.xenvironment.FusionFS.find(context);
-            if (fusionFS.isWineInstalled()) {
-                wineInfos.add(WineInfo.MAIN_WINE_INFO);
-            }
-            File installedWineDir = RootFS.find(context).getInstalledWineDir();
-            File[] files = installedWineDir.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    String name = file.getName();
-                    if (name.startsWith("wine") && !name.equals(WineInfo.MAIN_WINE_INFO.identifier())) wineInfos.add(WineInfo.fromIdentifier(context, name));
+            try {
+                com.winlator.fusion.xenvironment.FusionFS fusionFS = com.winlator.fusion.xenvironment.FusionFS.find(context);
+                if (fusionFS.isWineInstalled()) {
+                    wineInfos.add(WineInfo.MAIN_WINE_INFO);
                 }
-            }
-        }
-
-        if (!glibcOnly) {
-            File imagefsOptDir = new File(ImageFs.find(context).getRootDir(), "/opt");
-            File[] optFiles = imagefsOptDir.listFiles();
-            if (optFiles != null) {
-                for (File file : optFiles) {
-                    String name = file.getName();
-                    if (name.startsWith("proton") && file.isDirectory()) {
-                        File binDir = new File(file, "bin");
-                        if (binDir.isDirectory()) {
-                            wineInfos.add(WineInfo.fromIdentifier(context, name));
+                File installedWineDir = RootFS.find(context).getInstalledWineDir();
+                if (installedWineDir.isDirectory()) {
+                    File[] files = installedWineDir.listFiles();
+                    if (files != null) {
+                        for (File file : files) {
+                            String name = file.getName();
+                            if (name.startsWith("wine") && !name.equals(WineInfo.MAIN_WINE_INFO.identifier()) && file.isDirectory()) {
+                                wineInfos.add(WineInfo.fromIdentifier(context, name));
+                            }
                         }
                     }
                 }
-            }
-            if (wineInfos.isEmpty()) {
-                try {
-                    context.getAssets().open("proton-9.0-x86_64_container_pattern.tzst").close();
-                    wineInfos.add(WineInfo.BIONIC_WINE_INFO);
-                } catch (Exception e) {
+            } catch (Exception e) {}
+        }
+
+        if (!glibcOnly) {
+            try {
+                File imagefsOptDir = new File(ImageFs.find(context).getRootDir(), "/opt");
+                if (imagefsOptDir.isDirectory()) {
+                    File[] optFiles = imagefsOptDir.listFiles();
+                    if (optFiles != null) {
+                        for (File file : optFiles) {
+                            String name = file.getName();
+                            if (name.startsWith("proton") && file.isDirectory()) {
+                                File binDir = new File(file, "bin");
+                                if (binDir.isDirectory()) {
+                                    wineInfos.add(WineInfo.fromIdentifier(context, name));
+                                }
+                            }
+                        }
+                    }
                 }
-            }
+                if (wineInfos.isEmpty()) {
+                    try {
+                        context.getAssets().open("proton-9.0-x86_64_container_pattern.tzst").close();
+                        wineInfos.add(WineInfo.BIONIC_WINE_INFO);
+                    } catch (Exception e) {
+                    }
+                }
+            } catch (Exception e) {}
         }
 
         return wineInfos;

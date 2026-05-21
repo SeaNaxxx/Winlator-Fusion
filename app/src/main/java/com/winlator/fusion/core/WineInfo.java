@@ -132,7 +132,6 @@ public class WineInfo implements Parcelable {
 
     @NonNull
     public static WineInfo fromIdentifier(Context context, String identifier) {
-        if (identifier.equals(MAIN_WINE_INFO.identifier())) return MAIN_WINE_INFO;
         Matcher matcher = pattern.matcher(identifier);
         if (matcher.find()) {
             String type = matcher.group(1) != null ? matcher.group(1) : "wine";
@@ -143,9 +142,7 @@ public class WineInfo implements Parcelable {
 
             if (isMainWineVersion(identifier)) {
                 File wineDir = fusionFS.getWineDir();
-                if (wineDir.isDirectory()) {
-                    return new WineInfo(type, matcher.group(2), matcher.group(3), arch, wineDir.getPath());
-                }
+                return new WineInfo(type, matcher.group(2), matcher.group(3), arch, wineDir.getPath());
             }
 
             if (isProton) {
@@ -177,7 +174,8 @@ public class WineInfo implements Parcelable {
                 : fusionFS.getWineDir();
             return new WineInfo(type, matcher.group(2), matcher.group(3), arch, fallbackPath.getPath());
         }
-        else return MAIN_WINE_INFO;
+        com.winlator.fusion.xenvironment.FusionFS fusionFS = com.winlator.fusion.xenvironment.FusionFS.find(context);
+        return new WineInfo("wine", MAIN_WINE_VERSION, null, "x86_64", fusionFS.getWineDir().getPath());
     }
 
     public static boolean isMainWineVersion(String wineVersion) {

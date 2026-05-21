@@ -301,53 +301,78 @@ public class ContainerManager {
     }
 
     private boolean extractContainerPatternFile(String wineVersion, File containerDir, String containerVariant) {
-        if (containerVariant != null && containerVariant.equals(Container.BIONIC)) {
-            String containerPattern = wineVersion + "_container_pattern.tzst";
-            boolean result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, containerPattern, containerDir);
-            if (!result) {
-                WineInfo wineInfo = WineInfo.fromIdentifier(context, wineVersion);
-                File prefixPackFile = new File(wineInfo.path + "/prefixPack.txz");
-                result = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, prefixPackFile, containerDir);
-            }
-
-            if (result) {
-                final String containerDirPath = containerDir.getPath();
-                TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, "container_pattern_common.tzst", containerDir, (file, size) -> {
-                    String path = file.getPath();
-                    String prefix = containerDirPath + "/home/xuser/";
-                    if (path.startsWith(prefix)) {
-                        return new File(containerDirPath, path.substring(prefix.length()));
-                    }
-                    return file;
-                });
-
-                try {
-                    WineInfo wineInfo = WineInfo.fromIdentifier(context, wineVersion);
-                    copyBionicCommonDlls(wineInfo, containerDir);
-                } catch (Exception e) {
-                    Log.e(TAG, "Failed to copy Bionic common DLLs for " + wineVersion, e);
+        try {
+            if (containerVariant != null && containerVariant.equals(Container.BIONIC)) {
+                String containerPattern = wineVersion + "_container_pattern.tzst";
+                boolean result = false;
+                if (assetExists(context, containerPattern)) {
+                    result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, containerPattern, containerDir);
                 }
-            }
-            return result;
-        } else {
-            if (WineInfo.isMainWineVersion(wineVersion)) {
-                boolean result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, "wine-10.10-x86_64_container_pattern.tzst", containerDir);
+                if (!result) {
+                    WineInfo wineInfo = WineInfo.fromIdentifier(context, wineVersion);
+                    if (wineInfo.path != null) {
+                        File prefixPackFile = new File(wineInfo.path + "/prefixPack.txz");
+                        result = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, prefixPackFile, containerDir);
+                    }
+                }
+
                 if (result) {
+                    final String containerDirPath = containerDir.getPath();
+                    if (assetExists(context, "container_pattern_common.tzst")) {
+                        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, "container_pattern_common.tzst", containerDir, (file, size) -> {
+                            String path = file.getPath();
+                            String prefix = containerDirPath + "/home/xuser/";
+                            if (path.startsWith(prefix)) {
+                                return new File(containerDirPath, path.substring(prefix.length()));
+                            }
+                            return file;
+                        });
+                    }
+
                     try {
-                        JSONObject commonDlls = new JSONObject(FileUtils.readString(context, "common_dlls.json"));
-                        copyCommonDlls("x86_64-windows", "system32", commonDlls, containerDir);
-                        copyCommonDlls("i386-windows", "syswow64", commonDlls, containerDir);
-                    } catch (JSONException e) {
-                        return false;
+                        WineInfo wineInfo = WineInfo.fromIdentifier(context, wineVersion);
+                        copyBionicCommonDlls(wineInfo, containerDir);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to copy Bionic common DLLs for " + wineVersion, e);
                     }
                 }
                 return result;
             } else {
-                File installedWineDir = FusionFS.find(context).getInstalledWineDir();
-                WineInfo wineInfo = WineInfo.fromIdentifier(context, wineVersion);
-                File file = new File(installedWineDir, "container-pattern-" + wineInfo.fullVersion() + ".tzst");
-                return TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, file, containerDir);
+                if (WineInfo.isMainWineVersion(wineVersion)) {
+                    String patternAsset = "wine-10.10-x86_64_container_pattern.tzst";
+                    boolean result = false;
+                    if (assetExists(context, patternAsset)) {
+                        result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, patternAsset, containerDir);
+                    }
+                    if (result) {
+                        try {
+                            JSONObject commonDlls = new JSONObject(FileUtils.readString(context, "common_dlls.json"));
+                            copyCommonDlls("x86_64-windows", "system32", commonDlls, containerDir);
+                            copyCommonDlls("i386-windows", "syswow64", commonDlls, containerDir);
+                        } catch (JSONException e) {
+                            return false;
+                        }
+                    }
+                    return result;
+                } else {
+                    File installedWineDir = FusionFS.find(context).getInstalledWineDir();
+                    WineInfo wineInfo = WineInfo.fromIdentifier(context, wineVersion);
+                    File file = new File(installedWineDir, "container-pattern-" + wineInfo.fullVersion() + ".tzst");
+                    return TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, file, containerDir);
+                }
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to extract container pattern for " + wineVersion, e);
+            return false;
+        }
+    }
+
+    private boolean assetExists(Context context, String assetName) {
+        try {
+            context.getAssets().open(assetName).close();
+            return true;
+        } catch (IOException e) {
+            return false;
         }
     }
 
