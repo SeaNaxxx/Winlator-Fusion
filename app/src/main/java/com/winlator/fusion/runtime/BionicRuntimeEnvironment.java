@@ -136,7 +136,10 @@ public class BionicRuntimeEnvironment implements RuntimeEnvironment {
             FEXCoreManager.ensureAppConfigOverrides(context);
         }
 
-        EvshimPatcher.patch(rootFSAdapter.getRootFS().getRootDir());
+        File evshimFile = new File(ImageFs.find(context).getLibDir(), "libevshim.so");
+        if (evshimFile.exists()) {
+            EvshimPatcher.patch(rootFSAdapter.getRootFS().getRootDir());
+        }
     }
 
     @Override

@@ -79,7 +79,11 @@ public abstract class FusionFSInstaller {
             rootDir.mkdirs();
 
             long contentLength = 100000000L;
-            try { contentLength = (long)(getAssetSize(activity, FusionFS.ASSET_FUSIONFS) * 4.0f); } catch (Exception e) {}
+            try {
+                long rawSize = getAssetSize(activity, FusionFS.ASSET_FUSIONFS);
+                if (rawSize > 0) contentLength = (long)(rawSize * 4.0f);
+            } catch (Exception e) {}
+            if (contentLength <= 0) contentLength = 100000000L;
             final long totalContentLength = contentLength;
             AtomicLong totalSizeRef = new AtomicLong();
 
@@ -98,6 +102,7 @@ public abstract class FusionFSInstaller {
             if (success) {
                 renameExtractedDirs(rootDir);
                 applyPatches(activity, rootDir);
+                copySharedRuntimeLibraries(fusionFS);
                 activity.runOnUiThread(() -> dialog.setProgress(100));
                 createWineSymlink(fusionFS);
                 createCompatibilitySymlinks(activity, fusionFS);
@@ -303,6 +308,21 @@ public abstract class FusionFSInstaller {
                 TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FusionFS.ASSET_FUSIONFS_PATCHES, glibcDir);
             }
         } catch (Exception e) {}
+    }
+
+    private static void copySharedRuntimeLibraries(FusionFS fusionFS) {
+        File bionicLibDir = new File(fusionFS.getBionicDir(), "/usr/lib");
+        File glibcLibDir = new File(fusionFS.getGlibcDir(), "/usr/lib");
+        if (!glibcLibDir.isDirectory()) glibcLibDir.mkdirs();
+
+        String[] sharedLibs = {"libandroid-sysvshm.so"};
+        for (String libName : sharedLibs) {
+            File src = new File(bionicLibDir, libName);
+            File dst = new File(glibcLibDir, libName);
+            if (src.exists() && !dst.exists()) {
+                FileUtils.copy(src, dst);
+            }
+        }
     }
 
     private static void createCompatibilitySymlinks(Context context, FusionFS fusionFS) {

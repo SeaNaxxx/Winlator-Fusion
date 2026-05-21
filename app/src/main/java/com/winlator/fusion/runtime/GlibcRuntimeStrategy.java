@@ -158,9 +158,15 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
 
     @Override
     public String buildLdPreload() {
-        String sysvPath = getLibDir() + "/libandroid-sysvshm.so";
+        File libDir = getLibDir();
+        String sysvPath = new File(libDir, "libandroid-sysvshm.so").getAbsolutePath();
         if (new File(sysvPath).exists()) {
             return sysvPath;
+        }
+        File bionicLibDir = fusionFS.getBionicLibDir();
+        String bionicSysvPath = new File(bionicLibDir, "libandroid-sysvshm.so").getAbsolutePath();
+        if (new File(bionicSysvPath).exists()) {
+            return bionicSysvPath;
         }
         return "";
     }

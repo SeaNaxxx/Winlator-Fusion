@@ -185,23 +185,41 @@ public class BionicRuntimeStrategy implements RuntimeStrategy {
 
     @Override
     public String buildLdPreload() {
-        String ldPreload = "";
-        String redirectPath = imageFs.getLibDir() + "/libredirect-bionic.so";
-        String sysvPath = imageFs.getLibDir() + "/libandroid-sysvshm.so";
-        String evshimPath = imageFs.getLibDir() + "/libevshim.so";
+        StringBuilder ldPreload = new StringBuilder();
+        File libDir = imageFs.getLibDir();
 
-        if (new File(redirectPath).exists()) {
-            ldPreload = redirectPath;
+        String redirectPath = findLibrary(libDir, "libredirect-bionic.so", "libhook_impl.so");
+        if (redirectPath != null) {
+            ldPreload.append(redirectPath);
         }
+
+        String sysvPath = new File(libDir, "libandroid-sysvshm.so").getAbsolutePath();
         if (new File(sysvPath).exists()) {
-            if (!ldPreload.isEmpty()) ldPreload += ":";
-            ldPreload += sysvPath;
+            if (ldPreload.length() > 0) ldPreload.append(":");
+            ldPreload.append(sysvPath);
         }
-        if (new File(evshimPath).exists()) {
-            if (!ldPreload.isEmpty()) ldPreload += ":";
-            ldPreload += evshimPath;
+
+        String evshimPath = findLibrary(libDir, "libevshim.so", "libmain_hook.so");
+        if (evshimPath != null) {
+            if (ldPreload.length() > 0) ldPreload.append(":");
+            ldPreload.append(evshimPath);
         }
-        return ldPreload;
+
+        String fileRedirectPath = new File(libDir, "libfile_redirect_hook.so").getAbsolutePath();
+        if (new File(fileRedirectPath).exists()) {
+            if (ldPreload.length() > 0) ldPreload.append(":");
+            ldPreload.append(fileRedirectPath);
+        }
+
+        return ldPreload.toString();
+    }
+
+    private String findLibrary(File libDir, String... names) {
+        for (String name : names) {
+            File f = new File(libDir, name);
+            if (f.exists()) return f.getAbsolutePath();
+        }
+        return null;
     }
 
     @Override
