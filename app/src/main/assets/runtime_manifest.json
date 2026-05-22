@@ -1,10 +1,12 @@
 {
-  "version": 3,
+  "schema_version": 3,
+  "runtime_abi": 2,
+  "container_api": 5,
   "runtimes": {
     "glibc": {
       "display_name": "GLIBC",
       "filesystem_root": "fusionfs/glibc",
-      "version_file": ".winlator/.rfs_version",
+      "version_file": ".winlator/.ffs_version",
       "container_variant": "glibc",
       "box64": {
         "version": "0.4.0",
@@ -39,12 +41,13 @@
         "lib": "/usr/lib",
         "bin": "/usr/local/bin",
         "wineprefix": "/home/xuser/.wine"
-      }
+      },
+      "audio_profile": "minimal"
     },
     "bionic": {
       "display_name": "BIONIC",
       "filesystem_root": "fusionfs/bionic",
-      "version_file": ".winlator/.img_version",
+      "version_file": ".winlator/.ffs_version",
       "container_variant": "bionic",
       "box64": {
         "version": "0.4.1",
@@ -100,13 +103,25 @@
           "version": "0.4.1",
           "dll": "wowbox64.dll"
         }
-      }
+      },
+      "audio_profile": "full"
+    }
+  },
+  "audio_profiles": {
+    "minimal": {
+      "asset": "pulseaudio.tzst",
+      "description": "Core PulseAudio modules: AAudio sink, native protocol only"
+    },
+    "full": {
+      "asset": "pulseaudio.tzst",
+      "description": "Full PulseAudio modules: ALSA, RTP, tunnel, virtual sinks, remap, echo cancel, desktop-like"
     }
   },
   "assets": {
     "fusionfs": {
       "primary": "fusionfs.tzst",
-      "patches": "fusionfs_patches.tzst"
+      "patches": "fusionfs_patches.tzst",
+      "release_tag": "fusionfs-v5"
     },
     "wine": [
       "wine-10.10-x86_64",
@@ -125,13 +140,12 @@
     "input": "input_dlls.tzst",
     "debug": "layers.tzst"
   },
-  "compatibility_rules": [
-    "Vortek is GLIBC-only",
-    "Adrenotools is BIONIC-only",
-    "FEXCore is BIONIC-only",
-    "Wrapper is BIONIC-only",
-    "ARM64EC DXVK variants only available for bionic containers",
-    "Gladio renderer available for both GLIBC and BIONIC",
-    "container_pattern_common.tzst is shared across all container types"
-  ]
+  "constraints": {
+    "vortek": { "requires_runtime": "glibc" },
+    "adrenotools": { "requires_runtime": "bionic" },
+    "fexcore": { "requires_runtime": "bionic", "requires_feature": "arm64ec" },
+    "wrapper": { "requires_runtime": "bionic" },
+    "zink": { "excluded_runtime": "bionic" },
+    "arm64ec_dxvk": { "requires_runtime": "bionic" }
+  }
 }
