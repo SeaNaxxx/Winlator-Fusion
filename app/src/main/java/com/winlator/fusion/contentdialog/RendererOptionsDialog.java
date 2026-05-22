@@ -11,7 +11,7 @@ public class RendererOptionsDialog extends ContentDialog {
     public RendererOptionsDialog(final View anchor) {
         super(anchor.getContext(), R.layout.renderer_options_dialog);
         setIcon(R.drawable.icon_settings);
-        setTitle(context.getString(R.string.renderer_options));
+        setTitle(getContext().getString(R.string.renderer_options));
 
         final Spinner sRendererType = findViewById(R.id.SRendererType);
         final CheckBox cbNativeMode = findViewById(R.id.CBNativeMode);
