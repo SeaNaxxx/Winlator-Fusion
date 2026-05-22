@@ -21,7 +21,7 @@ import com.winlator.fusion.xserver.XServer;
 
 import java.util.ArrayList;
 
-public class VulkanRenderer implements WindowManager.OnWindowModificationListener,
+public class VulkanRenderer implements Renderer, WindowManager.OnWindowModificationListener,
                                        Pointer.OnPointerMotionListener {
 
     static { System.loadLibrary("vulkan_renderer"); }
@@ -698,6 +698,8 @@ public class VulkanRenderer implements WindowManager.OnWindowModificationListene
     public boolean isScreenOffsetYRelativeToCursor() { return screenOffsetYRelativeToCursor; }
     public void setMagnifierZoom(float zoom) { magnifierZoom = zoom; }
     public float getMagnifierZoom() { return magnifierZoom; }
+    @Override
+    public XServerView getXServerView() { return xServerView; }
     public void setUnviewableWMClasses(String... classes) { this.unviewableWMClasses = classes; }
     private int fpsLimit = 0;
     private int refreshRateLimit = 60;

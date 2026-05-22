@@ -14,6 +14,7 @@ import com.winlator.fusion.XServerDisplayActivity;
 import com.winlator.fusion.core.ImageUtils;
 import com.winlator.fusion.core.UnitUtils;
 import com.winlator.fusion.renderer.GLRenderer;
+import com.winlator.fusion.renderer.Renderer;
 import com.winlator.fusion.xserver.Drawable;
 import com.winlator.fusion.xserver.Window;
 import com.winlator.fusion.xserver.XLock;
@@ -52,7 +53,7 @@ public class ActiveWindowsDialog extends ContentDialog {
         XServer xServer = activity.getXServer();
         LinearLayout llWindowList = findViewById(R.id.LLWindowList);
         llWindowList.removeAllViews();
-        GLRenderer renderer = xServer.getRenderer();
+        Renderer renderer = xServer.getRenderer();
 
         LayoutInflater inflater = LayoutInflater.from(activity);
         float iconSize = UnitUtils.dpToPx(24);
@@ -82,7 +83,9 @@ public class ActiveWindowsDialog extends ContentDialog {
                 tvName.setMaxWidth((int)(scaledSize[0] - iconSize));
                 ivWindow.setLayoutParams(new FrameLayout.LayoutParams(scaledSize[0], scaledSize[1]));
 
-                renderer.takeWindowScreenshot(content, (bitmap) -> ivWindow.post(() -> ivWindow.setImageBitmap(bitmap)));
+                if (renderer instanceof GLRenderer) {
+                    ((GLRenderer)renderer).takeWindowScreenshot(content, (bitmap) -> ivWindow.post(() -> ivWindow.setImageBitmap(bitmap)));
+                }
             }
             else {
                 itemView.findViewById(R.id.IVHidden).setVisibility(View.VISIBLE);
