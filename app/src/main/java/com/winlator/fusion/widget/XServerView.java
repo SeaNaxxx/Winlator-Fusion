@@ -84,6 +84,10 @@ public class XServerView extends FrameLayout {
         return glRenderer;
     }
 
+    public Renderer getActiveRenderer() {
+        return useVulkan ? vulkanRenderer : glRenderer;
+    }
+
     public VulkanRenderer getVulkanRenderer() {
         return vulkanRenderer;
     }
@@ -113,6 +117,7 @@ public class XServerView extends FrameLayout {
     public SurfaceControl getSurfaceControl() {
         if (Build.VERSION.SDK_INT >= 29) {
             if (glSurfaceView != null) return glSurfaceView.getSurfaceControl();
+            if (vulkanTextureView != null) return vulkanTextureView.getSurfaceControl();
         }
         return null;
     }
