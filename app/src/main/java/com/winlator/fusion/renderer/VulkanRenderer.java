@@ -58,8 +58,8 @@ public class VulkanRenderer implements Renderer, WindowManager.OnWindowModificat
     private volatile ArrayList<RenderableWindow> renderableWindows = new ArrayList<>();
     private static final java.util.concurrent.atomic.AtomicLong ID_GEN =
         new java.util.concurrent.atomic.AtomicLong(1);
-    private final java.util.WeakHashMap<Drawable, Long> drawableIds =
-        new java.util.WeakHashMap<>();
+    private final java.util.concurrent.ConcurrentHashMap<Drawable, Long> drawableIds =
+        new java.util.concurrent.ConcurrentHashMap<>();
     private final java.util.concurrent.atomic.AtomicBoolean scenePending =
         new java.util.concurrent.atomic.AtomicBoolean(false);
     private android.view.SurfaceControl scanoutGameSC;

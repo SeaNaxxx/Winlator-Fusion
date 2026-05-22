@@ -18,7 +18,7 @@ public class PulseAudioComponent extends EnvironmentComponent {
 
     private final UnixSocketConfig socketConfig;
     private String audioProfile = PROFILE_MINIMAL;
-    private static int pid = -1;
+    private int pid = -1;
     private float volume = AudioDriverConfigDialog.DEFAULT_VOLUME;
     private byte performanceMode = AudioDriverConfigDialog.DEFAULT_PERFORMANCE_MODE;
     private static final Object lock = new Object();

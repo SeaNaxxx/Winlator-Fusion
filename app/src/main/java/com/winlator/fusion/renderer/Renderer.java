@@ -7,6 +7,7 @@ public interface Renderer {
     boolean isFullscreen();
     void toggleFullscreen();
     void setCursorVisible(boolean visible);
+    boolean isCursorVisible();
     void setScreenOffsetYRelativeToCursor(boolean relative);
     void setMagnifierZoom(float zoom);
     float getMagnifierZoom();

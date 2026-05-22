@@ -203,6 +203,11 @@ public class ContainerManager {
         dstContainer.setBox64Version(srcContainer.getBox64Version());
         dstContainer.setFEXCorePreset(srcContainer.getFEXCorePreset());
         dstContainer.setWineVersion(srcContainer.getWineVersion());
+        dstContainer.setRendererType(srcContainer.getRendererType());
+        dstContainer.setRendererNative(srcContainer.isRendererNative());
+        dstContainer.setRendererPresentMode(srcContainer.getRendererPresentMode());
+        dstContainer.setRendererFilterMode(srcContainer.getRendererFilterMode());
+        dstContainer.setRendererRefreshRate(srcContainer.getRendererRefreshRate());
         String srcExtraData = srcContainer.getExtraData();
         if (srcExtraData != null && !srcExtraData.isEmpty()) {
             try {

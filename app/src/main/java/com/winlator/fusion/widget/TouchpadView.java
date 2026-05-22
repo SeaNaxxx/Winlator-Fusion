@@ -13,6 +13,7 @@ import android.widget.FrameLayout;
 import com.winlator.fusion.core.AppUtils;
 import com.winlator.fusion.math.Mathf;
 import com.winlator.fusion.math.XForm;
+import com.winlator.fusion.renderer.Renderer;
 import com.winlator.fusion.renderer.ViewTransformation;
 import com.winlator.fusion.winhandler.MouseEventFlags;
 import com.winlator.fusion.winhandler.WinHandler;
@@ -78,7 +79,8 @@ public class TouchpadView extends View implements View.OnCapturedPointerListener
         viewTransformation.update(outerWidth, outerHeight, innerWidth, innerHeight);
 
         float invAspect = 1.0f / viewTransformation.aspect;
-        if (!xServer.getRenderer().isFullscreen()) {
+        Renderer r = xServer.getRenderer();
+        if (r == null || !r.isFullscreen()) {
             XForm.makeTranslation(xform, -viewTransformation.viewOffsetX, -viewTransformation.viewOffsetY);
             XForm.scale(xform, invAspect, invAspect);
         }

@@ -289,7 +289,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             @Override
             public void onMapWindow(Window window) {
                 if (!flags[0] && window.isRenderable() && !window.getClassName().isEmpty()) {
-                    xServer.getRenderer().setCursorVisible(true);
+                    Renderer r = xServer.getRenderer();
+                    if (r != null) r.setCursorVisible(true);
                     preloaderDialog.closeOnUiThread();
                     flags[0] = true;
                 }
@@ -406,7 +407,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             showInputControlsDialog();
             drawerLayout.closeDrawers();
         } else if (id == R.id.menu_item_toggle_fullscreen) {
-            xServer.getRenderer().toggleFullscreen();
+            Renderer r = xServer.getRenderer();
+            if (r != null) r.toggleFullscreen();
             drawerLayout.closeDrawers();
         } else if (id == R.id.menu_item_task_manager) {
             (new TaskManagerDialog(this)).show();
@@ -420,10 +422,10 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 magnifierView = new MagnifierView(this);
                 magnifierView.setZoomButtonCallback((value) -> {
                     Renderer r = xServer.getRenderer();
-                    r.setMagnifierZoom(Mathf.clamp(r.getMagnifierZoom() + value, 1.0f, 3.0f));
-                    magnifierView.setZoomValue(r.getMagnifierZoom());
+                    if (r != null) r.setMagnifierZoom(Mathf.clamp(r.getMagnifierZoom() + value, 1.0f, 3.0f));
+                    if (r != null) magnifierView.setZoomValue(r.getMagnifierZoom());
                 });
-                magnifierView.setZoomValue(xServer.getRenderer().getMagnifierZoom());
+                magnifierView.setZoomValue(xServer.getRenderer() != null ? xServer.getRenderer().getMagnifierZoom() : 1.0f);
                 magnifierView.setHideButtonCallback(() -> {
                     container.removeView(magnifierView);
                     magnifierView = null;
@@ -674,7 +676,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
         if (MainActivity.DEBUG_MODE) rootView.addView(AppUtils.createDebugMsgTextView(this));
         AppUtils.observeSoftKeyboardVisibility(drawerLayout, (visible) -> {
-            xServer.getRenderer().setScreenOffsetYRelativeToCursor(visible);
+            Renderer r = xServer.getRenderer();
+            if (r != null) r.setScreenOffsetYRelativeToCursor(visible);
         });
     }
 
@@ -741,11 +744,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         touchpadView.setPointerButtonRightEnabled(false);
 
         if (profile.isDisableMouseInput()) {
-            xServer.getRenderer().setCursorVisible(false);
+            Renderer r = xServer.getRenderer(); if (r != null) r.setCursorVisible(false);
             touchpadView.setEnabled(false);
         }
         else {
-            xServer.getRenderer().setCursorVisible(true);
+            Renderer r = xServer.getRenderer(); if (r != null) r.setCursorVisible(true);
             touchpadView.setEnabled(true);
         }
 
@@ -763,7 +766,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
         if (!touchpadView.isEnabled()) {
             touchpadView.setEnabled(true);
-            xServer.getRenderer().setCursorVisible(true);
+            Renderer r = xServer.getRenderer(); if (r != null) r.setCursorVisible(true);
         }
 
         inputControlsView.invalidate();
