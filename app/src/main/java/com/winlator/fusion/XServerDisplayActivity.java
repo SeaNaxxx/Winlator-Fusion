@@ -1199,7 +1199,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, FusionFS.ASSET_FUSIONFS_PATCHES, rootDir);
         }
 
-        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "pulseaudio.tzst", new File(getFilesDir(), "pulseaudio"));
+        String pulseaudioAsset = isBionic ? "pulseaudio-full.tzst" : "pulseaudio.tzst";
+        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, pulseaudioAsset, new File(getFilesDir(), "pulseaudio"));
         WineUtils.applySystemTweaks(this, wineInfo, rootDir);
         container.putExtra("graphicsDriver", null);
         container.putExtra("dxwrapper", null);
