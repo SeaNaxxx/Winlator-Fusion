@@ -13,7 +13,11 @@ import com.winlator.fusion.xenvironment.EnvironmentComponent;
 import java.io.File;
 
 public class PulseAudioComponent extends EnvironmentComponent {
+    public static final String PROFILE_MINIMAL = "minimal";
+    public static final String PROFILE_DESKTOP = "desktop";
+
     private final UnixSocketConfig socketConfig;
+    private String audioProfile = PROFILE_MINIMAL;
     private static int pid = -1;
     private float volume = AudioDriverConfigDialog.DEFAULT_VOLUME;
     private byte performanceMode = AudioDriverConfigDialog.DEFAULT_PERFORMANCE_MODE;
@@ -21,6 +25,10 @@ public class PulseAudioComponent extends EnvironmentComponent {
 
     public PulseAudioComponent(UnixSocketConfig socketConfig) {
         this.socketConfig = socketConfig;
+    }
+
+    public void setAudioProfile(String audioProfile) {
+        this.audioProfile = audioProfile;
     }
 
     @Override
@@ -67,15 +75,37 @@ public class PulseAudioComponent extends EnvironmentComponent {
         }
 
         File configFile = new File(workingDir, "default.pa");
-        FileUtils.writeString(configFile, String.join("\n",
-            "load-module module-native-protocol-unix auth-anonymous=1 auth-cookie-enabled=0 socket=\""+socketConfig.path+"\"",
-            "load-module module-aaudio-sink volume="+volume+" performance_mode="+performanceMode,
-            "set-default-sink AAudioSink"
-        ));
+        String config;
+        if (PROFILE_DESKTOP.equals(audioProfile)) {
+            config = String.join("\n",
+                "load-module module-augment-properties",
+                "load-module module-native-protocol-unix auth-anonymous=1 auth-cookie-enabled=0 socket=\""+socketConfig.path+"\"",
+                "load-module module-aaudio-sink volume="+volume+" performance_mode="+performanceMode,
+                "load-module module-null-sink sink_name=null sink_properties=device.description=\"NullSink\"",
+                "load-module module-remap-sink remix=no",
+                "load-module module-always-sink",
+                "set-default-sink AAudioSink"
+            );
+        } else {
+            config = String.join("\n",
+                "load-module module-native-protocol-unix auth-anonymous=1 auth-cookie-enabled=0 socket=\""+socketConfig.path+"\"",
+                "load-module module-aaudio-sink volume="+volume+" performance_mode="+performanceMode,
+                "set-default-sink AAudioSink"
+            );
+        }
+        FileUtils.writeString(configFile, config);
 
         File modulesDir = new File(workingDir, "modules");
         EnvVars envVars = new EnvVars();
-        envVars.put("LD_LIBRARY_PATH", "/system/lib64:"+nativeLibraryDir+":"+modulesDir);
+        StringBuilder ldPath = new StringBuilder();
+        ldPath.append("/system/lib64").append(":").append(nativeLibraryDir).append(":").append(modulesDir);
+        if (PROFILE_DESKTOP.equals(audioProfile)) {
+            File arm64Dir = new File(modulesDir, "arm64");
+            File armhfDir = new File(modulesDir, "armhf");
+            if (arm64Dir.isDirectory()) ldPath.append(":").append(arm64Dir);
+            if (armhfDir.isDirectory()) ldPath.append(":").append(armhfDir);
+        }
+        envVars.put("LD_LIBRARY_PATH", ldPath.toString());
         envVars.put("HOME", workingDir);
         envVars.put("TMPDIR", environment.getTmpDir());
 

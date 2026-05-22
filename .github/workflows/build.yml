@@ -72,6 +72,7 @@ jobs:
         download "fusionfs.tzst" 100000000 "$FUSIONFS_URL" || FAILED=1
         download "fusionfs_patches.tzst" 500000 "$FUSIONFS_URL" || FAILED=1
         download "pulseaudio.tzst" 10000 "$FUSIONFS_URL" || FAILED=1
+        download "pulseaudio-full.tzst" 500000 "$FUSIONFS_URL" || FAILED=1
         download "container_pattern_common.tzst" 5000000 "$FUSIONFS_URL" || FAILED=1
         download "wine-10.10-x86_64_container_pattern.tzst" 1000000 "$FUSIONFS_URL" || FAILED=1
         download "wine-10.10-arm64ec_container_pattern.tzst" 1000000 "$FUSIONFS_URL" || FAILED=1
