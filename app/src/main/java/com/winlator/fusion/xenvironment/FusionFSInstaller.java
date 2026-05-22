@@ -343,7 +343,9 @@ public abstract class FusionFSInstaller {
         File wineDir = fusionFS.getWineDir();
         if (wineDir.isDirectory() && !glibcOptWine.exists()) {
             glibcOptWine.getParentFile().mkdirs();
-            FileUtils.symlink("../../wine", glibcOptWine.getPath());
+            File wineGlibcDir = fusionFS.getWineGlibcDir();
+            String target = wineGlibcDir.isDirectory() ? "../../wine.glibc" : "../../wine";
+            FileUtils.symlink(target, glibcOptWine.getPath());
         }
     }
 
@@ -368,7 +370,7 @@ public abstract class FusionFSInstaller {
                 for (File file : files) {
                     if (file.isDirectory()) {
                         String name = file.getName();
-                        if (name.equals("home") || name.equals("opt") || name.equals("installed-wine") || name.equals("bionic") || name.equals("glibc") || name.equals("wine")) continue;
+                        if (name.equals("home") || name.equals("opt") || name.equals("installed-wine") || name.equals("bionic") || name.equals("glibc") || name.equals("wine") || name.equals("wine.glibc") || name.equals("wine.bionic") || name.equals("usr.glibc") || name.equals("usr.bionic") || name.equals("etc.glibc") || name.equals("etc.bionic")) continue;
                     }
                     FileUtils.delete(file);
                 }

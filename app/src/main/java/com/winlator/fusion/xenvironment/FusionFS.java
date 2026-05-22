@@ -26,12 +26,17 @@ public class FusionFS {
     private final File bionicDir;
     private final File glibcDir;
     private final File wineDir;
+    private final File wineGlibcDir;
+    private final File wineBionicDir;
 
     private FusionFS(File rootDir) {
         this.rootDir = rootDir;
         this.bionicDir = new File(rootDir, "bionic");
         this.glibcDir = new File(rootDir, "glibc");
-        this.wineDir = new File(rootDir, "wine");
+        this.wineGlibcDir = new File(rootDir, "wine.glibc");
+        this.wineBionicDir = new File(rootDir, "wine.bionic");
+        File legacyWineDir = new File(rootDir, "wine");
+        this.wineDir = wineGlibcDir.isDirectory() ? wineGlibcDir : legacyWineDir;
     }
 
     public static FusionFS find(Context context) {
@@ -55,7 +60,15 @@ public class FusionFS {
     }
 
     public File getWineDir() {
-        return wineDir;
+        return wineGlibcDir.isDirectory() ? wineGlibcDir : wineDir;
+    }
+
+    public File getWineGlibcDir() {
+        return wineGlibcDir;
+    }
+
+    public File getWineBionicDir() {
+        return wineBionicDir;
     }
 
     public boolean isValid() {
@@ -108,23 +121,27 @@ public class FusionFS {
     }
 
     public boolean isWineInstalled() {
-        return wineDir.isDirectory() && new File(wineDir, "/bin").isDirectory();
+        File dir = wineGlibcDir.isDirectory() ? wineGlibcDir : wineDir;
+        return dir.isDirectory() && new File(dir, "/bin").isDirectory();
     }
 
     public String getWinePath() {
-        return wineDir.getPath();
+        File dir = wineGlibcDir.isDirectory() ? wineGlibcDir : wineDir;
+        return dir.getPath();
     }
 
     public String getWinePathForVersion(String wineVersion) {
         if (WineInfo.isMainWineVersion(wineVersion)) {
-            return wineDir.getPath();
+            File dir = wineGlibcDir.isDirectory() ? wineGlibcDir : wineDir;
+            return dir.getPath();
         }
         File installedWineDir = getInstalledWineDir();
         File versionDir = new File(installedWineDir, wineVersion);
         if (versionDir.isDirectory()) return versionDir.getPath();
         File optDir = new File(bionicDir, "/opt/" + wineVersion);
         if (optDir.isDirectory()) return optDir.getPath();
-        return wineDir.getPath();
+        File dir = wineGlibcDir.isDirectory() ? wineGlibcDir : wineDir;
+        return dir.getPath();
     }
 
     public File getInstalledWineDir() {
@@ -226,6 +243,7 @@ public class FusionFS {
 
     public String getPathForGlibc() {
         StringBuilder path = new StringBuilder();
+        File wineDir = wineGlibcDir.isDirectory() ? wineGlibcDir : this.wineDir;
         path.append(wineDir).append("/bin");
         path.append(":").append(glibcDir).append("/usr/local/bin");
         path.append(":").append(glibcDir).append("/usr/bin");
