@@ -1,0 +1,130 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'com.winlator.fusion'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.winlator.fusion'
+        minSdkVersion 26
+        targetSdkVersion 28
+        versionCode 31
+        versionName "11.0-fusion"
+
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+    }
+
+    aaptOptions {
+        noCompress 'tzst', 'txz', 'sf2'
+    }
+
+    packagingOptions {
+        pickFirst '**/*.so'
+        jniLibs {
+            useLegacyPackaging true
+        }
+    }
+
+    ndkVersion '24.0.8215888'
+
+    externalNativeBuild {
+        cmake {
+            version '3.22.1'
+            path 'src/main/cpp/CMakeLists.txt'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+final String RELEASE_BASE = "https://github.com/SeaNaxxx/wine-10.10-custom/releases/download/fusionfs-v4"
+final long MIN_FUSIONFS_SIZE = 100_000_000L
+final long MIN_FUSIONFS_PATCHES_SIZE = 500_000L
+final long MIN_WINE_SIZE = 10_000_000L
+final long MIN_PATTERN_SIZE = 1_000_000L
+final long MIN_COMMON_SIZE = 5_000_000L
+final long MIN_SMALL_SIZE = 10_000L
+
+tasks.register("downloadFusionFS") {
+    def assetDir = file("src/main/assets")
+    assetDir.mkdirs()
+
+    def downloads = [
+        [name: "fusionfs.tzst", minSize: MIN_FUSIONFS_SIZE],
+        [name: "fusionfs_patches.tzst", minSize: MIN_FUSIONFS_PATCHES_SIZE],
+        [name: "wine-10.10-x86_64.txz", minSize: MIN_WINE_SIZE],
+        [name: "wine-10.10-x86_64_container_pattern.tzst", minSize: MIN_PATTERN_SIZE],
+        [name: "wine-10.10-arm64ec.txz", minSize: MIN_WINE_SIZE],
+        [name: "wine-10.10-arm64ec_container_pattern.tzst", minSize: MIN_PATTERN_SIZE],
+        [name: "proton-9.0-x86_64.txz", minSize: MIN_WINE_SIZE],
+        [name: "proton-9.0-x86_64_container_pattern.tzst", minSize: MIN_PATTERN_SIZE],
+        [name: "proton-9.0-arm64ec.txz", minSize: MIN_WINE_SIZE],
+        [name: "proton-9.0-arm64ec_container_pattern.tzst", minSize: MIN_PATTERN_SIZE],
+        [name: "container_pattern_common.tzst", minSize: MIN_COMMON_SIZE],
+        [name: "input_dlls.tzst", minSize: MIN_SMALL_SIZE],
+        [name: "pulseaudio.tzst", minSize: MIN_SMALL_SIZE],
+        [name: "layers.tzst", minSize: MIN_SMALL_SIZE]
+    ]
+
+    for (def dl : downloads) {
+        def target = new File(assetDir, dl.name)
+        boolean needsDownload = !target.exists() || target.length() < dl.minSize
+
+        if (needsDownload) {
+            try {
+                def url = "${RELEASE_BASE}/${dl.name}"
+                println("Downloading ${dl.name}...")
+                new URL(url).withInputStream { ins -> target.withOutputStream { it << ins } }
+
+                if (target.length() < dl.minSize) {
+                    println("ERROR: ${dl.name} is only ${target.length()} bytes — download may have failed!")
+                } else {
+                    println("${dl.name} download complete (${target.length()} bytes).")
+                }
+            } catch (Exception e) {
+                println("WARNING: Failed to download ${dl.name}: ${e.message}")
+                target.delete()
+            }
+        } else {
+            println("${dl.name} already present (${target.length()} bytes), skipping.")
+        }
+    }
+}
+
+if (project.hasProperty('downloadAssets') || project.hasProperty('downloadBionic')) {
+    preBuild.dependsOn(downloadFusionFS)
+}
+
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.4.0'
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'com.google.android.material:material:1.4.0'
+    implementation 'com.github.luben:zstd-jni:1.5.2-3@aar'
+    implementation 'org.tukaani:xz:1.7'
+    implementation 'org.apache.commons:commons-compress:1.20'
+    implementation 'androidx.activity:activity-ktx:1.4.0'
+    implementation 'androidx.fragment:fragment-ktx:1.4.0'
+    implementation files('libs/MidiSynth/MidiSynth.jar')
+    implementation 'androidx.recyclerview:recyclerview:1.2.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+    implementation 'com.google.code.gson:gson:2.8.8'
+}

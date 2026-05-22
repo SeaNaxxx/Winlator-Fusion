@@ -1,0 +1,154 @@
+package com.winlator.fusion.runtime;
+
+import android.content.Context;
+
+import com.winlator.fusion.box64.Box64Preset;
+import com.winlator.fusion.container.Container;
+import com.winlator.fusion.container.GraphicsDrivers;
+import com.winlator.fusion.core.Callback;
+import com.winlator.fusion.core.EnvVars;
+import com.winlator.fusion.core.EvshimPatcher;
+import com.winlator.fusion.core.FileUtils;
+import com.winlator.fusion.core.WineInfo;
+import com.winlator.fusion.xconnector.UnixSocketConfig;
+import com.winlator.fusion.xenvironment.ImageFs;
+import com.winlator.fusion.xenvironment.XEnvironment;
+import com.winlator.fusion.xenvironment.components.ALSAServerComponent;
+import com.winlator.fusion.xenvironment.components.BionicProgramLauncherComponent;
+import com.winlator.fusion.xenvironment.components.PulseAudioComponent;
+import com.winlator.fusion.xenvironment.components.VirGLRendererComponent;
+import com.winlator.fusion.alsaserver.ALSAClient;
+import com.winlator.fusion.contents.ContentsManager;
+import com.winlator.fusion.contentdialog.AudioDriverConfigDialog;
+import com.winlator.fusion.fexcore.FEXCoreManager;
+
+import java.io.File;
+
+public class BionicRuntimeEnvironment implements RuntimeEnvironment {
+    private final RuntimeProfile profile;
+    private final RootFSAdapter rootFSAdapter;
+    private final Context context;
+    private final RuntimeStrategy strategy;
+
+    public BionicRuntimeEnvironment(Context context) {
+        this.context = context;
+        this.profile = RuntimeProfile.forBionic(context);
+        this.rootFSAdapter = RootFSAdapter.forBionic(context);
+        this.strategy = new BionicRuntimeStrategy(context);
+    }
+
+    @Override
+    public RuntimeProfile getProfile() {
+        return profile;
+    }
+
+    @Override
+    public void prepare() {
+        File tmpDir = profile.getTmpDir();
+        if (!tmpDir.isDirectory()) tmpDir.mkdirs();
+
+        File socketTmpDir = new File(profile.getRootDir(), "/tmp");
+        if (!socketTmpDir.isDirectory()) socketTmpDir.mkdirs();
+
+        File usrTmpDir = new File(profile.getRootDir(), "/usr/tmp");
+        if (!usrTmpDir.isDirectory()) usrTmpDir.mkdirs();
+    }
+
+    @Override
+    public void setupBaseEnvVars(EnvVars envVars, WineInfo wineInfo) {
+        EnvVars baseVars = strategy.buildBaseEnvVars();
+        envVars.putAll(baseVars);
+
+        envVars.put("MESA_DEBUG", "silent");
+        envVars.put("MESA_NO_ERROR", "1");
+        envVars.put("WINE_DO_NOT_CREATE_DXGI_DEVICE_MANAGER", "1");
+        envVars.put("WINEPREFIX", profile.getWinePrefix());
+        envVars.put("APP_CACHE_DIR", context.getCacheDir().getAbsolutePath());
+    }
+
+    @Override
+    public void setupGraphics(XEnvironment environment, EnvVars envVars, String[] graphicsDriver, com.winlator.fusion.core.KeyValueSet[] graphicsDriverConfig) {
+        String rootPath = profile.getRootDir().getPath();
+
+        envVars.put("X11_SERVER_PATH", rootPath + UnixSocketConfig.XSERVER_PATH);
+        envVars.put("VORTEK_SERVER_PATH", rootPath + UnixSocketConfig.VORTEK_SERVER_PATH);
+
+        if (graphicsDriver[1].equals(GraphicsDrivers.VIRGL)) {
+            environment.addComponent(new VirGLRendererComponent(
+                environment.getXServer(),
+                UnixSocketConfig.create(rootPath, UnixSocketConfig.VIRGL_SERVER_PATH)
+            ));
+        }
+    }
+
+    @Override
+    public void setupAudio(XEnvironment environment, EnvVars envVars, String audioDriver, com.winlator.fusion.core.KeyValueSet audioDriverConfig) {
+        String rootPath = profile.getRootDir().getPath();
+
+        if (audioDriver.equals(com.winlator.fusion.container.AudioDrivers.ALSA)) {
+            envVars.put("ANDROID_ALSA_SERVER", rootPath + UnixSocketConfig.ALSA_SERVER_PATH);
+            envVars.put("ANDROID_ASERVER_USE_SHM", ALSAClient.USE_SHARED_MEMORY ? "true" : "false");
+            ALSAClient.Options options = ALSAClient.Options.fromKeyValueSet(audioDriverConfig);
+            environment.addComponent(new ALSAServerComponent(
+                UnixSocketConfig.create(rootPath, UnixSocketConfig.ALSA_SERVER_PATH), options
+            ));
+        } else if (audioDriver.equals(com.winlator.fusion.container.AudioDrivers.PULSEAUDIO)) {
+            PulseAudioComponent pulseAudioComponent = new PulseAudioComponent(
+                UnixSocketConfig.create(rootPath, UnixSocketConfig.PULSE_SERVER_PATH)
+            );
+            envVars.put("PULSE_SERVER", rootPath + UnixSocketConfig.PULSE_SERVER_PATH);
+
+            if (!audioDriverConfig.isEmpty()) {
+                envVars.put("PULSE_LATENCY_MSEC", audioDriverConfig.getInt("latencyMillis", AudioDriverConfigDialog.DEFAULT_LATENCY_MILLIS));
+                pulseAudioComponent.setVolume(audioDriverConfig.getFloat("volume", AudioDriverConfigDialog.DEFAULT_VOLUME));
+                pulseAudioComponent.setPerformanceMode(audioDriverConfig.getInt("performanceMode", AudioDriverConfigDialog.DEFAULT_PERFORMANCE_MODE));
+            } else {
+                envVars.put("PULSE_LATENCY_MSEC", AudioDriverConfigDialog.DEFAULT_LATENCY_MILLIS);
+            }
+            environment.addComponent(pulseAudioComponent);
+        }
+    }
+
+    @Override
+    public void setupLauncher(XEnvironment environment, Container container, WineInfo wineInfo, String guestExecutable, EnvVars envVars, String box64Preset, Callback<Integer> terminationCallback) {
+        ContentsManager bionicContentsManager = new ContentsManager(context);
+        bionicContentsManager.syncContents();
+        bionicContentsManager.setFileSystemRoot("imagefs");
+
+        BionicProgramLauncherComponent launcher = new BionicProgramLauncherComponent(bionicContentsManager);
+        launcher.setGuestExecutable(guestExecutable);
+        launcher.setWineInfo(wineInfo);
+        launcher.setContainer(container);
+        launcher.setEnvVars(envVars);
+        launcher.setBox64Preset(box64Preset != null ? box64Preset : Box64Preset.CONSERVATIVE);
+        launcher.setTerminationCallback(terminationCallback);
+        environment.addComponent(launcher);
+    }
+
+    @Override
+    public void postSetup(XEnvironment environment, Container container) {
+        if (container != null) {
+            File fexConfigDir = new File(ImageFs.find(context).getRootDir(), "/home/xuser/.fex-emu");
+            if (!fexConfigDir.isDirectory()) fexConfigDir.mkdirs();
+            File fexConfigFile = new File(fexConfigDir, "Config.json");
+            FEXCoreManager.writeToConfigFile(fexConfigFile, container.getFEXCorePreset(), context);
+            FEXCoreManager.createAppConfigFiles(context);
+            FEXCoreManager.ensureAppConfigOverrides(context);
+        }
+
+        File evshimFile = new File(ImageFs.find(context).getLibDir(), "libevshim.so");
+        if (evshimFile.exists()) {
+            EvshimPatcher.patch(rootFSAdapter.getRootFS().getRootDir());
+        }
+    }
+
+    @Override
+    public String getSocketPath(String relativeSocketPath) {
+        return profile.getRootDir().getPath() + relativeSocketPath;
+    }
+
+    @Override
+    public RootFSAdapter getRootFSAdapter() {
+        return rootFSAdapter;
+    }
+}

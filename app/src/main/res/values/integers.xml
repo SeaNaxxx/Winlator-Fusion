@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="keycode_button_a">96</integer>
+    <integer name="keycode_button_b">97</integer>
+    <integer name="keycode_button_x">99</integer>
+    <integer name="keycode_button_y">100</integer>
+    <integer name="keycode_button_l1">102</integer>
+    <integer name="keycode_button_r1">103</integer>
+    <integer name="keycode_button_l2">104</integer>
+    <integer name="keycode_button_r2">105</integer>
+    <integer name="keycode_button_thumbl">106</integer>
+    <integer name="keycode_button_thumbr">107</integer>
+    <integer name="keycode_button_start">108</integer>
+    <integer name="keycode_button_select">109</integer>
+    <integer name="keycode_button_mode">110</integer>
+</resources>

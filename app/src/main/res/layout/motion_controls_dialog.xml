@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Gyro Enable -->
+        <CheckBox
+            android:id="@+id/cbGyroEnabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Enable Gyroscope"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Target Stick -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Target Stick"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <RadioGroup
+            android:id="@+id/rgGyroTarget"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <RadioButton
+                android:id="@+id/rbTargetRight"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Right Stick"
+                android:checked="true" />
+
+            <RadioButton
+                android:id="@+id/rbTargetLeft"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Left Stick"
+                android:layout_marginStart="16dp" />
+        </RadioGroup>
+
+        <!-- Activator -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Activator Button"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <Spinner
+            android:id="@+id/spGyroTriggerButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Mode -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Activation Mode"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <RadioGroup
+            android:id="@+id/rgGyroMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <RadioButton
+                android:id="@+id/rbHoldMode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hold"
+                android:checked="true" />
+
+            <RadioButton
+                android:id="@+id/rbToggleMode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Toggle"
+                android:layout_marginStart="16dp" />
+        </RadioGroup>
+
+        <!-- Invert -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Invert Axis"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <CheckBox
+                android:id="@+id/cbInvertGyroX"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Invert X" />
+
+            <CheckBox
+                android:id="@+id/cbInvertGyroY"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Invert Y"
+                android:layout_marginStart="16dp" />
+        </LinearLayout>
+
+        <!-- X Sensitivity -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="X Sensitivity"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <SeekBar
+                android:id="@+id/sbGyroXSensitivity"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="200"
+                android:progress="100" />
+
+            <TextView
+                android:id="@+id/tvGyroXSensitivity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="100%"
+                android:layout_marginStart="8dp"
+                android:minWidth="48dp" />
+        </LinearLayout>
+
+        <!-- Y Sensitivity -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Y Sensitivity"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <SeekBar
+                android:id="@+id/sbGyroYSensitivity"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="200"
+                android:progress="100" />
+
+            <TextView
+                android:id="@+id/tvGyroYSensitivity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="100%"
+                android:layout_marginStart="8dp"
+                android:minWidth="48dp" />
+        </LinearLayout>
+
+        <!-- Smoothing -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Smoothing"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <SeekBar
+                android:id="@+id/sbGyroSmoothing"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="90" />
+
+            <TextView
+                android:id="@+id/tvGyroSmoothing"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="90%"
+                android:layout_marginStart="8dp"
+                android:minWidth="48dp" />
+        </LinearLayout>
+
+        <!-- Deadzone -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Deadzone"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <SeekBar
+                android:id="@+id/sbGyroDeadzone"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="5" />
+
+            <TextView
+                android:id="@+id/tvGyroDeadzone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="5%"
+                android:layout_marginStart="8dp"
+                android:minWidth="48dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
