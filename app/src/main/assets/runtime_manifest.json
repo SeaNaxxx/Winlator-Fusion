@@ -104,7 +104,7 @@
           "dll": "wowbox64.dll"
         }
       },
-      "audio_profile": "full"
+      "audio_profile": "desktop"
     }
   },
   "audio_profiles": {
@@ -112,8 +112,8 @@
       "asset": "pulseaudio.tzst",
       "description": "Core PulseAudio modules: AAudio sink, native protocol only"
     },
-    "full": {
-      "asset": "pulseaudio.tzst",
+    "desktop": {
+      "asset": "pulseaudio-full.tzst",
       "description": "Full PulseAudio modules: ALSA, RTP, tunnel, virtual sinks, remap, echo cancel, desktop-like"
     }
   },
@@ -136,7 +136,10 @@
       "proton-9.0-arm64ec_container_pattern.tzst",
       "container_pattern_common.tzst"
     ],
-    "audio": "pulseaudio.tzst",
+    "audio": {
+      "minimal": "pulseaudio.tzst",
+      "desktop": "pulseaudio-full.tzst"
+    },
     "input": "input_dlls.tzst",
     "debug": "layers.tzst"
   },
