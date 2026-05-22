@@ -167,6 +167,9 @@ public abstract class TarCompressorUtils {
                 if (isSpecialTarEntry(entryName)) continue;
                 if (!tar.canReadEntryData(entry)) continue;
                 File file = new File(destination, entryName);
+                try {
+                    if (!file.getCanonicalPath().startsWith(destination.getCanonicalPath())) continue;
+                } catch (IOException ignored) { continue; }
 
                 if (onExtractFileListener != null) {
                     file = onExtractFileListener.onExtractFile(file, entry.getSize());
@@ -178,9 +181,13 @@ public abstract class TarCompressorUtils {
                 }
                 else {
                     if (entry.isSymbolicLink()) {
+                        File parent = file.getParentFile();
+                        if (parent != null && !parent.isDirectory()) parent.mkdirs();
                         FileUtils.symlink(entry.getLinkName(), file.getAbsolutePath());
                     }
                     else {
+                        File parent = file.getParentFile();
+                        if (parent != null && !parent.isDirectory()) parent.mkdirs();
                         try (BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(file), StreamUtils.BUFFER_SIZE)) {
                             if (!StreamUtils.copy(tar, outStream)) return false;
                         }
