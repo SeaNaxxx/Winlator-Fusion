@@ -147,16 +147,24 @@ public abstract class TarCompressorUtils {
         }
     }
 
+    private static boolean isSpecialTarEntry(String name) {
+        if (name == null || name.isEmpty()) return true;
+        if (name.equals("././@LongLink")) return true;
+        if (name.startsWith("PaxHeaders/") || name.startsWith("@PaxHeader")) return true;
+        if (name.startsWith("../") || name.contains("/..")) return true;
+        return false;
+    }
+
     private static boolean extract(Type type, InputStream source, File destination, OnExtractFileListener onExtractFileListener) {
         if (source == null) return false;
         try (InputStream inStream = getCompressorInputStream(type, source);
              ArchiveInputStream tar = new TarArchiveInputStream(inStream)) {
             TarArchiveEntry entry;
             while ((entry = (TarArchiveEntry)tar.getNextEntry()) != null) {
-                if (entry.getName() == null || entry.getName().isEmpty()) continue;
-                if (entry.getName().startsWith("../") || entry.getName().contains("/..")) continue;
+                String entryName = entry.getName();
+                if (isSpecialTarEntry(entryName)) continue;
                 if (!tar.canReadEntryData(entry)) continue;
-                File file = new File(destination, entry.getName());
+                File file = new File(destination, entryName);
 
                 if (onExtractFileListener != null) {
                     file = onExtractFileListener.onExtractFile(file, entry.getSize());
@@ -214,7 +222,7 @@ public abstract class TarCompressorUtils {
             TarArchiveEntry entry;
             while ((entry = (TarArchiveEntry)tar.getNextEntry()) != null) {
                 String entryName = entry.getName();
-                if (entryName == null || entryName.isEmpty()) continue;
+                if (isSpecialTarEntry(entryName)) continue;
                 if (!tar.canReadEntryData(entry)) continue;
                 boolean match = pathIsSuffix ? entryName.endsWith(localPath) : (pathIsPrefix ? entryName.startsWith(localPath) : entryName.equals(localPath));
 
@@ -266,8 +274,7 @@ public abstract class TarCompressorUtils {
             TarArchiveEntry entry;
             while ((entry = tais.getNextTarEntry()) != null) {
                 String entryName = entry.getName();
-                if (entryName == null || entryName.isEmpty()) continue;
-                if (entryName.startsWith("../") || entryName.contains("/..")) continue;
+                if (isSpecialTarEntry(entryName)) continue;
                 File outputFile = new File(destDir, entryName);
                 if (entry.isDirectory()) {
                     if (!outputFile.isDirectory()) outputFile.mkdirs();
