@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLSurfaceView;
+import android.os.Build;
+import android.view.SurfaceControl;
 import android.view.TextureView;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -44,7 +46,7 @@ public class XServerView extends FrameLayout {
         glSurfaceView.setEGLContextClientVersion(3);
         glSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 0, 0);
         glSurfaceView.setPreserveEGLContextOnPause(true);
-        glRenderer = new GLRenderer(glSurfaceView, xServer);
+        glRenderer = new GLRenderer(this, xServer);
         glSurfaceView.setRenderer(glRenderer);
         glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         addView(glSurfaceView);
@@ -104,5 +106,13 @@ public class XServerView extends FrameLayout {
     public void queueEvent(Runnable r) {
         if (glSurfaceView != null) glSurfaceView.queueEvent(r);
         else if (vulkanRenderer != null) r.run();
+    }
+
+    public SurfaceControl getSurfaceControl() {
+        if (Build.VERSION.SDK_INT >= 29) {
+            if (glSurfaceView != null) return glSurfaceView.getSurfaceControl();
+            if (vulkanTextureView != null) return vulkanTextureView.getSurfaceControl();
+        }
+        return null;
     }
 }
