@@ -108,10 +108,10 @@ public class XServerView extends FrameLayout {
         else if (vulkanRenderer != null) r.run();
     }
 
+    @android.annotation.SuppressLint("NewApi")
     public SurfaceControl getSurfaceControl() {
         if (Build.VERSION.SDK_INT >= 29) {
             if (glSurfaceView != null) return glSurfaceView.getSurfaceControl();
-            if (vulkanTextureView != null) return vulkanTextureView.getSurfaceControl();
         }
         return null;
     }
