@@ -472,4 +472,10 @@
     <string name="download">Download</string>
     <string name="add_to_home_screen">Add to Home Screen</string>
     <string name="shortcut_not_available">Shortcut not available</string>
+    <string name="renderer_type">Renderer Type</string>
+    <string name="native_display_mode">Native Display Mode (Direct Scanout)</string>
+    <string name="present_mode">Present Mode</string>
+    <string name="filter_mode">Filter Mode</string>
+    <string name="refresh_rate_limit">Refresh Rate Limit</string>
+    <string name="renderer_options">Renderer Options</string>
 </resources>

@@ -46,19 +46,6 @@ public class ScreenEffectDialog extends ContentDialog {
 
         preferences = PreferenceManager.getDefaultSharedPreferences(activity);
 
-        Renderer baseRenderer = activity.getXServer().getRenderer();
-        GLRenderer renderer = baseRenderer instanceof GLRenderer ? (GLRenderer) baseRenderer : null;
-        if (renderer == null) {
-            dismiss();
-            return;
-        }
-        ColorEffect currentColorEffect = renderer.effectComposer.getEffect(ColorEffect.class);
-        final ColorEffect colorEffect = currentColorEffect != null ? currentColorEffect : new ColorEffect();
-        final FXAAEffect fxaaEffect = renderer.effectComposer.getEffect(FXAAEffect.class);
-        final CRTEffect crtEffect = renderer.effectComposer.getEffect(CRTEffect.class);
-        final NTSCCombinedEffect ntscEffect = renderer.effectComposer.getEffect(NTSCCombinedEffect.class);
-        final ToonEffect toonEffect = renderer.effectComposer.getEffect(ToonEffect.class);
-
         sProfile = findViewById(R.id.SProfile);
         sbBrightness = findViewById(R.id.SBBrightness);
         sbContrast = findViewById(R.id.SBContrast);
@@ -67,6 +54,19 @@ public class ScreenEffectDialog extends ContentDialog {
         cbEnableCRTShader = findViewById(R.id.CBEnableCRTShader);
         cbEnableNTSCShader = findViewById(R.id.CBEnableNTSCShader);
         cbEnableToonShader = findViewById(R.id.CBEnableToonShader);
+
+        Renderer baseRenderer = activity.getXServer().getRenderer();
+        GLRenderer renderer = baseRenderer instanceof GLRenderer ? (GLRenderer) baseRenderer : null;
+        if (renderer == null) {
+            setOnConfirmCallback(() -> {});
+            return;
+        }
+        ColorEffect currentColorEffect = renderer.effectComposer.getEffect(ColorEffect.class);
+        final ColorEffect colorEffect = currentColorEffect != null ? currentColorEffect : new ColorEffect();
+        final FXAAEffect fxaaEffect = renderer.effectComposer.getEffect(FXAAEffect.class);
+        final CRTEffect crtEffect = renderer.effectComposer.getEffect(CRTEffect.class);
+        final NTSCCombinedEffect ntscEffect = renderer.effectComposer.getEffect(NTSCCombinedEffect.class);
+        final ToonEffect toonEffect = renderer.effectComposer.getEffect(ToonEffect.class);
 
         sbBrightness.setValue(colorEffect.getBrightness() * 100);
         sbContrast.setValue(colorEffect.getContrast() * 100);

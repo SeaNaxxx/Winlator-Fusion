@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="id" name="rendererType" />
+    <item type="id" name="rendererNative" />
+    <item type="id" name="rendererPresentMode" />
+    <item type="id" name="rendererFilterMode" />
+    <item type="id" name="rendererRefreshRate" />
+</resources>
