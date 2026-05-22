@@ -19,7 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class FusionFSInstaller {
-    public static final byte LATEST_VERSION = 4;
+    public static final byte LATEST_VERSION = 5;
 
     private static boolean assetExists(Context context, String assetName) {
         try {
@@ -92,7 +92,7 @@ public abstract class FusionFSInstaller {
                 success = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, activity, FusionFS.ASSET_FUSIONFS, rootDir, (file, size) -> {
                     if (size > 0) {
                         long totalSize = totalSizeRef.addAndGet(size);
-                        final int progress = Math.min((int)(((float)totalSize / totalContentLength) * 100), 99);
+                        final int progress = Math.min((int)(((float)totalSize / totalContentLength) * 70), 70);
                         activity.runOnUiThread(() -> dialog.setProgress(progress));
                     }
                     return file;
@@ -103,14 +103,16 @@ public abstract class FusionFSInstaller {
                 renameExtractedDirs(rootDir);
                 applyPatches(activity, rootDir);
                 copySharedRuntimeLibraries(fusionFS);
-                activity.runOnUiThread(() -> dialog.setProgress(100));
+                activity.runOnUiThread(() -> dialog.setProgress(75));
                 createWineSymlink(fusionFS);
                 createCompatibilitySymlinks(activity, fusionFS);
-                installWineFromAssets(activity, fusionFS);
+                installWineFromAssets(activity, fusionFS, dialog);
                 installContainerPatternsFromAssets(activity, fusionFS);
+                activity.runOnUiThread(() -> dialog.setProgress(95));
                 installDriversFromAssets(activity);
                 fusionFS.createVersionFile(LATEST_VERSION);
                 resetContainerVersions(activity);
+                activity.runOnUiThread(() -> dialog.setProgress(100));
             } else {
                 AppUtils.showToast(activity, R.string.unable_to_install_system_files);
             }
@@ -118,16 +120,20 @@ public abstract class FusionFSInstaller {
         });
     }
 
-    public static void installWineFromAssets(final MainActivity activity, FusionFS fusionFS) {
+    public static void installWineFromAssets(final MainActivity activity, FusionFS fusionFS, DownloadProgressDialog dialog) {
         String[] versions = activity.getResources().getStringArray(R.array.wine_entries);
-        File bionicDir = fusionFS.getBionicDir();
+        int totalVersions = versions.length;
 
-        for (String version : versions) {
+        for (int i = 0; i < versions.length; i++) {
+            String version = versions[i];
             if (isWineVersionInstalled(fusionFS, version)) continue;
 
             boolean isProton = version.startsWith("proton-");
             boolean isArm64EC = version.endsWith("-arm64ec");
             boolean installed = false;
+
+            int baseProgress = 75;
+            int versionProgress = baseProgress + (int)(((float)(i + 1) / totalVersions) * 20);
 
             if (assetExists(activity, version + ".txz")) {
                 File outFile = getWineInstallDir(fusionFS, version, isProton, isArm64EC);
@@ -146,7 +152,16 @@ public abstract class FusionFSInstaller {
                     FileUtils.delete(outFile);
                 }
             }
+
+            if (dialog != null) {
+                int progress = Math.min(versionProgress, 94);
+                activity.runOnUiThread(() -> dialog.setProgress(progress));
+            }
         }
+    }
+
+    public static void installWineFromAssets(final MainActivity activity, FusionFS fusionFS) {
+        installWineFromAssets(activity, fusionFS, null);
     }
 
     private static File getWineInstallDir(FusionFS fusionFS, String version, boolean isProton, boolean isArm64EC) {
@@ -259,8 +274,11 @@ public abstract class FusionFSInstaller {
         new File(bionicDir, "/tmp").mkdirs();
 
         new File(glibcDir, "/usr/lib").mkdirs();
+        new File(glibcDir, "/usr/lib/x86_64-linux-gnu").mkdirs();
         new File(glibcDir, "/usr/local/bin").mkdirs();
         new File(glibcDir, "/usr/bin").mkdirs();
+        new File(glibcDir, "/usr/etc").mkdirs();
+        new File(glibcDir, "/usr/share/fonts").mkdirs();
         new File(glibcDir, "/tmp").mkdirs();
         new File(glibcDir, "/home").mkdirs();
         new File(glibcDir, "/opt").mkdirs();
