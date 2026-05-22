@@ -42,6 +42,7 @@ import com.winlator.fusion.container.GraphicsDrivers;
 import com.winlator.fusion.contentdialog.AddEnvVarDialog;
 import com.winlator.fusion.contentdialog.AudioDriverConfigDialog;
 import com.winlator.fusion.contentdialog.ContentDialog;
+import com.winlator.fusion.contentdialog.RendererOptionsDialog;
 import com.winlator.fusion.contentdialog.VortekConfigDialog;
 import com.winlator.fusion.core.AppUtils;
 import com.winlator.fusion.core.Callback;
@@ -162,6 +163,22 @@ public class ContainerDetailFragment extends Fragment {
         dxwrapperPickerRef[0] = new DXWrapperPicker(view.findViewById(R.id.LLDXWrapper), graphicsDriverPickerRef[0], selectedDXWrapper, oldDXWrapperConfig, isBionic);
 
         view.findViewById(R.id.BTHelpDXWrapper).setOnClickListener((v) -> AppUtils.showHelpBox(context, v, R.string.dxwrapper_help_content));
+
+        final View btRendererOptions = view.findViewById(R.id.BTRendererOptions);
+        final TextView tvRendererSummary = view.findViewById(R.id.TVRendererSummary);
+        if (isEditMode()) RendererOptionsDialog.loadFromContainer(btRendererOptions, container);
+        else {
+            btRendererOptions.setTag(R.id.rendererType, Container.RENDERER_GL);
+            btRendererOptions.setTag(R.id.rendererNative, false);
+            btRendererOptions.setTag(R.id.rendererPresentMode, Container.PRESENT_MODE_FIFO);
+            btRendererOptions.setTag(R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR);
+            btRendererOptions.setTag(R.id.rendererRefreshRate, (byte) 0);
+        }
+        updateRendererSummary(tvRendererSummary, btRendererOptions);
+        btRendererOptions.setOnClickListener((v) -> {
+            new RendererOptionsDialog(btRendererOptions).show();
+            btRendererOptions.postDelayed(() -> updateRendererSummary(tvRendererSummary, btRendererOptions), 100);
+        });
 
         if (sContainerVariant != null) {
             String variant = isEditMode() ? container.getContainerVariant() : Container.DEFAULT_VARIANT;
@@ -358,6 +375,7 @@ public class ContainerDetailFragment extends Fragment {
                     container.setDesktopTheme(desktopTheme);
                     container.setContainerVariant(containerVariant);
                     container.setEmulator(emulator);
+                    RendererOptionsDialog.applyToContainer(btRendererOptions, container);
                     if (containerVariant.equals(Container.BIONIC)) {
                         if (sFEXCoreVersion.getSelectedItem() != null)
                             container.setFEXCoreVersion(sFEXCoreVersion.getSelectedItem().toString());
@@ -726,5 +744,16 @@ public class ContainerDetailFragment extends Fragment {
         view.findViewById(R.id.LLWineVersion).setVisibility(View.VISIBLE);
         sWineVersion.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, wineInfos));
         if (isEditMode()) AppUtils.setSpinnerSelectionFromValue(sWineVersion, WineInfo.fromIdentifier(context, container.getWineVersion()).toString());
+    }
+
+    private void updateRendererSummary(TextView tvRendererSummary, View anchor) {
+        Object rt = anchor.getTag(R.id.rendererType);
+        byte rendererType = rt != null ? (byte) rt : Container.RENDERER_GL;
+        String type = rendererType == Container.RENDERER_VULKAN ? "Vulkan" : "OpenGL";
+        Object nm = anchor.getTag(R.id.rendererNative);
+        boolean nativeMode = nm != null && (boolean) nm;
+        String summary = type;
+        if (nativeMode && rendererType == Container.RENDERER_VULKAN) summary += " +Native";
+        tvRendererSummary.setText(summary);
     }
 }
