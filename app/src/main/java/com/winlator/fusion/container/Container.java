@@ -72,6 +72,19 @@ public class Container {
     private String box64Version = DefaultVersion.BOX64;
     private String emulator = "FEXCore";
     private String fexcorePreset = FEXCorePreset.DEFAULT;
+    private byte rendererType = 0;
+    private boolean rendererNative = false;
+    private byte rendererPresentMode = 0;
+    private byte rendererFilterMode = 1;
+    private byte rendererRefreshRate = 0;
+
+    public static final byte RENDERER_GL = 0;
+    public static final byte RENDERER_VULKAN = 1;
+    public static final byte PRESENT_MODE_FIFO = 0;
+    public static final byte PRESENT_MODE_MAILBOX = 1;
+    public static final byte PRESENT_MODE_IMMEDIATE = 2;
+    public static final byte FILTER_MODE_NEAREST = 0;
+    public static final byte FILTER_MODE_LINEAR = 1;
 
     public Container(int id) {
         this.id = id;
@@ -377,6 +390,18 @@ public class Container {
     }
     public void setFEXCorePreset(String v) { this.fexcorePreset = v; }
 
+    public byte getRendererType() { return rendererType; }
+    public void setRendererType(byte rendererType) { this.rendererType = rendererType; }
+    public boolean isRendererNative() { return rendererNative; }
+    public void setRendererNative(boolean rendererNative) { this.rendererNative = rendererNative; }
+    public byte getRendererPresentMode() { return rendererPresentMode; }
+    public void setRendererPresentMode(byte rendererPresentMode) { this.rendererPresentMode = rendererPresentMode; }
+    public byte getRendererFilterMode() { return rendererFilterMode; }
+    public void setRendererFilterMode(byte rendererFilterMode) { this.rendererFilterMode = rendererFilterMode; }
+    public byte getRendererRefreshRate() { return rendererRefreshRate; }
+    public void setRendererRefreshRate(byte rendererRefreshRate) { this.rendererRefreshRate = rendererRefreshRate; }
+    public boolean isVulkanRenderer() { return rendererType == RENDERER_VULKAN; }
+
     public void saveData() {
         try {
             JSONObject data = new JSONObject();
@@ -407,6 +432,12 @@ public class Container {
             data.put("fexcorePreset", fexcorePreset);
             data.put("primaryController", primaryController);
             data.put("controllerMapping", controllerMapping);
+
+            if (rendererType != RENDERER_GL) data.put("rendererType", rendererType);
+            if (rendererNative) data.put("rendererNative", true);
+            if (rendererPresentMode != PRESENT_MODE_FIFO) data.put("rendererPresentMode", rendererPresentMode);
+            if (rendererFilterMode != FILTER_MODE_LINEAR) data.put("rendererFilterMode", rendererFilterMode);
+            if (rendererRefreshRate > 0) data.put("rendererRefreshRate", rendererRefreshRate);
 
             if (!WineInfo.isMainWineVersion(wineVersion)) data.put("wineVersion", wineVersion);
             FileUtils.writeString(getConfigFile(), data.toString());
@@ -505,6 +536,21 @@ public class Container {
                     break;
                 case "fexcorePreset":
                     setFEXCorePreset(data.getString(key));
+                    break;
+                case "rendererType":
+                    setRendererType((byte)data.getInt(key));
+                    break;
+                case "rendererNative":
+                    setRendererNative(data.getBoolean(key));
+                    break;
+                case "rendererPresentMode":
+                    setRendererPresentMode((byte)data.getInt(key));
+                    break;
+                case "rendererFilterMode":
+                    setRendererFilterMode((byte)data.getInt(key));
+                    break;
+                case "rendererRefreshRate":
+                    setRendererRefreshRate((byte)data.getInt(key));
                     break;
                 case "fexcoreTSOPreset": {
                     if (!data.has("fexcorePreset")) {
