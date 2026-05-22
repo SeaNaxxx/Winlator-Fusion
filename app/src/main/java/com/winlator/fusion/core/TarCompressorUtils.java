@@ -150,8 +150,10 @@ public abstract class TarCompressorUtils {
     private static boolean isSpecialTarEntry(String name) {
         if (name == null || name.isEmpty()) return true;
         if (name.equals("././@LongLink")) return true;
-        if (name.startsWith("PaxHeaders/") || name.startsWith("@PaxHeader")) return true;
+        if (name.startsWith("/") || name.equals(".") || name.equals("..")) return true;
         if (name.startsWith("../") || name.contains("/..")) return true;
+        if (name.startsWith("PaxHeaders/") || name.contains("/PaxHeaders.")) return true;
+        if (name.contains("@PaxHeader") || name.equals("././@PaxHeader")) return true;
         return false;
     }
 

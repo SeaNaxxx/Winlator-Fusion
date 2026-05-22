@@ -1200,7 +1200,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         }
 
         String pulseaudioAsset = isBionic ? "pulseaudio-full.tzst" : "pulseaudio.tzst";
-        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, pulseaudioAsset, new File(getFilesDir(), "pulseaudio"));
+        String pulseaudioDir = isBionic ? "pulseaudio/bionic" : "pulseaudio/glibc";
+        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, pulseaudioAsset, new File(getFilesDir(), pulseaudioDir));
         WineUtils.applySystemTweaks(this, wineInfo, rootDir);
         container.putExtra("graphicsDriver", null);
         container.putExtra("dxwrapper", null);
