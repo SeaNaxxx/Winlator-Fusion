@@ -123,12 +123,15 @@
       "patches": "fusionfs_patches.tzst",
       "release_tag": "fusionfs-v5"
     },
-    "wine": [
-      "wine-10.10-x86_64",
-      "wine-10.10-arm64ec",
-      "proton-9.0-x86_64",
-      "proton-9.0-arm64ec"
-    ],
+    "wine": {
+      "format": "txz",
+      "entries": [
+        "wine-10.10-x86_64",
+        "wine-10.10-arm64ec",
+        "proton-9.0-x86_64",
+        "proton-9.0-arm64ec"
+      ]
+    },
     "container_patterns": [
       "wine-10.10-x86_64_container_pattern.tzst",
       "wine-10.10-arm64ec_container_pattern.tzst",
