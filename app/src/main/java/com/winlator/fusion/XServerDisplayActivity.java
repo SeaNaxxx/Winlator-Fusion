@@ -424,10 +424,21 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 final FrameLayout container = findViewById(R.id.FLXServerDisplay);
                 magnifierView = new MagnifierView(this);
                 magnifierView.setZoomButtonCallback((value) -> {
-                    renderer.setMagnifierZoom(Mathf.clamp(renderer.getMagnifierZoom() + value, 1.0f, 3.0f));
-                    magnifierView.setZoomValue(renderer.getMagnifierZoom());
+                    if (xServerView.isVulkan()) {
+                        VulkanRenderer vr = xServerView.getVulkanRenderer();
+                        vr.setMagnifierZoom(Mathf.clamp(vr.getMagnifierZoom() + value, 1.0f, 3.0f));
+                        magnifierView.setZoomValue(vr.getMagnifierZoom());
+                    } else {
+                        GLRenderer r = xServerView.getRenderer();
+                        r.setMagnifierZoom(Mathf.clamp(r.getMagnifierZoom() + value, 1.0f, 3.0f));
+                        magnifierView.setZoomValue(r.getMagnifierZoom());
+                    }
                 });
-                magnifierView.setZoomValue(renderer.getMagnifierZoom());
+                if (xServerView.isVulkan()) {
+                    magnifierView.setZoomValue(xServerView.getVulkanRenderer().getMagnifierZoom());
+                } else {
+                    magnifierView.setZoomValue(xServerView.getRenderer().getMagnifierZoom());
+                }
                 magnifierView.setHideButtonCallback(() -> {
                     container.removeView(magnifierView);
                     magnifierView = null;
@@ -676,7 +687,13 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         }
 
         if (MainActivity.DEBUG_MODE) rootView.addView(AppUtils.createDebugMsgTextView(this));
-        AppUtils.observeSoftKeyboardVisibility(drawerLayout, renderer::setScreenOffsetYRelativeToCursor);
+        AppUtils.observeSoftKeyboardVisibility(drawerLayout, (visible) -> {
+            if (xServerView.isVulkan()) {
+                xServerView.getVulkanRenderer().setScreenOffsetYRelativeToCursor(visible);
+            } else {
+                xServerView.getRenderer().setScreenOffsetYRelativeToCursor(visible);
+            }
+        });
     }
 
     private void showInputControlsDialog() {
