@@ -304,16 +304,25 @@ public class ContainerManager {
     private boolean extractContainerPatternFile(String wineVersion, File containerDir, String containerVariant) {
         try {
             if (containerVariant != null && containerVariant.equals(Container.BIONIC)) {
-                String containerPattern = wineVersion + "_container_pattern.tzst";
+                String containerPattern = WineInfo.getContainerPatternAssetName(wineVersion);
                 boolean result = false;
                 if (assetExists(context, containerPattern)) {
                     result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, containerPattern, containerDir);
                 }
                 if (!result) {
+                    FusionFS fusionFS = FusionFS.find(context);
+                    File installedPattern = new File(fusionFS.getInstalledWineDir(), containerPattern);
+                    if (installedPattern.isFile()) {
+                        result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, installedPattern, containerDir);
+                    }
+                }
+                if (!result) {
                     WineInfo wineInfo = WineInfo.fromIdentifier(context, wineVersion);
                     if (wineInfo.path != null) {
                         File prefixPackFile = new File(wineInfo.path + "/prefixPack.txz");
-                        result = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, prefixPackFile, containerDir);
+                        if (prefixPackFile.isFile()) {
+                            result = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, prefixPackFile, containerDir);
+                        }
                     }
                 }
 
@@ -339,28 +348,41 @@ public class ContainerManager {
                 }
                 return result;
             } else {
-                if (WineInfo.isMainWineVersion(wineVersion)) {
-                    String patternAsset = "wine-10.10-x86_64_container_pattern.tzst";
-                    boolean result = false;
-                    if (assetExists(context, patternAsset)) {
-                        result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, patternAsset, containerDir);
+                String patternAsset = WineInfo.getContainerPatternAssetName(wineVersion);
+                boolean result = false;
+
+                if (assetExists(context, patternAsset)) {
+                    result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, patternAsset, containerDir);
+                }
+
+                if (!result) {
+                    FusionFS fusionFS = FusionFS.find(context);
+                    File installedPattern = new File(fusionFS.getInstalledWineDir(), patternAsset);
+                    if (installedPattern.isFile()) {
+                        result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, installedPattern, containerDir);
                     }
-                    if (result) {
-                        try {
-                            JSONObject commonDlls = new JSONObject(FileUtils.readString(context, "common_dlls.json"));
-                            copyCommonDlls("x86_64-windows", "system32", commonDlls, containerDir);
-                            copyCommonDlls("i386-windows", "syswow64", commonDlls, containerDir);
-                        } catch (JSONException e) {
-                            return false;
+                }
+
+                if (!result) {
+                    WineInfo wineInfo = WineInfo.fromIdentifier(context, wineVersion);
+                    if (wineInfo.path != null) {
+                        File prefixPackFile = new File(wineInfo.path + "/prefixPack.txz");
+                        if (prefixPackFile.isFile()) {
+                            result = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, prefixPackFile, containerDir);
                         }
                     }
-                    return result;
-                } else {
-                    File installedWineDir = FusionFS.find(context).getInstalledWineDir();
-                    WineInfo wineInfo = WineInfo.fromIdentifier(context, wineVersion);
-                    File file = new File(installedWineDir, "container-pattern-" + wineInfo.fullVersion() + ".tzst");
-                    return TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, file, containerDir);
                 }
+
+                if (result && WineInfo.isMainWineVersion(wineVersion)) {
+                    try {
+                        JSONObject commonDlls = new JSONObject(FileUtils.readString(context, "common_dlls.json"));
+                        copyCommonDlls("x86_64-windows", "system32", commonDlls, containerDir);
+                        copyCommonDlls("i386-windows", "syswow64", commonDlls, containerDir);
+                    } catch (JSONException e) {
+                        return false;
+                    }
+                }
+                return result;
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to extract container pattern for " + wineVersion, e);
