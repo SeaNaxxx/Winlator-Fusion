@@ -68,7 +68,8 @@ public class PulseAudioComponent extends EnvironmentComponent {
     private int execPulseAudio() {
         Context context = environment.getContext();
         String nativeLibraryDir = context.getApplicationInfo().nativeLibraryDir;
-        File workingDir = new File(context.getFilesDir(), "/pulseaudio");
+        String pulseSubdir = PROFILE_DESKTOP.equals(audioProfile) ? "bionic" : "glibc";
+        File workingDir = new File(context.getFilesDir(), "/pulseaudio/" + pulseSubdir);
         if (!workingDir.isDirectory()) {
             workingDir.mkdirs();
             FileUtils.chmod(workingDir, 0771);
