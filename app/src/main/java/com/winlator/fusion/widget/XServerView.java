@@ -64,11 +64,12 @@ public class XServerView extends FrameLayout {
 
             @Override
             public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-                vulkanRenderer.onSurfaceCreated(new android.view.Surface(surface));
+                vulkanRenderer.onSurfaceChanged(width, height);
             }
 
             @Override
             public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+                vulkanRenderer.onSurfaceDestroyed();
                 return true;
             }
 

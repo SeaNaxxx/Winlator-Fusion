@@ -3,7 +3,7 @@ package com.winlator.fusion.xserver;
 import com.winlator.fusion.XServerDisplayActivity;
 import com.winlator.fusion.contentdialog.DebugDialog;
 import com.winlator.fusion.core.CursorLocker;
-import com.winlator.fusion.renderer.GLRenderer;
+import com.winlator.fusion.renderer.Renderer;
 import com.winlator.fusion.winhandler.WinHandler;
 import com.winlator.fusion.xserver.extensions.BigReqExtension;
 import com.winlator.fusion.xserver.extensions.DRI3Extension;
@@ -39,7 +39,7 @@ public class XServer {
     public final GrabManager grabManager;
     public final CursorLocker cursorLocker;
     private SHMSegmentManager shmSegmentManager;
-    private GLRenderer renderer;
+    private Renderer renderer;
     private WinHandler winHandler;
     private final EnumMap<Lockable, ReentrantLock> locks = new EnumMap<>(Lockable.class);
     private boolean relativeMouseMovement = false;
@@ -75,11 +75,11 @@ public class XServer {
         windowManager.setRenderingEnabled(enabled);
     }
 
-    public GLRenderer getRenderer() {
+    public Renderer getRenderer() {
         return renderer;
     }
 
-    public void setRenderer(GLRenderer renderer) {
+    public void setRenderer(Renderer renderer) {
         this.renderer = renderer;
     }
 
