@@ -41,8 +41,7 @@ jobs:
     - name: Download large assets
       run: |
         ASSET_DIR=app/src/main/assets
-        FUSIONFS_V5_URL="https://github.com/SeaNaxxx/wine-10.10-custom/releases/download/fusionfs-v5"
-        FUSIONFS_V4_URL="https://github.com/SeaNaxxx/wine-10.10-custom/releases/download/fusionfs-v4"
+        FUSIONFS_URL="https://github.com/SeaNaxxx/wine-10.10-custom/releases/download/fusionfs-v5"
         
         mkdir -p "$ASSET_DIR"
         
@@ -70,17 +69,16 @@ jobs:
         
         FAILED=0
         
-        download "fusionfs.tzst" 100000000 "$FUSIONFS_V5_URL" || FAILED=1
-        download "fusionfs_patches.tzst" 500000 "$FUSIONFS_V5_URL" || FAILED=1
-        
-        download "container_pattern_common.tzst" 5000000 "$FUSIONFS_V4_URL" || FAILED=1
-        download "pulseaudio.tzst" 10000 "$FUSIONFS_V4_URL" || FAILED=1
-        download "wine-10.10-x86_64_container_pattern.tzst" 1000000 "$FUSIONFS_V4_URL" || FAILED=1
-        download "wine-10.10-arm64ec_container_pattern.tzst" 1000000 "$FUSIONFS_V4_URL" || FAILED=1
-        download "proton-9.0-x86_64_container_pattern.tzst" 1000000 "$FUSIONFS_V4_URL" || FAILED=1
-        download "proton-9.0-arm64ec_container_pattern.tzst" 1000000 "$FUSIONFS_V4_URL" || FAILED=1
-        download "input_dlls.tzst" 100000 "$FUSIONFS_V4_URL" || true
-        download "layers.tzst" 100000 "$FUSIONFS_V4_URL" || true
+        download "fusionfs.tzst" 100000000 "$FUSIONFS_URL" || FAILED=1
+        download "fusionfs_patches.tzst" 500000 "$FUSIONFS_URL" || FAILED=1
+        download "pulseaudio.tzst" 10000 "$FUSIONFS_URL" || FAILED=1
+        download "container_pattern_common.tzst" 5000000 "$FUSIONFS_URL" || FAILED=1
+        download "wine-10.10-x86_64_container_pattern.tzst" 1000000 "$FUSIONFS_URL" || FAILED=1
+        download "wine-10.10-arm64ec_container_pattern.tzst" 1000000 "$FUSIONFS_URL" || FAILED=1
+        download "proton-9.0-x86_64_container_pattern.tzst" 1000000 "$FUSIONFS_URL" || FAILED=1
+        download "proton-9.0-arm64ec_container_pattern.tzst" 1000000 "$FUSIONFS_URL" || FAILED=1
+        download "input_dlls.tzst" 100000 "$FUSIONFS_URL" || true
+        download "layers.tzst" 100000 "$FUSIONFS_URL" || true
         
         if [ "$FAILED" -ne 0 ]; then
           echo "ERROR: Some required assets failed to download"
