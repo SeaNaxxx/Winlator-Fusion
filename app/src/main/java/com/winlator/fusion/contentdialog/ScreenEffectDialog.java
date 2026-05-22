@@ -15,6 +15,7 @@ import com.winlator.fusion.XServerDisplayActivity;
 import com.winlator.fusion.core.AppUtils;
 import com.winlator.fusion.core.KeyValueSet;
 import com.winlator.fusion.renderer.GLRenderer;
+import com.winlator.fusion.renderer.Renderer;
 import com.winlator.fusion.renderer.effects.CRTEffect;
 import com.winlator.fusion.renderer.effects.ColorEffect;
 import com.winlator.fusion.renderer.effects.FXAAEffect;
@@ -45,7 +46,12 @@ public class ScreenEffectDialog extends ContentDialog {
 
         preferences = PreferenceManager.getDefaultSharedPreferences(activity);
 
-        GLRenderer renderer = activity.getXServerView().getRenderer();
+        Renderer baseRenderer = activity.getXServer().getRenderer();
+        GLRenderer renderer = baseRenderer instanceof GLRenderer ? (GLRenderer) baseRenderer : null;
+        if (renderer == null) {
+            dismiss();
+            return;
+        }
         ColorEffect currentColorEffect = renderer.effectComposer.getEffect(ColorEffect.class);
         final ColorEffect colorEffect = currentColorEffect != null ? currentColorEffect : new ColorEffect();
         final FXAAEffect fxaaEffect = renderer.effectComposer.getEffect(FXAAEffect.class);
