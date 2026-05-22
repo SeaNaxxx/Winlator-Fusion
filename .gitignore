@@ -21,4 +21,5 @@ app/src/main/assets/proton-9.0-arm64ec_container_pattern.tzst
 app/src/main/assets/container_pattern_common.tzst
 app/src/main/assets/input_dlls.tzst
 app/src/main/assets/pulseaudio.tzst
+app/src/main/assets/pulseaudio-full.tzst
 app/src/main/assets/layers.tzst
