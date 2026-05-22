@@ -70,6 +70,7 @@ import com.winlator.fusion.inputcontrols.ExternalController;
 import com.winlator.fusion.inputcontrols.InputControlsManager;
 import com.winlator.fusion.math.Mathf;
 import com.winlator.fusion.renderer.GLRenderer;
+import com.winlator.fusion.renderer.VulkanRenderer;
 import com.winlator.fusion.widget.FrameRating;
 import com.winlator.fusion.widget.InputControlsView;
 import com.winlator.fusion.widget.MagnifierView;
@@ -287,7 +288,12 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             @Override
             public void onMapWindow(Window window) {
                 if (!flags[0] && window.isRenderable() && !window.getClassName().isEmpty()) {
-                    xServerView.getRenderer().setCursorVisible(true);
+                    if (xServerView.isVulkan()) {
+                        VulkanRenderer vkRenderer = xServerView.getVulkanRenderer();
+                        if (vkRenderer != null) vkRenderer.setCursorVisible(true);
+                    } else {
+                        xServerView.getRenderer().setCursorVisible(true);
+                    }
                     preloaderDialog.closeOnUiThread();
                     flags[0] = true;
                 }
@@ -396,7 +402,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        final GLRenderer renderer = xServerView.getRenderer();
+        final GLRenderer glRenderer = xServerView.isVulkan() ? null : xServerView.getRenderer();
         int id = item.getItemId();
         if (id == R.id.menu_item_keyboard) {
             AppUtils.showKeyboard(this);
@@ -405,7 +411,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             showInputControlsDialog();
             drawerLayout.closeDrawers();
         } else if (id == R.id.menu_item_toggle_fullscreen) {
-            renderer.toggleFullscreen();
+            if (glRenderer != null) glRenderer.toggleFullscreen();
             drawerLayout.closeDrawers();
         } else if (id == R.id.menu_item_task_manager) {
             (new TaskManagerDialog(this)).show();
@@ -614,14 +620,27 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
     private void setupUI() {
         FrameLayout rootView = findViewById(R.id.FLXServerDisplay);
-        xServerView = new XServerView(this, xServer);
-        final GLRenderer renderer = xServerView.getRenderer();
-        renderer.setCursorVisible(false);
-        renderer.setCursorColor(preferences.getInt("cursor_color", 0xffffff));
-        renderer.setCursorScale(preferences.getFloat("cursor_scale", 1.0f));
-        renderer.setForceWindowsFullscreen(shortcut != null && shortcut.getExtra("forceFullscreen", "0").equals("1"));
+        boolean useVulkan = !isGenerateWineprefix() && container != null && container.isVulkanRenderer();
+        xServerView = new XServerView(this, xServer, useVulkan);
 
-        xServer.setRenderer(renderer);
+        if (useVulkan) {
+            VulkanRenderer vkRenderer = xServerView.getVulkanRenderer();
+            vkRenderer.setCursorVisible(false);
+            vkRenderer.setVkPresentMode(container.getRendererPresentMode());
+            vkRenderer.setFilterMode(container.getRendererFilterMode());
+            vkRenderer.setNativeMode(container.isRendererNative());
+            if (container.getRendererRefreshRate() > 0) {
+                vkRenderer.setRefreshRateLimit(container.getRendererRefreshRate());
+            }
+        } else {
+            final GLRenderer renderer = xServerView.getRenderer();
+            renderer.setCursorVisible(false);
+            renderer.setCursorColor(preferences.getInt("cursor_color", 0xffffff));
+            renderer.setCursorScale(preferences.getFloat("cursor_scale", 1.0f));
+            renderer.setForceWindowsFullscreen(shortcut != null && shortcut.getExtra("forceFullscreen", "0").equals("1"));
+            xServer.setRenderer(renderer);
+        }
+
         rootView.addView(xServerView);
 
         globalCursorSpeed = preferences.getFloat("cursor_speed", 1.0f);
@@ -722,13 +741,15 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         touchpadView.setSensitivity(profile.getCursorSpeed() * globalCursorSpeed);
         touchpadView.setPointerButtonRightEnabled(false);
 
-        GLRenderer renderer = xServerView.getRenderer();
+        GLRenderer glRenderer = xServerView.isVulkan() ? null : xServerView.getRenderer();
         if (profile.isDisableMouseInput()) {
-            renderer.setCursorVisible(false);
+            if (glRenderer != null) glRenderer.setCursorVisible(false);
+            else if (xServerView.getVulkanRenderer() != null) xServerView.getVulkanRenderer().setCursorVisible(false);
             touchpadView.setEnabled(false);
         }
         else {
-            renderer.setCursorVisible(true);
+            if (glRenderer != null) glRenderer.setCursorVisible(true);
+            else if (xServerView.getVulkanRenderer() != null) xServerView.getVulkanRenderer().setCursorVisible(true);
             touchpadView.setEnabled(true);
         }
 
@@ -746,7 +767,12 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
         if (!touchpadView.isEnabled()) {
             touchpadView.setEnabled(true);
-            xServerView.getRenderer().setCursorVisible(true);
+            if (xServerView.isVulkan()) {
+                VulkanRenderer vkRenderer = xServerView.getVulkanRenderer();
+                if (vkRenderer != null) vkRenderer.setCursorVisible(true);
+            } else {
+                xServerView.getRenderer().setCursorVisible(true);
+            }
         }
 
         inputControlsView.invalidate();
