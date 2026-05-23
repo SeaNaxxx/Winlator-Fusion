@@ -116,8 +116,14 @@ public class SettingsFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.settings_fragment, container, false);
+        View view;
+        try {
+            view = inflater.inflate(R.layout.settings_fragment, container, false);
+        } catch (Exception e) {
+            return null;
+        }
         final Context context = getContext();
+        if (context == null) return null;
         preferences = PreferenceManager.getDefaultSharedPreferences(context);
 
         final Spinner sSoundFont = view.findViewById(R.id.SSoundFont);

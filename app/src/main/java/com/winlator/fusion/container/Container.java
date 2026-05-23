@@ -500,10 +500,18 @@ public class Container {
                     setWinComponents(data.getString(key));
                     break;
                 case "dxwrapper" :
-                    setDXWrapper(data.getString(key));
+                    String dxw = data.getString(key);
+                    if ("dxvk+vkd3d".equals(dxw)) dxw = DXWrappers.DXVK;
+                    setDXWrapper(dxw);
                     break;
                 case "dxwrapperConfig" :
-                    setDXWrapperConfig(data.getString(key));
+                    String cfg = data.getString(key);
+                    if (cfg.contains("vkd3dVersion=") && !cfg.contains("|")) {
+                        String[] parts = migrateLudashiDXWrapperConfig(cfg);
+                        setDXWrapperConfig(parts[0] + "|" + parts[1]);
+                    } else {
+                        setDXWrapperConfig(cfg);
+                    }
                     break;
                 case "graphicsDriverConfig" :
                     setGraphicsDriverConfig(data.getString(key));
@@ -566,13 +574,26 @@ public class Container {
                     setRendererNative(data.getBoolean(key));
                     break;
                 case "rendererPresentMode":
-                    setRendererPresentMode((byte)data.getInt(key));
+                    try {
+                        setRendererPresentMode((byte)data.getInt(key));
+                    } catch (Exception e) {
+                        String modeStr = data.optString(key, "fifo");
+                        switch (modeStr) {
+                            case "mailbox": setRendererPresentMode(PRESENT_MODE_MAILBOX); break;
+                            case "immediate": setRendererPresentMode(PRESENT_MODE_IMMEDIATE); break;
+                            default: setRendererPresentMode(PRESENT_MODE_FIFO); break;
+                        }
+                    }
                     break;
                 case "rendererFilterMode":
                     setRendererFilterMode((byte)data.getInt(key));
                     break;
                 case "rendererRefreshRate":
-                    setRendererRefreshRate((byte)data.getInt(key));
+                    try {
+                        setRendererRefreshRate((byte)data.getInt(key));
+                    } catch (Exception e) {
+                        setRendererRefreshRate((byte)0);
+                    }
                     break;
                 case "fexcoreTSOPreset": {
                     if (!data.has("fexcorePreset")) {
@@ -646,6 +667,47 @@ public class Container {
                 graphicsDriver = GraphicsDrivers.TURNIP + "," + driverIds[1];
             }
         }
+    }
+
+    private static String[] migrateLudashiDXWrapperConfig(String flatConfig) {
+        String dxvkPart = "";
+        String vkd3dPart = "";
+        String[] pairs = flatConfig.split(",");
+        for (String pair : pairs) {
+            if (pair.isEmpty()) continue;
+            String[] kv = pair.split("=", 2);
+            if (kv.length != 2) continue;
+            String key = kv[0].trim();
+            String val = kv[1].trim();
+            switch (key) {
+                case "version":
+                case "framerate":
+                case "async":
+                case "asyncCache":
+                case "ddrawrapper":
+                case "csmt":
+                case "gpuName":
+                case "videoMemorySize":
+                case "strict_shader_math":
+                case "OffscreenRenderingMode":
+                case "renderer":
+                    dxvkPart += (dxvkPart.isEmpty() ? "" : ",") + key + "=" + val;
+                    break;
+                case "vkd3dVersion":
+                    vkd3dPart += (vkd3dPart.isEmpty() ? "" : ",") + "version=" + val;
+                    break;
+                case "vkd3dLevel":
+                    String featureLevel = val.replace("_", ".");
+                    vkd3dPart += (vkd3dPart.isEmpty() ? "" : ",") + "featureLevel=" + featureLevel;
+                    break;
+            }
+        }
+        return new String[]{dxvkPart, vkd3dPart};
+    }
+
+    public static KeyValueSet[] migrateLudashiDXWrapperConfigToKeyValueSet(String flatConfig) {
+        String[] parts = migrateLudashiDXWrapperConfig(flatConfig);
+        return new KeyValueSet[]{new KeyValueSet(parts[0]), new KeyValueSet(parts[1])};
     }
 
     public static void checkObsoleteOrMissingProperties(JSONObject data) {
