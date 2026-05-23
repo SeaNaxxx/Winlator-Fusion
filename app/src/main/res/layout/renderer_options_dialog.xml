@@ -1,71 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
     <LinearLayout
-        android:layout_width="300dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="300dp"
             android:layout_height="wrap_content"
-            android:text="@string/renderer_type" />
+            android:orientation="vertical">
 
-        <Spinner
-            style="@style/ComboBox"
-            android:id="@+id/SRendererType"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:entries="@array/renderer_type_entries" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/renderer_type" />
 
-        <CheckBox
-            android:id="@+id/CBNativeMode"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/native_display_mode"
-            android:layout_marginTop="8dp" />
+            <Spinner
+                style="@style/ComboBox"
+                android:id="@+id/SRendererType"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/renderer_type_entries" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/present_mode"
-            android:layout_marginTop="8dp" />
+            <CheckBox
+                android:id="@+id/CBNativeMode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/native_display_mode"
+                android:layout_marginTop="8dp" />
 
-        <Spinner
-            style="@style/ComboBox"
-            android:id="@+id/SPresentMode"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:entries="@array/present_mode_entries" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/present_mode"
+                android:layout_marginTop="8dp" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/filter_mode"
-            android:layout_marginTop="8dp" />
+            <Spinner
+                style="@style/ComboBox"
+                android:id="@+id/SPresentMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/present_mode_entries" />
 
-        <Spinner
-            style="@style/ComboBox"
-            android:id="@+id/SFilterMode"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:entries="@array/filter_mode_entries" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/filter_mode"
+                android:layout_marginTop="8dp" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/refresh_rate_limit"
-            android:layout_marginTop="8dp" />
+            <Spinner
+                style="@style/ComboBox"
+                android:id="@+id/SFilterMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/filter_mode_entries" />
 
-        <Spinner
-            style="@style/ComboBox"
-            android:id="@+id/SRefreshRate"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:entries="@array/refresh_rate_entries" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/refresh_rate_limit"
+                android:layout_marginTop="8dp" />
 
+            <Spinner
+                style="@style/ComboBox"
+                android:id="@+id/SRefreshRate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/refresh_rate_entries" />
+
+        </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+</ScrollView>

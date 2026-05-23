@@ -85,6 +85,8 @@ public class ActiveWindowsDialog extends ContentDialog {
 
                 if (renderer instanceof GLRenderer) {
                     ((GLRenderer)renderer).takeWindowScreenshot(content, (bitmap) -> ivWindow.post(() -> ivWindow.setImageBitmap(bitmap)));
+                } else {
+                    ivWindow.setImageResource(R.drawable.ic_no_screenshot);
                 }
             }
             else {

@@ -493,6 +493,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             sessionStartTime = 0; // Prevent double-counting
         }
         if (wineRequestHandler != null) wineRequestHandler.stop();
+        if (midiHandler != null) midiHandler.stop();
         winHandler.stop();
         if (environment != null) environment.stopEnvironmentComponents();
 

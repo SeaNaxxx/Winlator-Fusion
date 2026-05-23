@@ -262,7 +262,7 @@
             android:textSize="16sp"
             android:layout_marginTop="16dp" />
 
-        <Switch
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/bgMusicSwitch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
