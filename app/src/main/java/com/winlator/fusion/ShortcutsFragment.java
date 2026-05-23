@@ -59,8 +59,10 @@ public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
         if (manager.getContainers().isEmpty()) return;
         CreateFolderDialog createFolderDialog = new CreateFolderDialog(manager);
         createFolderDialog.setOnCreateFolderListener((container, name) -> {
-            File desktopDir = new File(container.getUserDir(), "Desktop");
+            File userDir = container.getUserDir();
+            File desktopDir = userDir != null ? new File(userDir, "Desktop") : null;
             File parent = !folderStack.isEmpty() ? folderStack.peek().file : desktopDir;
+            if (parent == null) return;
             File file = new File(parent, name);
             if (file.isDirectory()) {
                 AppUtils.showToast(getContext(), R.string.there_already_file_with_that_name);

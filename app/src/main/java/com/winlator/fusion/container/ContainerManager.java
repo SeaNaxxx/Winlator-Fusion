@@ -71,7 +71,9 @@ public class ContainerManager {
                             if (getContainerById(id) != null) continue;
                             Container container = new Container(id);
                             container.setRootDir(new File(homeDir, RootFS.USER+"-"+container.id));
-                            JSONObject data = new JSONObject(FileUtils.readString(container.getConfigFile()));
+                            File configFile = container.getConfigFile();
+                            if (configFile == null || !configFile.isFile()) continue;
+                            JSONObject data = new JSONObject(FileUtils.readString(configFile));
                             container.loadData(data);
                             if (container.isBionic() != isBionicDir) {
                                 Log.w(TAG, "Container " + id + " variant mismatch: isBionic=" + container.isBionic() + " but found in " + (isBionicDir ? "imagefs" : "rootfs") + " - skipping");
@@ -210,6 +212,11 @@ public class ContainerManager {
         dstContainer.setRendererPresentMode(srcContainer.getRendererPresentMode());
         dstContainer.setRendererFilterMode(srcContainer.getRendererFilterMode());
         dstContainer.setRendererRefreshRate(srcContainer.getRendererRefreshRate());
+        dstContainer.setFullscreenStretched(srcContainer.isFullscreenStretched());
+        dstContainer.setMIDISoundFont(srcContainer.getMIDISoundFont());
+        dstContainer.setInputType(srcContainer.getInputType());
+        dstContainer.setLC_ALL(srcContainer.getLC_ALL());
+        dstContainer.setExclusiveXInput(srcContainer.isExclusiveXInput());
         String srcExtraData = srcContainer.getExtraData();
         if (srcExtraData != null && !srcExtraData.isEmpty()) {
             try {
@@ -231,6 +238,7 @@ public class ContainerManager {
         ArrayList<Shortcut> shortcuts = new ArrayList<>();
 
         if (selectedFolder != null) {
+            if (selectedFolder.file == null) return shortcuts;
             File[] files = selectedFolder.file.listFiles();
             if (files != null) {
                 for (File file : files) {
@@ -242,7 +250,9 @@ public class ContainerManager {
         }
         else {
             for (Container container : containers) {
-                File desktopDir = new File(container.getUserDir(), "Desktop");
+                File userDir = container.getUserDir();
+                if (userDir == null) continue;
+                File desktopDir = new File(userDir, "Desktop");
                 File[] files = desktopDir.listFiles();
                 if (files != null) {
                     for (File file : files) {
@@ -265,6 +275,8 @@ public class ContainerManager {
     public ArrayList<FileInfo> loadFiles(Container container, FileInfo parent) {
         ArrayList<FileInfo> fileInfos = new ArrayList<>();
 
+        if (container == null || container.getRootDir() == null) return fileInfos;
+
         if (parent != null) {
             fileInfos = parent.list();
         }
@@ -276,11 +288,13 @@ public class ContainerManager {
             }
 
             File userDir = container.getUserDir();
-            File documentsDir = new File(userDir, "Documents");
-            File favoritesDir = new File(userDir, "Favorites");
+            if (userDir != null) {
+                File documentsDir = new File(userDir, "Documents");
+                File favoritesDir = new File(userDir, "Favorites");
 
-            fileInfos.add(new FileInfo(container, documentsDir.getName(), documentsDir.getPath(), FileInfo.Type.DIRECTORY));
-            fileInfos.add(new FileInfo(container, favoritesDir.getName(), favoritesDir.getPath(), FileInfo.Type.DIRECTORY));
+                fileInfos.add(new FileInfo(container, documentsDir.getName(), documentsDir.getPath(), FileInfo.Type.DIRECTORY));
+                fileInfos.add(new FileInfo(container, favoritesDir.getName(), favoritesDir.getPath(), FileInfo.Type.DIRECTORY));
+            }
 
             Collections.sort(fileInfos);
         }

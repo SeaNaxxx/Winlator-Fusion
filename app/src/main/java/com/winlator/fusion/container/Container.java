@@ -282,19 +282,19 @@ public class Container {
     }
 
     public File getConfigFile() {
-        return new File(rootDir, ".container");
+        return rootDir != null ? new File(rootDir, ".container") : null;
     }
 
     public File getUserDir() {
-        return new File(rootDir, ".wine/drive_c/users/"+ RootFS.USER+"/");
+        return rootDir != null ? new File(rootDir, ".wine/drive_c/users/"+ RootFS.USER+"/") : null;
     }
 
     public File getStartMenuDir() {
-        return new File(rootDir, ".wine/drive_c/ProgramData/Microsoft/Windows/Start Menu/");
+        return rootDir != null ? new File(rootDir, ".wine/drive_c/ProgramData/Microsoft/Windows/Start Menu/") : null;
     }
 
     public File getIconsDir(int size) {
-        return new File(rootDir, ".local/share/icons/hicolor/"+size+"x"+size+"/apps/");
+        return rootDir != null ? new File(rootDir, ".local/share/icons/hicolor/"+size+"x"+size+"/apps/") : null;
     }
 
     public String getDesktopTheme() {
@@ -419,6 +419,8 @@ public class Container {
     public void setExclusiveXInput(boolean exclusiveXInput) { this.exclusiveXInput = exclusiveXInput; }
 
     public void saveData() {
+        File configFile = getConfigFile();
+        if (configFile == null) return;
         try {
             JSONObject data = new JSONObject();
             data.put("id", id);
@@ -462,7 +464,7 @@ public class Container {
             data.put("exclusiveXInput", exclusiveXInput);
 
             if (!WineInfo.isMainWineVersion(wineVersion)) data.put("wineVersion", wineVersion);
-            FileUtils.writeString(getConfigFile(), data.toString());
+            FileUtils.writeString(configFile, data.toString());
         }
         catch (JSONException e) {}
     }
