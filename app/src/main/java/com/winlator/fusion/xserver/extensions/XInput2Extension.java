@@ -210,7 +210,7 @@ public class XInput2Extension extends Extension {
 
     private void queryDevice(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
         int deviceId = inputStream.readInt();
-        inputStream.skip(client.getRemainingRequestLength() - 4);
+        inputStream.skip(client.getRemainingRequestLength());
 
         if (deviceId == XI_ALL_DEVICES || deviceId == XI_ALL_MASTER_DEVICES) {
             writeMultiDeviceQueryResponse(client, outputStream, deviceId);
