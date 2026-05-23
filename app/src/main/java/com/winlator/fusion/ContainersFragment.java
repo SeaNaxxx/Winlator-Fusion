@@ -156,8 +156,10 @@ public class ContainersFragment extends Fragment {
                 subtitle.append("Glibc");
             }
             if (wineVersion != null && !wineVersion.isEmpty()) {
-                String wineDisplay = WineInfo.fromIdentifier(holder.itemView.getContext(), wineVersion).toString();
-                subtitle.append(" · ").append(wineDisplay);
+                WineInfo wineInfo = WineInfo.fromIdentifier(holder.itemView.getContext(), wineVersion);
+                if (wineInfo != null) {
+                    subtitle.append(" · ").append(wineInfo.toString());
+                }
             }
             if (holder.subtitle != null) {
                 holder.subtitle.setText(subtitle.toString());

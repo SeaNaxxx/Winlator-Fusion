@@ -136,14 +136,17 @@ public class ContainerDetailFragment extends Fragment {
         }
         else etName.setText(getString(R.string.container)+"-"+manager.getNextContainerId());
 
-        final ArrayList<WineInfo> wineInfos = WineInstaller.getInstalledWineInfos(context, isEditMode() ? container.getContainerVariant() : Container.DEFAULT_VARIANT);
+        // Determine current variant for variant-aware driver/wrapper selection
+        String currentVariant = isEditMode() ? container.getContainerVariant() : Container.DEFAULT_VARIANT;
+        boolean isBionic = currentVariant.equals(Container.BIONIC);
+
+        final ArrayList<WineInfo> wineInfos = WineInstaller.getInstalledWineInfos(context, currentVariant);
         if (wineInfos == null || wineInfos.isEmpty()) {
             if (!Container.BIONIC.equals(currentVariant)) {
                 currentVariant = Container.BIONIC;
                 isBionic = true;
             }
         }
-        // Use non-final wrapper to allow re-filtering when variant changes
         final ArrayList<WineInfo>[] wineInfosRef = new ArrayList[]{wineInfos};
         final Spinner sWineVersion = view.findViewById(R.id.SWineVersion);
         if (wineInfosRef[0].size() > 1) loadWineVersionSpinner(view, sWineVersion, wineInfosRef[0]);
@@ -152,10 +155,6 @@ public class ContainerDetailFragment extends Fragment {
         final Spinner sContainerVariant = view.findViewById(R.id.SContainerVariant);
         final View llBionicOptions = view.findViewById(R.id.LLBionicOptions);
         final Spinner sEmulator = view.findViewById(R.id.SEmulator);
-
-        // Determine current variant for variant-aware driver/wrapper selection
-        String currentVariant = isEditMode() ? container.getContainerVariant() : Container.DEFAULT_VARIANT;
-        boolean isBionic = currentVariant.equals(Container.BIONIC);
 
         // Define picker refs before variant listener so they are accessible
         final String oldGraphicsDriverConfig = isEditMode() ? container.getGraphicsDriverConfig() : "";
@@ -754,7 +753,10 @@ public class ContainerDetailFragment extends Fragment {
         sWineVersion.setEnabled(!isEditMode());
         view.findViewById(R.id.LLWineVersion).setVisibility(View.VISIBLE);
         sWineVersion.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, wineInfos));
-        if (isEditMode()) AppUtils.setSpinnerSelectionFromValue(sWineVersion, WineInfo.fromIdentifier(context, container.getWineVersion()).toString());
+        if (isEditMode()) {
+            WineInfo wineInfo = WineInfo.fromIdentifier(context, container.getWineVersion());
+            if (wineInfo != null) AppUtils.setSpinnerSelectionFromValue(sWineVersion, wineInfo.toString());
+        }
     }
 
     private void updateRendererSummary(TextView tvRendererSummary, View anchor) {
