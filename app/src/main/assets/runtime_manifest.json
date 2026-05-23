@@ -96,12 +96,14 @@
         "fexcore": {
           "asset": "fexcore/fexcore-{version}.tzst",
           "version": "2601",
-          "dll": "libwow64fex.dll"
+          "dlls": ["libarm64ecfex.dll", "libwow64fex.dll"],
+          "primary_dll": "libwow64fex.dll"
         },
         "wowbox64": {
           "asset": "wowbox64/wowbox64-{version}.tzst",
           "version": "0.4.1",
-          "dll": "wowbox64.dll"
+          "dlls": ["wowbox64.dll"],
+          "primary_dll": "wowbox64.dll"
         }
       },
       "audio_profile": "desktop"
