@@ -627,6 +627,16 @@ public class SettingsFragment extends Fragment {
     private void loadMIDIInputDeviceSpinner(final Spinner sMIDIInputDevice, final String selectedValue) {
         Context context = getContext();
         MidiManager mm = (MidiManager)context.getSystemService(Context.MIDI_SERVICE);
+        if (mm == null) {
+            ArrayList<String> items = new ArrayList<>();
+            items.add(context.getString(R.string.none));
+            items.add(context.getString(R.string.auto));
+            sMIDIInputDevice.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, items));
+            if (selectedValue.equals("none")) sMIDIInputDevice.setSelection(0, false);
+            else sMIDIInputDevice.setSelection(1, false);
+            return;
+        }
+
         MidiDeviceInfo[] infos = mm.getDevices();
 
         if (!midiDeviceCallbackRegistered) {

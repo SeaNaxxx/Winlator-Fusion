@@ -93,30 +93,44 @@ public abstract class FusionFSInstaller {
                     if (size > 0) {
                         long totalSize = totalSizeRef.addAndGet(size);
                         final int progress = Math.min((int)(((float)totalSize / totalContentLength) * 70), 70);
-                        activity.runOnUiThread(() -> dialog.setProgress(progress));
+                        if (!activity.isFinishing()) activity.runOnUiThread(() -> {
+                            if (!activity.isFinishing()) dialog.setProgress(progress);
+                        });
                     }
                     return file;
                 });
             } catch (Exception e) { success = false; }
 
             if (success) {
-                renameExtractedDirs(rootDir);
-                applyPatches(activity, rootDir);
-                copySharedRuntimeLibraries(fusionFS);
-                activity.runOnUiThread(() -> dialog.setProgress(75));
-                createWineSymlink(fusionFS);
-                createCompatibilitySymlinks(activity, fusionFS);
-                installWineFromAssets(activity, fusionFS, dialog);
-                installContainerPatternsFromAssets(activity, fusionFS);
-                activity.runOnUiThread(() -> dialog.setProgress(95));
-                installDriversFromAssets(activity);
-                fusionFS.createVersionFile(LATEST_VERSION);
-                resetContainerVersions(activity);
-                activity.runOnUiThread(() -> dialog.setProgress(100));
-            } else {
+                try {
+                    renameExtractedDirs(rootDir);
+                    applyPatches(activity, rootDir);
+                    copySharedRuntimeLibraries(fusionFS);
+                    if (!activity.isFinishing()) activity.runOnUiThread(() -> {
+                        if (!activity.isFinishing()) dialog.setProgress(75);
+                    });
+                    createWineSymlink(fusionFS);
+                    createCompatibilitySymlinks(activity, fusionFS);
+                    installWineFromAssets(activity, fusionFS, dialog);
+                    installContainerPatternsFromAssets(activity, fusionFS);
+                    if (!activity.isFinishing()) activity.runOnUiThread(() -> {
+                        if (!activity.isFinishing()) dialog.setProgress(95);
+                    });
+                    installDriversFromAssets(activity);
+                    fusionFS.createVersionFile(LATEST_VERSION);
+                    resetContainerVersions(activity);
+                    if (!activity.isFinishing()) activity.runOnUiThread(() -> {
+                        if (!activity.isFinishing()) dialog.setProgress(100);
+                    });
+                } catch (Exception e) {
+                    success = false;
+                }
+            }
+
+            if (!success) {
                 AppUtils.showToast(activity, R.string.unable_to_install_system_files);
             }
-            dialog.closeOnUiThread();
+            if (!activity.isFinishing()) dialog.closeOnUiThread();
         });
     }
 
@@ -153,9 +167,11 @@ public abstract class FusionFSInstaller {
                 }
             }
 
-            if (dialog != null) {
+            if (dialog != null && !activity.isFinishing()) {
                 int progress = Math.min(versionProgress, 94);
-                activity.runOnUiThread(() -> dialog.setProgress(progress));
+                activity.runOnUiThread(() -> {
+                    if (!activity.isFinishing()) dialog.setProgress(progress);
+                });
             }
         }
     }
