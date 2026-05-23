@@ -208,28 +208,32 @@ public class XInput2Extension extends Extension {
         outputStream.writePad(3);
     }
 
-    private void queryDevice(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException {
-        inputStream.skip(client.getRemainingRequestLength());
+    private void queryDevice(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
+        int deviceId = inputStream.readInt();
+        inputStream.skip(client.getRemainingRequestLength() - 4);
 
-        final int masterPointerId = 2;
-        final String name = "Virtual Core Pointer";
-        final byte[] nameBytes = name.getBytes();
-        final int nameLen = nameBytes.length;
-        final int namePad = (nameLen + 3) & ~3;
+        if (deviceId == XI_ALL_DEVICES || deviceId == XI_ALL_MASTER_DEVICES) {
+            writeMultiDeviceQueryResponse(client, outputStream, deviceId);
+        } else if (deviceId == MASTER_POINTER_ID) {
+            writeSingleDeviceQueryResponse(client, outputStream, MASTER_POINTER_ID, "Virtual Core Pointer", true);
+        } else if (deviceId == MASTER_KEYBOARD_ID) {
+            writeSingleDeviceQueryResponse(client, outputStream, MASTER_KEYBOARD_ID, "Virtual Core Keyboard", false);
+        } else {
+            throw new BadValue(deviceId);
+        }
+    }
 
-        final int numButtons = POINTER_BUTTON_COUNT;
-        final int buttonStateBytes = Math.max(4, ((numButtons + 31) / 32) * 4);
-        final int buttonClassBytes = 8 + buttonStateBytes + (numButtons * 4);
+    private void writeSingleDeviceQueryResponse(XClient client, XOutputStream outputStream, int deviceId, String name, boolean isPointer) throws IOException {
+        byte[] nameBytes = name.getBytes();
+        int nameLen = nameBytes.length;
+        int namePad = (nameLen + 3) & ~3;
+        int numButtons = isPointer ? POINTER_BUTTON_COUNT : 0;
+        int buttonStateBytes = Math.max(4, ((numButtons + 31) / 32) * 4);
+        int buttonClassBytes = isPointer ? 8 + buttonStateBytes + (numButtons * 4) : 0;
+        int numValuators = isPointer ? 2 : 0;
+        int numClasses = (isPointer ? 1 : 0) + numValuators;
 
-        final int numValuators = 2;
-        final int numClasses = 1 + numValuators;
-
-        int deviceInfoSize =
-                12 +
-                        namePad +
-                        buttonClassBytes +
-                        (44 * numValuators);
-
+        int deviceInfoSize = 12 + namePad + buttonClassBytes + (44 * numValuators);
         int length = deviceInfoSize / 4;
 
         try (XStreamLock lock = outputStream.lock()) {
@@ -240,9 +244,9 @@ public class XInput2Extension extends Extension {
             outputStream.writeShort((short) 1);
             outputStream.writePad(22);
 
-            outputStream.writeShort((short) masterPointerId);
+            outputStream.writeShort((short) deviceId);
             outputStream.writeShort((short) 1);
-            outputStream.writeShort((short) 0);
+            outputStream.writeShort((short) (isPointer ? 0 : 1));
             outputStream.writeShort((short) numClasses);
             outputStream.writeShort((short) nameLen);
             outputStream.writeByte((byte) 1);
@@ -251,9 +255,66 @@ public class XInput2Extension extends Extension {
             outputStream.write(nameBytes);
             outputStream.writePad(namePad - nameLen);
 
-            writeButtonClass(outputStream, masterPointerId, numButtons);
+            if (isPointer) writeButtonClass(outputStream, deviceId, numButtons);
+            for (int i = 0; i < numValuators; i++) writeValuatorClass(outputStream, i);
+        }
+    }
+
+    private void writeMultiDeviceQueryResponse(XClient client, XOutputStream outputStream, int requestedDeviceId) throws IOException {
+        String pointerName = "Virtual Core Pointer";
+        String keyboardName = "Virtual Core Keyboard";
+
+        byte[] pointerNameBytes = pointerName.getBytes();
+        int pointerNameLen = pointerNameBytes.length;
+        int pointerNamePad = (pointerNameLen + 3) & ~3;
+
+        byte[] keyboardNameBytes = keyboardName.getBytes();
+        int keyboardNameLen = keyboardNameBytes.length;
+        int keyboardNamePad = (keyboardNameLen + 3) & ~3;
+
+        int numPointerButtons = POINTER_BUTTON_COUNT;
+        int pointerButtonStateBytes = Math.max(4, ((numPointerButtons + 31) / 32) * 4);
+        int pointerButtonClassBytes = 8 + pointerButtonStateBytes + (numPointerButtons * 4);
+        int pointerNumValuators = 2;
+        int pointerNumClasses = 1 + pointerNumValuators;
+        int pointerInfoSize = 12 + pointerNamePad + pointerButtonClassBytes + (44 * pointerNumValuators);
+
+        int keyboardNumClasses = 0;
+        int keyboardInfoSize = 12 + keyboardNamePad;
+
+        int numDevices = 2;
+        int totalLength = (pointerInfoSize + keyboardInfoSize) / 4;
+
+        try (XStreamLock lock = outputStream.lock()) {
+            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
+            outputStream.writeByte((byte) 0);
+            outputStream.writeShort(client.getSequenceNumber());
+            outputStream.writeInt(totalLength);
+            outputStream.writeShort((short) numDevices);
+            outputStream.writePad(22);
+
+            outputStream.writeShort((short) MASTER_POINTER_ID);
+            outputStream.writeShort((short) 1);
+            outputStream.writeShort((short) 0);
+            outputStream.writeShort((short) pointerNumClasses);
+            outputStream.writeShort((short) pointerNameLen);
+            outputStream.writeByte((byte) 1);
+            outputStream.writeByte((byte) 0);
+            outputStream.write(pointerNameBytes);
+            outputStream.writePad(pointerNamePad - pointerNameLen);
+            writeButtonClass(outputStream, MASTER_POINTER_ID, numPointerButtons);
             writeValuatorClass(outputStream, 0);
             writeValuatorClass(outputStream, 1);
+
+            outputStream.writeShort((short) MASTER_KEYBOARD_ID);
+            outputStream.writeShort((short) 1);
+            outputStream.writeShort((short) 1);
+            outputStream.writeShort((short) keyboardNumClasses);
+            outputStream.writeShort((short) keyboardNameLen);
+            outputStream.writeByte((byte) 1);
+            outputStream.writeByte((byte) 0);
+            outputStream.write(keyboardNameBytes);
+            outputStream.writePad(keyboardNamePad - keyboardNameLen);
         }
     }
 

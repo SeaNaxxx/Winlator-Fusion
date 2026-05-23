@@ -662,9 +662,16 @@ public class BigPictureActivity extends AppCompatActivity {
 
     private void loadYouTubeVideo(String videoId) {
         if (musicWebView == null) return;
-        // Use mute=1 to guarantee autoplay — muted autoplay is always permitted without user gesture
-        String html = "<iframe width=\"1\" height=\"1\" src=\"https://www.youtube.com/embed/" + videoId + "?autoplay=1&mute=1&loop=1&playlist=" + videoId + "\" frameborder=\"0\" allow=\"autoplay\" allowfullscreen></iframe>";
-        musicWebView.loadData(html, "text/html", "utf-8");
+        String html = "<!DOCTYPE html><html><body><div id=\"yt-player\"></div>" +
+            "<script src=\"https://www.youtube.com/iframe_api\"></script>" +
+            "<script>var player;function onYouTubeIframeAPIReady(){" +
+            "player=new YT.Player('yt-player',{" +
+            "height:'1',width:'1'," +
+            "videoId:'" + videoId + "'," +
+            "playerVars:{autoplay:1,mute:1,loop:1,playlist:'" + videoId + "'}," +
+            "events:{'onReady':function(e){e.target.unMute();}}});}" +
+            "</script></body></html>";
+        musicWebView.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "utf-8", null);
     }
 
     private String extractYouTubeId(String url) {
