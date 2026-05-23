@@ -419,16 +419,11 @@ public class ContainerDetailFragment extends Fragment {
                     data.put("desktopTheme", desktopTheme);
                     data.put("containerVariant", containerVariant);
                     data.put("emulator", emulator);
-                    Object rtObj = btRendererOptions.getTag(R.id.rendererType);
-                    data.put("rendererType", rtObj instanceof Integer ? (int)(byte)(Integer)rtObj : rtObj != null ? (int)(byte)rtObj : Container.RENDERER_GL);
-                    Object rnObj = btRendererOptions.getTag(R.id.rendererNative);
-                    data.put("rendererNative", rnObj instanceof Boolean ? (boolean) rnObj : false);
-                    Object pmObj = btRendererOptions.getTag(R.id.rendererPresentMode);
-                    data.put("rendererPresentMode", pmObj instanceof Integer ? (int)(byte)(Integer)pmObj : pmObj != null ? (int)(byte)pmObj : Container.PRESENT_MODE_FIFO);
-                    Object fmObj = btRendererOptions.getTag(R.id.rendererFilterMode);
-                    data.put("rendererFilterMode", fmObj instanceof Integer ? (int)(byte)(Integer)fmObj : fmObj != null ? (int)(byte)fmObj : Container.FILTER_MODE_LINEAR);
-                    Object rrObj = btRendererOptions.getTag(R.id.rendererRefreshRate);
-                    data.put("rendererRefreshRate", rrObj instanceof Integer ? (int)(byte)(Integer)rrObj : rrObj != null ? (int)(byte)rrObj : 0);
+                    data.put("rendererType", RendererOptionsDialog.getTagByte(btRendererOptions, R.id.rendererType, Container.RENDERER_GL));
+                    data.put("rendererNative", RendererOptionsDialog.getTagBoolean(btRendererOptions, R.id.rendererNative, false));
+                    data.put("rendererPresentMode", RendererOptionsDialog.getTagByte(btRendererOptions, R.id.rendererPresentMode, Container.PRESENT_MODE_FIFO));
+                    data.put("rendererFilterMode", RendererOptionsDialog.getTagByte(btRendererOptions, R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR));
+                    data.put("rendererRefreshRate", RendererOptionsDialog.getTagByte(btRendererOptions, R.id.rendererRefreshRate, (byte) 0));
                     if (containerVariant.equals(Container.BIONIC)) {
                         if (sFEXCoreVersion.getSelectedItem() != null)
                             data.put("fexcoreVersion", sFEXCoreVersion.getSelectedItem().toString());
