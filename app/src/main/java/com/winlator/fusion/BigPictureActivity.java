@@ -264,18 +264,24 @@ public class BigPictureActivity extends AppCompatActivity {
             }
         }
 
-        // Add item decoration for reduced spacing
-        recyclerView.addItemDecoration(new CarouselItemDecoration(15));
-
         // Initialize ContainerManager
-        manager = new ContainerManager(this);
+        try {
+            manager = new ContainerManager(this);
+        } catch (Exception e) {
+            manager = null;
+        }
+
+        // Add item decoration for reduced spacing
+        if (recyclerView != null) {
+            recyclerView.addItemDecoration(new CarouselItemDecoration(15));
+
+            // Setup snapping for RecyclerView
+            SnapHelper snapHelper = new LinearSnapHelper();
+            snapHelper.attachToRecyclerView(recyclerView);
+        }
 
         // Load shortcuts
-        loadShortcutsList();
-
-        // Setup snapping for RecyclerView
-        SnapHelper snapHelper = new LinearSnapHelper();
-        snapHelper.attachToRecyclerView(recyclerView);
+        if (manager != null) loadShortcutsList();
 
         // Play button click
         if (playButton != null) {
@@ -287,7 +293,7 @@ public class BigPictureActivity extends AppCompatActivity {
         }
 
         // RecyclerView scroll listener to update current shortcut
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        if (recyclerView != null) recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
@@ -300,7 +306,9 @@ public class BigPictureActivity extends AppCompatActivity {
             }
         });
 
-        setupMusicControls();
+        try {
+            setupMusicControls();
+        } catch (Exception e) {}
     }
 
     @Override
@@ -381,6 +389,7 @@ public class BigPictureActivity extends AppCompatActivity {
     }
 
     private int getCenterItemPosition() {
+        if (recyclerView == null) return RecyclerView.NO_POSITION;
         LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
         if (layoutManager == null) return RecyclerView.NO_POSITION;
         int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();

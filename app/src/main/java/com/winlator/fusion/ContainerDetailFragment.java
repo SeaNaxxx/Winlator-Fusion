@@ -137,6 +137,12 @@ public class ContainerDetailFragment extends Fragment {
         else etName.setText(getString(R.string.container)+"-"+manager.getNextContainerId());
 
         final ArrayList<WineInfo> wineInfos = WineInstaller.getInstalledWineInfos(context, isEditMode() ? container.getContainerVariant() : Container.DEFAULT_VARIANT);
+        if (wineInfos == null || wineInfos.isEmpty()) {
+            if (!Container.BIONIC.equals(currentVariant)) {
+                currentVariant = Container.BIONIC;
+                isBionic = true;
+            }
+        }
         // Use non-final wrapper to allow re-filtering when variant changes
         final ArrayList<WineInfo>[] wineInfosRef = new ArrayList[]{wineInfos};
         final Spinner sWineVersion = view.findViewById(R.id.SWineVersion);
