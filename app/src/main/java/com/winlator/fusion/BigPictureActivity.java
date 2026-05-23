@@ -9,7 +9,6 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.webkit.WebSettings;
@@ -23,12 +22,12 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSnapHelper;
@@ -537,7 +536,7 @@ public class BigPictureActivity extends AppCompatActivity {
     }
 
     private void setupMusicControls() {
-        Switch bgMusicSwitch = findViewById(R.id.bgMusicSwitch);
+        SwitchCompat bgMusicSwitch = findViewById(R.id.bgMusicSwitch);
         if (bgMusicSwitch == null) return;
 
         boolean bgMusicEnabled = preferences.getBoolean("bg_music_enabled", false);
@@ -663,21 +662,9 @@ public class BigPictureActivity extends AppCompatActivity {
 
     private void loadYouTubeVideo(String videoId) {
         if (musicWebView == null) return;
-        String html = "<iframe width=\"1\" height=\"1\" src=\"https://www.youtube.com/embed/" + videoId + "?autoplay=1&loop=1&playlist=" + videoId + "\" frameborder=\"0\" allow=\"autoplay\" allowfullscreen></iframe>";
+        // Use mute=1 to guarantee autoplay — muted autoplay is always permitted without user gesture
+        String html = "<iframe width=\"1\" height=\"1\" src=\"https://www.youtube.com/embed/" + videoId + "?autoplay=1&mute=1&loop=1&playlist=" + videoId + "\" frameborder=\"0\" allow=\"autoplay\" allowfullscreen></iframe>";
         musicWebView.loadData(html, "text/html", "utf-8");
-        musicWebView.postDelayed(() -> simulateTouchOnWebView(), 1000);
-    }
-
-    private void simulateTouchOnWebView() {
-        if (musicWebView == null) return;
-        long downTime = System.currentTimeMillis();
-        long eventTime = System.currentTimeMillis();
-        MotionEvent event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_DOWN, 50, 50, 0);
-        musicWebView.dispatchTouchEvent(event);
-        event.recycle();
-        event = MotionEvent.obtain(downTime, eventTime + 100, MotionEvent.ACTION_UP, 50, 50, 0);
-        musicWebView.dispatchTouchEvent(event);
-        event.recycle();
     }
 
     private String extractYouTubeId(String url) {
