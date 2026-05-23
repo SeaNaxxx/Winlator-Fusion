@@ -413,6 +413,11 @@ public class ContainerDetailFragment extends Fragment {
                     data.put("desktopTheme", desktopTheme);
                     data.put("containerVariant", containerVariant);
                     data.put("emulator", emulator);
+                    data.put("rendererType", (int)(byte) btRendererOptions.getTag(R.id.rendererType));
+                    data.put("rendererNative", (boolean) btRendererOptions.getTag(R.id.rendererNative));
+                    data.put("rendererPresentMode", (int)(byte) btRendererOptions.getTag(R.id.rendererPresentMode));
+                    data.put("rendererFilterMode", (int)(byte) btRendererOptions.getTag(R.id.rendererFilterMode));
+                    data.put("rendererRefreshRate", (int)(byte) btRendererOptions.getTag(R.id.rendererRefreshRate));
                     if (containerVariant.equals(Container.BIONIC)) {
                         if (sFEXCoreVersion.getSelectedItem() != null)
                             data.put("fexcoreVersion", sFEXCoreVersion.getSelectedItem().toString());
