@@ -64,6 +64,7 @@ import com.winlator.fusion.core.WineInstaller;
 import com.winlator.fusion.core.WineRegistryEditor;
 import com.winlator.fusion.core.WineStartMenuCreator;
 import com.winlator.fusion.core.WineThemeManager;
+import com.winlator.fusion.core.WineRequestHandler;
 import com.winlator.fusion.core.WineUtils;
 import com.winlator.fusion.inputcontrols.ControlsProfile;
 import com.winlator.fusion.inputcontrols.ExternalController;
@@ -72,6 +73,9 @@ import com.winlator.fusion.math.Mathf;
 import com.winlator.fusion.renderer.GLRenderer;
 import com.winlator.fusion.renderer.Renderer;
 import com.winlator.fusion.renderer.VulkanRenderer;
+import cn.sherlock.com.sun.media.sound.SF2Soundbank;
+import com.winlator.fusion.midi.MidiHandler;
+import com.winlator.fusion.midi.MidiManager;
 import com.winlator.fusion.widget.FrameRating;
 import com.winlator.fusion.widget.InputControlsView;
 import com.winlator.fusion.widget.MagnifierView;
@@ -147,6 +151,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
     private String screenEffectProfile;
     private boolean isPaused = false;
     private long sessionStartTime = 0;
+    private WineRequestHandler wineRequestHandler;
+    private MidiHandler midiHandler;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -272,6 +278,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             this.dxwrapperConfig = DXWrappers.parseConfigs(dxwrapper, dxwrapperConfig);
 
             winHandler.gamepadHandler.setPreferredInputApi(GamepadHandler.PreferredInputApi.values()[preferredInputApiIdx]);
+
+            if (container != null) {
+                winHandler.setInputType((byte) container.getInputType());
+            }
+            if (shortcut != null) {
+                String shortcutInputType = shortcut.getExtra("inputType");
+                if (!shortcutInputType.isEmpty()) winHandler.setInputType(Byte.parseByte(shortcutInputType));
+            }
         }
 
         preloaderDialog.showWithCountdown(R.string.starting_up, 15);
@@ -382,6 +396,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             shortcut.saveData();
             sessionStartTime = 0; // Prevent double-counting
         }
+        if (wineRequestHandler != null) wineRequestHandler.stop();
+        if (midiHandler != null) midiHandler.stop();
         winHandler.stop();
         if (environment != null) environment.stopEnvironmentComponents();
         super.onDestroy();
@@ -476,6 +492,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             shortcut.saveData();
             sessionStartTime = 0; // Prevent double-counting
         }
+        if (wineRequestHandler != null) wineRequestHandler.stop();
         winHandler.stop();
         if (environment != null) environment.stopEnvironmentComponents();
 
@@ -536,6 +553,24 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             containerDataChanged = true;
         }
 
+        String currentInputType = String.valueOf(container.getInputType());
+        String currentExclusiveXInput = String.valueOf(container.isExclusiveXInput());
+        if (shortcut != null) {
+            String shortcutInputType = shortcut.getExtra("inputType", "");
+            if (!shortcutInputType.isEmpty()) currentInputType = shortcutInputType;
+            String shortcutExclusive = shortcut.getExtra("exclusiveXInput", "");
+            if (!shortcutExclusive.isEmpty()) currentExclusiveXInput = shortcutExclusive;
+        }
+        if (!currentInputType.equals(container.getExtra("inputType")) || !currentExclusiveXInput.equals(container.getExtra("exclusiveXInput"))) {
+            int inputType = Integer.parseInt(currentInputType);
+            boolean dinputEnabled = (inputType & WinHandler.FLAG_INPUT_TYPE_DINPUT) == WinHandler.FLAG_INPUT_TYPE_DINPUT;
+            boolean exclusiveXInput = currentExclusiveXInput.equals("true") || currentExclusiveXInput.equals("1");
+            WineUtils.setJoystickRegistryKeys(container, dinputEnabled, exclusiveXInput);
+            container.putExtra("inputType", currentInputType);
+            container.putExtra("exclusiveXInput", currentExclusiveXInput);
+            containerDataChanged = true;
+        }
+
         if (containerDataChanged) container.saveData();
     }
 
@@ -577,6 +612,31 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             envVars.putAll(container.getEnvVars());
             if (shortcut != null) envVars.putAll(shortcut.getExtra("envVars"));
             if (!envVars.has("WINEESYNC")) envVars.put("WINEESYNC", "1");
+
+            String lcAll = container.getLC_ALL();
+            if (shortcut != null) {
+                String shortcutLcAll = shortcut.getExtra("lc_all", "");
+                if (!shortcutLcAll.isEmpty()) lcAll = shortcutLcAll;
+            }
+            if (!lcAll.isEmpty()) envVars.put("LC_ALL", lcAll);
+
+            String vkbasaltConfig = "";
+            if (shortcut != null) {
+                String sharpnessEffect = shortcut.getExtra("sharpnessEffect", "None");
+                if (!sharpnessEffect.equals("None")) {
+                    double sharpnessLevel = Double.parseDouble(shortcut.getExtra("sharpnessLevel", "100"));
+                    double sharpnessDenoise = Double.parseDouble(shortcut.getExtra("sharpnessDenoise", "100"));
+                    vkbasaltConfig = "effects=" + sharpnessEffect.toLowerCase() + ";"
+                        + "casSharpness=" + sharpnessLevel / 100 + ";"
+                        + "dlsSharpness=" + sharpnessLevel / 100 + ";"
+                        + "dlsDenoise=" + sharpnessDenoise / 100 + ";"
+                        + "enableOnLaunch=True";
+                }
+            }
+            if (!vkbasaltConfig.isEmpty()) {
+                envVars.put("ENABLE_VKBASALT", "1");
+                envVars.put("VKBASALT_CONFIG", vkbasaltConfig);
+            }
         }
 
         environment = new XEnvironment(this, rootFS, xServer);
@@ -607,6 +667,30 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         environment.startEnvironmentComponents();
 
         winHandler.start();
+        wineRequestHandler = new WineRequestHandler(this);
+        wineRequestHandler.start();
+
+        String midiSoundFont = container != null ? container.getMIDISoundFont() : "";
+        if (shortcut != null) {
+            String shortcutMidi = shortcut.getExtra("midiSoundFont", "");
+            if (!shortcutMidi.isEmpty()) midiSoundFont = shortcutMidi;
+        }
+        if (!midiSoundFont.isEmpty()) {
+            try {
+                midiHandler = new MidiHandler();
+                SF2Soundbank soundbank;
+                if (midiSoundFont.equals(MidiManager.DEFAULT_SF2_FILE)) {
+                    soundbank = new SF2Soundbank(getAssets().open(MidiManager.SF2_ASSETS_DIR + "/" + MidiManager.DEFAULT_SF2_FILE));
+                } else {
+                    soundbank = new SF2Soundbank(new File(MidiManager.getSoundFontDir(this), midiSoundFont));
+                }
+                midiHandler.setSoundBank(soundbank);
+                midiHandler.start();
+            } catch (Exception e) {
+                midiHandler = null;
+            }
+        }
+
         envVars.clear();
         graphicsDriver = null;
         dxwrapperConfig = null;
@@ -638,6 +722,18 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             renderer.setCursorScale(preferences.getFloat("cursor_scale", 1.0f));
             renderer.setForceWindowsFullscreen(shortcut != null && shortcut.getExtra("forceFullscreen", "0").equals("1"));
             xServer.setRenderer(renderer);
+        }
+
+        if (container != null) {
+            boolean shouldStretch = container.isFullscreenStretched();
+            if (shortcut != null) {
+                String shortcutStretched = shortcut.getExtra("fullscreenStretched", "");
+                if (!shortcutStretched.isEmpty()) shouldStretch = shortcutStretched.equals("1");
+            }
+            if (shouldStretch) {
+                Renderer r = xServer.getRenderer();
+                if (r != null) r.toggleFullscreen();
+            }
         }
 
         rootView.addView(xServerView);

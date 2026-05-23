@@ -8,6 +8,7 @@ import com.winlator.fusion.xconnector.ConnectedClient;
 import com.winlator.fusion.xconnector.XInputStream;
 import com.winlator.fusion.xconnector.XOutputStream;
 import com.winlator.fusion.xserver.events.Event;
+import com.winlator.fusion.xserver.extensions.XInput2Extension;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -101,6 +102,9 @@ public class XClient extends ConnectedClient implements XResourceManager.OnResou
             xServer.cursorManager.removeOnResourceLifecycleListener(this);
             xServer.resourceIDs.free(resourceIDBase);
         }
+
+        XInput2Extension xi2 = (XInput2Extension) xServer.getExtensionByName("XInputExtension");
+        if (xi2 != null) xi2.onClientDisconnected(this);
     }
 
     public void generateSequenceNumber() {
