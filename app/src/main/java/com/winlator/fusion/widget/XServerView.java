@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import com.winlator.fusion.renderer.GLRenderer;
+import com.winlator.fusion.renderer.Renderer;
 import com.winlator.fusion.renderer.VulkanRenderer;
 import com.winlator.fusion.xserver.XServer;
 
@@ -117,7 +118,14 @@ public class XServerView extends FrameLayout {
     public SurfaceControl getSurfaceControl() {
         if (Build.VERSION.SDK_INT >= 29) {
             if (glSurfaceView != null) return glSurfaceView.getSurfaceControl();
-            if (vulkanTextureView != null) return vulkanTextureView.getSurfaceControl();
+            if (vulkanTextureView != null) {
+                try {
+                    java.lang.reflect.Method m = android.view.View.class.getMethod("getSurfaceControl");
+                    return (SurfaceControl) m.invoke(vulkanTextureView);
+                } catch (Exception e) {
+                    return null;
+                }
+            }
         }
         return null;
     }
