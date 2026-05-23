@@ -204,7 +204,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             try {
                 startActivity(new Intent(this, BigPictureActivity.class));
             } catch (Exception e) {
-                AppUtils.showToast(this, R.string.unable_to_install_wine);
+                android.util.Log.e("MainActivity", "Failed to launch BigPictureActivity", e);
+                AppUtils.showToast(this, R.string.unable_to_open_big_picture);
             }
         } else if (id == R.id.menu_item_about) {
             (new AboutDialog(this)).show();

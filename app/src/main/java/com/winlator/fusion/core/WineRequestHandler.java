@@ -9,6 +9,7 @@ import android.net.Uri;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -32,7 +33,7 @@ public class WineRequestHandler {
         running = true;
         new Thread(() -> {
             try {
-                serverSocket = new ServerSocket(20000);
+                serverSocket = new ServerSocket(20000, 50, InetAddress.getLoopbackAddress());
                 while (running) {
                     try {
                         Socket clientSocket = serverSocket.accept();

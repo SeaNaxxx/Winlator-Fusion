@@ -21,6 +21,7 @@ public class XServerView extends FrameLayout {
     private VulkanRenderer vulkanRenderer;
     private GLSurfaceView glSurfaceView;
     private TextureView vulkanTextureView;
+    private android.view.Surface vulkanSurface;
     private final XServer xServer;
     private final boolean useVulkan;
 
@@ -60,7 +61,9 @@ public class XServerView extends FrameLayout {
         vulkanTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-                vulkanRenderer.onSurfaceCreated(new android.view.Surface(surface));
+                if (vulkanSurface != null) vulkanSurface.release();
+                vulkanSurface = new android.view.Surface(surface);
+                vulkanRenderer.onSurfaceCreated(vulkanSurface);
             }
 
             @Override
@@ -71,6 +74,10 @@ public class XServerView extends FrameLayout {
             @Override
             public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
                 vulkanRenderer.onSurfaceDestroyed();
+                if (vulkanSurface != null) {
+                    vulkanSurface.release();
+                    vulkanSurface = null;
+                }
                 return true;
             }
 

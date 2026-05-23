@@ -168,7 +168,7 @@ public abstract class TarCompressorUtils {
                 if (!tar.canReadEntryData(entry)) continue;
                 File file = new File(destination, entryName);
                 try {
-                    if (!file.getCanonicalPath().startsWith(destination.getCanonicalPath())) continue;
+                    if (!file.getCanonicalPath().startsWith(destination.getCanonicalPath() + File.separator)) continue;
                 } catch (IOException ignored) { continue; }
 
                 if (onExtractFileListener != null) {

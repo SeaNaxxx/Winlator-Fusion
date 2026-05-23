@@ -19,11 +19,11 @@ public class RendererOptionsDialog extends ContentDialog {
         final Spinner sFilterMode = findViewById(R.id.SFilterMode);
         final Spinner sRefreshRate = findViewById(R.id.SRefreshRate);
 
-        byte rendererType = (byte) anchor.getTag(R.id.rendererType);
-        boolean nativeMode = (boolean) anchor.getTag(R.id.rendererNative);
-        byte presentMode = (byte) anchor.getTag(R.id.rendererPresentMode);
-        byte filterMode = (byte) anchor.getTag(R.id.rendererFilterMode);
-        byte refreshRate = (byte) anchor.getTag(R.id.rendererRefreshRate);
+        byte rendererType = getTagByte(anchor, R.id.rendererType, Container.RENDERER_GL);
+        boolean nativeMode = getTagBoolean(anchor, R.id.rendererNative, false);
+        byte presentMode = getTagByte(anchor, R.id.rendererPresentMode, Container.PRESENT_MODE_FIFO);
+        byte filterMode = getTagByte(anchor, R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR);
+        byte refreshRate = getTagByte(anchor, R.id.rendererRefreshRate, (byte) 0);
 
         sRendererType.setSelection(rendererType);
         cbNativeMode.setChecked(nativeMode);
@@ -63,16 +63,11 @@ public class RendererOptionsDialog extends ContentDialog {
     }
 
     public static void applyToContainer(View anchor, Container container) {
-        Object rt = anchor.getTag(R.id.rendererType);
-        if (rt != null) container.setRendererType((byte) rt);
-        Object rn = anchor.getTag(R.id.rendererNative);
-        if (rn != null) container.setRendererNative((boolean) rn);
-        Object pm = anchor.getTag(R.id.rendererPresentMode);
-        if (pm != null) container.setRendererPresentMode((byte) pm);
-        Object fm = anchor.getTag(R.id.rendererFilterMode);
-        if (fm != null) container.setRendererFilterMode((byte) fm);
-        Object rr = anchor.getTag(R.id.rendererRefreshRate);
-        if (rr != null) container.setRendererRefreshRate((byte) rr);
+        container.setRendererType(getTagByte(anchor, R.id.rendererType, Container.RENDERER_GL));
+        container.setRendererNative(getTagBoolean(anchor, R.id.rendererNative, false));
+        container.setRendererPresentMode(getTagByte(anchor, R.id.rendererPresentMode, Container.PRESENT_MODE_FIFO));
+        container.setRendererFilterMode(getTagByte(anchor, R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR));
+        container.setRendererRefreshRate(getTagByte(anchor, R.id.rendererRefreshRate, (byte) 0));
     }
 
     public static void loadFromContainer(View anchor, Container container) {
@@ -81,5 +76,18 @@ public class RendererOptionsDialog extends ContentDialog {
         anchor.setTag(R.id.rendererPresentMode, container.getRendererPresentMode());
         anchor.setTag(R.id.rendererFilterMode, container.getRendererFilterMode());
         anchor.setTag(R.id.rendererRefreshRate, container.getRendererRefreshRate());
+    }
+
+    private static byte getTagByte(View anchor, int key, byte defaultValue) {
+        Object val = anchor.getTag(key);
+        if (val instanceof Byte) return (Byte) val;
+        if (val instanceof Integer) return ((Integer) val).byteValue();
+        return defaultValue;
+    }
+
+    private static boolean getTagBoolean(View anchor, int key, boolean defaultValue) {
+        Object val = anchor.getTag(key);
+        if (val instanceof Boolean) return (Boolean) val;
+        return defaultValue;
     }
 }

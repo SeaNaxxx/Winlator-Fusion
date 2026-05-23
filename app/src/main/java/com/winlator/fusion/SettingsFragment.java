@@ -120,6 +120,7 @@ public class SettingsFragment extends Fragment {
         try {
             view = inflater.inflate(R.layout.settings_fragment, container, false);
         } catch (Exception e) {
+            android.util.Log.e("SettingsFragment", "Failed to inflate settings layout", e);
             return null;
         }
         final Context context = getContext();
@@ -649,7 +650,6 @@ public class SettingsFragment extends Fragment {
             MidiDeviceInfo[] infos = mm.getDevices();
 
             if (!midiDeviceCallbackRegistered) {
-                midiDeviceCallbackRegistered = true;
                 try {
                     mm.registerDeviceCallback(new MidiManager.DeviceCallback() {
                         @Override
@@ -662,7 +662,10 @@ public class SettingsFragment extends Fragment {
                             loadMIDIInputDeviceSpinner(sMIDIInputDevice, selectedValue);
                         }
                     }, new Handler(Looper.getMainLooper()));
-                } catch (Exception e) {}
+                    midiDeviceCallbackRegistered = true;
+                } catch (Exception e) {
+                    android.util.Log.w("SettingsFragment", "Failed to register MIDI device callback", e);
+                }
             }
 
             for (MidiDeviceInfo info : infos) {

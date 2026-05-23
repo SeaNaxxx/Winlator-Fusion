@@ -120,7 +120,9 @@ public abstract class FusionFSInstaller {
                     fusionFS.createVersionFile(LATEST_VERSION);
                     try {
                         resetContainerVersions(activity);
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                        android.util.Log.w("FusionFSInstaller", "Failed to reset container versions", e);
+                    }
                     if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
                         if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(100);
                     });

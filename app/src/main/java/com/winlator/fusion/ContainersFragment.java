@@ -31,6 +31,7 @@ import com.winlator.fusion.container.Container;
 import com.winlator.fusion.container.ContainerManager;
 import com.winlator.fusion.contentdialog.ContentDialog;
 import com.winlator.fusion.contentdialog.StorageInfoDialog;
+import com.winlator.fusion.core.AppUtils;
 import com.winlator.fusion.core.PreloaderDialog;
 import com.winlator.fusion.core.WineInfo;
 import com.winlator.fusion.xenvironment.FusionFS;
@@ -103,7 +104,8 @@ public class ContainersFragment extends Fragment {
                     .addToBackStack(null)
                     .replace(R.id.FLFragmentContainer, new ContainerDetailFragment())
                     .commit();
-            } catch (Exception e) {
+            } catch (IllegalStateException e) {
+                android.util.Log.w("ContainersFragment", "Cannot add container: fragment not attached", e);
                 return false;
             }
             return true;
