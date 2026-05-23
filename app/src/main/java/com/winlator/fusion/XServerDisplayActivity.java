@@ -561,7 +561,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             String shortcutExclusive = shortcut.getExtra("exclusiveXInput", "");
             if (!shortcutExclusive.isEmpty()) currentExclusiveXInput = shortcutExclusive;
         }
-        if (!currentInputType.equals(container.getExtra("inputType")) || !currentExclusiveXInput.equals(container.getExtra("exclusiveXInput"))) {
+        if (!currentInputType.equals(container.getExtra("inputType")) || !currentExclusiveXInput.equals(container.getExtra("exclusiveXInput")) || wineprefixWasUpdated) {
             int inputType = Integer.parseInt(currentInputType);
             boolean dinputEnabled = (inputType & WinHandler.FLAG_INPUT_TYPE_DINPUT) == WinHandler.FLAG_INPUT_TYPE_DINPUT;
             boolean exclusiveXInput = currentExclusiveXInput.equals("true") || currentExclusiveXInput.equals("1");

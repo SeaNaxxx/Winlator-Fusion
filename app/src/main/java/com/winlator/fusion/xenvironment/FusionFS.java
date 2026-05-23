@@ -60,7 +60,9 @@ public class FusionFS {
     }
 
     public File getWineDir() {
-        return wineGlibcDir.isDirectory() ? wineGlibcDir : wineDir;
+        if (wineGlibcDir.isDirectory()) return wineGlibcDir;
+        if (wineBionicDir.isDirectory()) return wineBionicDir;
+        return wineDir;
     }
 
     public File getWineGlibcDir() {
@@ -121,18 +123,18 @@ public class FusionFS {
     }
 
     public boolean isWineInstalled() {
-        File dir = wineGlibcDir.isDirectory() ? wineGlibcDir : wineDir;
+        File dir = wineGlibcDir.isDirectory() ? wineGlibcDir : (wineBionicDir.isDirectory() ? wineBionicDir : wineDir);
         return dir.isDirectory() && new File(dir, "/bin").isDirectory();
     }
 
     public String getWinePath() {
-        File dir = wineGlibcDir.isDirectory() ? wineGlibcDir : wineDir;
+        File dir = wineGlibcDir.isDirectory() ? wineGlibcDir : (wineBionicDir.isDirectory() ? wineBionicDir : wineDir);
         return dir.getPath();
     }
 
     public String getWinePathForVersion(String wineVersion) {
         if (WineInfo.isMainWineVersion(wineVersion)) {
-            File dir = wineGlibcDir.isDirectory() ? wineGlibcDir : wineDir;
+            File dir = wineGlibcDir.isDirectory() ? wineGlibcDir : (wineBionicDir.isDirectory() ? wineBionicDir : wineDir);
             return dir.getPath();
         }
         File installedWineDir = getInstalledWineDir();
@@ -140,7 +142,7 @@ public class FusionFS {
         if (versionDir.isDirectory()) return versionDir.getPath();
         File optDir = new File(bionicDir, "/opt/" + wineVersion);
         if (optDir.isDirectory()) return optDir.getPath();
-        File dir = wineGlibcDir.isDirectory() ? wineGlibcDir : wineDir;
+        File dir = wineGlibcDir.isDirectory() ? wineGlibcDir : (wineBionicDir.isDirectory() ? wineBionicDir : wineDir);
         return dir.getPath();
     }
 
@@ -243,8 +245,8 @@ public class FusionFS {
 
     public String getPathForGlibc() {
         StringBuilder path = new StringBuilder();
-        File wineDir = wineGlibcDir.isDirectory() ? wineGlibcDir : this.wineDir;
-        path.append(wineDir).append("/bin");
+        File resolvedWineDir = wineGlibcDir.isDirectory() ? wineGlibcDir : (wineBionicDir.isDirectory() ? wineBionicDir : this.wineDir);
+        path.append(resolvedWineDir).append("/bin");
         path.append(":").append(glibcDir).append("/usr/local/bin");
         path.append(":").append(glibcDir).append("/usr/bin");
         return path.toString();

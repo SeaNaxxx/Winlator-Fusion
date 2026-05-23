@@ -300,7 +300,9 @@ public class XInput2Extension extends Extension {
                             old.id == windowId &&
                             old.deviceId == deviceId);
 
-            selections.add(sel);
+            if (!mask.isEmpty()) {
+                selections.add(sel);
+            }
         }
 
         inputStream.skip(client.getRemainingRequestLength());

@@ -39,7 +39,9 @@ public class ContainerManager {
         File imagefsDir = fusionFS.getBionicDir();
         try {
             if (!imagefsDir.isDirectory()) imagefsDir.mkdirs();
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to create bionic directory: " + imagefsDir, e);
+        }
         rootfsHomeDir = new File(rootfsDir, "home");
         imagefsHomeDir = new File(imagefsDir, "home");
         loadContainers();

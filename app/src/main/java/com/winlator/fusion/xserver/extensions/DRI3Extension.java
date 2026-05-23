@@ -112,7 +112,7 @@ public class DRI3Extension extends Extension {
         final Texture texture = content.getTexture();
 
         if (!(texture instanceof GPUImage)) {
-            xServer.getRenderer().getXServerView().queueEvent(texture::destroy);
+            if (texture != null) xServer.getRenderer().getXServerView().queueEvent(texture::destroy);
             content.setTexture(new GPUImage(content.width, content.height, false));
         }
 

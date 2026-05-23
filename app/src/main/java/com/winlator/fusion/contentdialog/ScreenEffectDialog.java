@@ -59,6 +59,13 @@ public class ScreenEffectDialog extends ContentDialog {
         GLRenderer renderer = baseRenderer instanceof GLRenderer ? (GLRenderer) baseRenderer : null;
         if (renderer == null) {
             setOnConfirmCallback(() -> {});
+            sbBrightness.setEnabled(false);
+            sbContrast.setEnabled(false);
+            sbGamma.setEnabled(false);
+            cbEnableFXAA.setEnabled(false);
+            cbEnableCRTShader.setEnabled(false);
+            cbEnableNTSCShader.setEnabled(false);
+            cbEnableToonShader.setEnabled(false);
             return;
         }
         ColorEffect currentColorEffect = renderer.effectComposer.getEffect(ColorEffect.class);
