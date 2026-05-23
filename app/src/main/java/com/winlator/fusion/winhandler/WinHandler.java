@@ -42,8 +42,8 @@ public class WinHandler {
     private MIDIHandler midiHandler;
     public final GamepadHandler gamepadHandler = new GamepadHandler(this);
     private byte inputType = DEFAULT_INPUT_TYPE;
-    private boolean xinputDisabled;
-    private boolean xinputDisabledInitialized = false;
+    private volatile boolean xinputDisabled;
+    private volatile boolean xinputDisabledInitialized = false;
 
     public WinHandler(XServerDisplayActivity activity) {
         this.activity = activity;

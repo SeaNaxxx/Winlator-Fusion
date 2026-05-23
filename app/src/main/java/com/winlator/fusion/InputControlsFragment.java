@@ -70,7 +70,7 @@ public class InputControlsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
+        ActionBar actionBar = ((AppCompatActivity)requireActivity()).getSupportActionBar();
         if (actionBar != null) actionBar.setTitle(R.string.input_controls);
     }
 

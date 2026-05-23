@@ -523,7 +523,9 @@ public class VulkanRenderer implements Renderer, WindowManager.OnWindowModificat
 
     @Override
     public void onDestroyWindow(Window window) {
-        final long id = did(window.getContent());
+        Drawable content = window.getContent();
+        final long id = did(content);
+        drawableIds.remove(content);
         xServerView.queueEvent(() -> {
             synchronized (lock) { if (nativeHandle != 0) nativeRemoveWindow(nativeHandle, id); }
             queueSceneUpdate();
