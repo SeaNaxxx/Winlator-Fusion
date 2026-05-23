@@ -435,13 +435,15 @@ public abstract class WineUtils {
         final String joysticksKey = "Software\\Wine\\DirectInput\\Joysticks";
         final String value = dinputEnabled ? "override" : "disabled";
         try (WineRegistryEditor registryEditor = new WineRegistryEditor(userRegFile)) {
+            String truncatedPrefix = "ric HID Gamepad ";
             for (int i = 0; i < 4; i++) {
                 if (exclusiveXInput) {
                     registryEditor.setStringValue(joysticksKey, "Generic HID Gamepad " + i, value);
-                    registryEditor.setStringValue(joysticksKey, "ric HID Gamepad " + i, value);
+                    // Wine may truncate the registry key name; handle the known truncated form
+                    registryEditor.setStringValue(joysticksKey, truncatedPrefix + i, value);
                 } else {
                     registryEditor.removeValue(joysticksKey, "Generic HID Gamepad " + i);
-                    registryEditor.removeValue(joysticksKey, "ric HID Gamepad " + i);
+                    registryEditor.removeValue(joysticksKey, truncatedPrefix + i);
                 }
             }
         }

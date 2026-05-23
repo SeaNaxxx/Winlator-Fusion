@@ -339,7 +339,8 @@ public class ContainerManager {
                         result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, installedPattern, containerDir);
                     }
                     if (!result) {
-                        String legacyName = "container-pattern-" + wineVersion + ".tzst";
+                        String legacyVersion = WineInfo.fromIdentifier(context, wineVersion).fullVersion();
+                        String legacyName = "container-pattern-" + legacyVersion + ".tzst";
                         File legacyPattern = new File(fusionFS.getInstalledWineDir(), legacyName);
                         if (legacyPattern.isFile()) {
                             result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, legacyPattern, containerDir);
@@ -392,7 +393,8 @@ public class ContainerManager {
                         result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, installedPattern, containerDir);
                     }
                     if (!result) {
-                        String legacyName = "container-pattern-" + wineVersion + ".tzst";
+                        String legacyVersion = WineInfo.fromIdentifier(context, wineVersion).fullVersion();
+                        String legacyName = "container-pattern-" + legacyVersion + ".tzst";
                         File legacyPattern = new File(fusionFS.getInstalledWineDir(), legacyName);
                         if (legacyPattern.isFile()) {
                             result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, legacyPattern, containerDir);

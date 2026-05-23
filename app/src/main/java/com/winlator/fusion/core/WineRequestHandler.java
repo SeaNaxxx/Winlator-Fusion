@@ -57,12 +57,11 @@ public class WineRequestHandler {
     }
 
     private void handleClient(Socket clientSocket) {
-        try {
+        try (clientSocket) {
             DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
             DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
             int requestCode = inputStream.readInt();
             handleRequest(requestCode, inputStream, outputStream);
-            clientSocket.close();
         } catch (IOException e) {}
     }
 
@@ -80,8 +79,11 @@ public class WineRequestHandler {
         }
     }
 
+    private static final int MAX_URL_LENGTH = 8192;
+
     private void openURL(DataInputStream inputStream) throws IOException {
         int urlLength = inputStream.readInt();
+        if (urlLength <= 0 || urlLength > MAX_URL_LENGTH) return;
         byte[] urlBytes = new byte[urlLength];
         inputStream.readFully(urlBytes);
         String url = new String(urlBytes);
