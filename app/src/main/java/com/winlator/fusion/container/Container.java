@@ -15,6 +15,7 @@ import com.winlator.fusion.runtime.BionicRuntimeStrategy;
 import com.winlator.fusion.runtime.GlibcRuntimeStrategy;
 import com.winlator.fusion.runtime.RuntimeStrategy;
 import com.winlator.fusion.widget.FrameRating;
+import com.winlator.fusion.winhandler.WinHandler;
 import com.winlator.fusion.xenvironment.RootFS;
 
 import org.json.JSONException;
@@ -77,6 +78,11 @@ public class Container {
     private byte rendererPresentMode = 0;
     private byte rendererFilterMode = 1;
     private byte rendererRefreshRate = 0;
+    private boolean fullscreenStretched;
+    private String midiSoundFont = "";
+    private int inputType = WinHandler.DEFAULT_INPUT_TYPE;
+    private String lc_all = "";
+    private boolean exclusiveXInput = true;
 
     public static final byte RENDERER_GL = 0;
     public static final byte RENDERER_VULKAN = 1;
@@ -401,6 +407,16 @@ public class Container {
     public byte getRendererRefreshRate() { return rendererRefreshRate; }
     public void setRendererRefreshRate(byte rendererRefreshRate) { this.rendererRefreshRate = rendererRefreshRate; }
     public boolean isVulkanRenderer() { return rendererType == RENDERER_VULKAN; }
+    public boolean isFullscreenStretched() { return fullscreenStretched; }
+    public void setFullscreenStretched(boolean fullscreenStretched) { this.fullscreenStretched = fullscreenStretched; }
+    public String getMIDISoundFont() { return midiSoundFont; }
+    public void setMIDISoundFont(String fileName) { midiSoundFont = fileName; }
+    public int getInputType() { return inputType; }
+    public void setInputType(int inputType) { this.inputType = inputType; }
+    public String getLC_ALL() { return lc_all; }
+    public void setLC_ALL(String lc_all) { this.lc_all = lc_all; }
+    public boolean isExclusiveXInput() { return exclusiveXInput; }
+    public void setExclusiveXInput(boolean exclusiveXInput) { this.exclusiveXInput = exclusiveXInput; }
 
     public void saveData() {
         try {
@@ -438,6 +454,12 @@ public class Container {
             if (rendererPresentMode != PRESENT_MODE_FIFO) data.put("rendererPresentMode", rendererPresentMode);
             if (rendererFilterMode != FILTER_MODE_LINEAR) data.put("rendererFilterMode", rendererFilterMode);
             if (rendererRefreshRate > 0) data.put("rendererRefreshRate", rendererRefreshRate);
+
+            if (fullscreenStretched) data.put("fullscreenStretched", fullscreenStretched);
+            data.put("inputType", inputType);
+            if (!midiSoundFont.isEmpty()) data.put("midiSoundFont", midiSoundFont);
+            if (!lc_all.isEmpty()) data.put("lc_all", lc_all);
+            data.put("exclusiveXInput", exclusiveXInput);
 
             if (!WineInfo.isMainWineVersion(wineVersion)) data.put("wineVersion", wineVersion);
             FileUtils.writeString(getConfigFile(), data.toString());
@@ -575,6 +597,21 @@ public class Container {
                     break;
                 case "desktopTheme" :
                     setDesktopTheme(data.getString(key));
+                    break;
+                case "fullscreenStretched" :
+                    fullscreenStretched = data.getBoolean(key);
+                    break;
+                case "inputType" :
+                    inputType = data.getInt(key);
+                    break;
+                case "midiSoundFont" :
+                    midiSoundFont = data.getString(key);
+                    break;
+                case "lc_all" :
+                    lc_all = data.getString(key);
+                    break;
+                case "exclusiveXInput" :
+                    exclusiveXInput = data.getBoolean(key);
                     break;
             }
         }

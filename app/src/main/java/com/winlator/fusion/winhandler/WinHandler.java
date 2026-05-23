@@ -22,6 +22,9 @@ import java.util.ArrayDeque;
 import java.util.concurrent.Executors;
 
 public class WinHandler {
+    public static final byte FLAG_INPUT_TYPE_XINPUT = 0x04;
+    public static final byte FLAG_INPUT_TYPE_DINPUT = 0x08;
+    public static final byte DEFAULT_INPUT_TYPE = FLAG_INPUT_TYPE_XINPUT;
     private static final short SERVER_PORT = 7947;
     private static final short CLIENT_PORT = 7946;
     private static final byte DEFAULT_PACKET_LENGTH = 64;
@@ -38,6 +41,9 @@ public class WinHandler {
     protected final XServerDisplayActivity activity;
     private MIDIHandler midiHandler;
     public final GamepadHandler gamepadHandler = new GamepadHandler(this);
+    private byte inputType = DEFAULT_INPUT_TYPE;
+    private boolean xinputDisabled;
+    private boolean xinputDisabledInitialized = false;
 
     public WinHandler(XServerDisplayActivity activity) {
         this.activity = activity;
@@ -298,6 +304,12 @@ public class WinHandler {
                 break;
             }
             case RequestCodes.GET_GAMEPAD: {
+                if (!xinputDisabledInitialized) {
+                    xinputDisabled = activity.getPreferences().getBoolean("xinput_toggle", true) == false;
+                    xinputDisabledInitialized = true;
+                }
+                boolean isXInputRequest = receiveData.get(receiveData.position()) == 1;
+                if (xinputDisabled && isXInputRequest) break;
                 gamepadHandler.handleGetGamepadRequest(port);
                 break;
             }
@@ -433,6 +445,11 @@ public class WinHandler {
         adjustedPitch *= gyroSensitivityY;
         gamepadHandler.setGyroData(adjustedYaw, adjustedPitch, gyroToLeftStick);
     }
+
+    public byte getInputType() { return inputType; }
+    public void setInputType(byte inputType) { this.inputType = inputType; }
+    public boolean isXInputDisabled() { return xinputDisabled; }
+    public void setXInputDisabled(boolean disabled) { this.xinputDisabled = disabled; this.xinputDisabledInitialized = true; }
 
     public void refreshControllerMappings() {
         // Refresh controller mappings after button remapping
