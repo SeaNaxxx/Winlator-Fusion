@@ -78,14 +78,14 @@ public class RendererOptionsDialog extends ContentDialog {
         anchor.setTag(R.id.rendererRefreshRate, container.getRendererRefreshRate());
     }
 
-    static byte getTagByte(View anchor, int key, byte defaultValue) {
+    public static byte getTagByte(View anchor, int key, byte defaultValue) {
         Object val = anchor.getTag(key);
         if (val instanceof Byte) return (Byte) val;
         if (val instanceof Integer) return ((Integer) val).byteValue();
         return defaultValue;
     }
 
-    static boolean getTagBoolean(View anchor, int key, boolean defaultValue) {
+    public static boolean getTagBoolean(View anchor, int key, boolean defaultValue) {
         Object val = anchor.getTag(key);
         if (val instanceof Boolean) return (Boolean) val;
         return defaultValue;
