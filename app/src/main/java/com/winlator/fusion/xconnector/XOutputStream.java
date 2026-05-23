@@ -74,6 +74,14 @@ public class XOutputStream {
         writePad(nativePtr, length);
     }
 
+    public void writeFP3232(double value) {
+        long fixed = Math.round(value * 4294967296.0);
+        int integral = (int) (fixed >> 32);
+        int frac = (int) fixed;
+        writeInt(integral);
+        writeInt(frac);
+    }
+
     public XStreamLock lock() {
         return new OutputStreamLock();
     }

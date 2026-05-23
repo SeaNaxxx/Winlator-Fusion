@@ -12,6 +12,8 @@ public abstract class Extension {
     public static final byte START_MAJOR_OPCODE = -100;
     private final byte majorOpcode;
     protected final XServer xServer;
+    private byte firstEventId = 0;
+    private byte firstErrorId = 0;
 
     public Extension(XServer xServer, byte majorOpcode) {
         this.xServer = xServer;
@@ -24,12 +26,28 @@ public abstract class Extension {
         return majorOpcode;
     }
 
-    public byte getFirstErrorId() {
+    public int getNumEvents() {
         return 0;
     }
 
-    public byte getFirstEventId() {
+    public int getNumErrors() {
         return 0;
+    }
+
+    public void setFirstEventId(byte id) {
+        this.firstEventId = id;
+    }
+
+    public void setFirstErrorId(byte id) {
+        this.firstErrorId = id;
+    }
+
+    public byte getFirstEventId() {
+        return firstEventId;
+    }
+
+    public byte getFirstErrorId() {
+        return firstErrorId;
     }
 
     public abstract void handleRequest(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError;

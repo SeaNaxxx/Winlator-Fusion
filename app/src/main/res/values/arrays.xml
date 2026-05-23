@@ -257,4 +257,49 @@
         <item>90 FPS</item>
         <item>120 FPS</item>
     </string-array>
+
+    <string-array name="some_lc_all">
+        <item>ar_EG</item>
+        <item>cs_CZ</item>
+        <item>de_DE</item>
+        <item>el_GR</item>
+        <item>en_GB</item>
+        <item>en_US</item>
+        <item>es_ES</item>
+        <item>fi_FI</item>
+        <item>fr_FR</item>
+        <item>he_IL</item>
+        <item>hu_HU</item>
+        <item>it_IT</item>
+        <item>ja_JP</item>
+        <item>ko_KR</item>
+        <item>nl_NL</item>
+        <item>no_NO</item>
+        <item>pl_PL</item>
+        <item>pt_BR</item>
+        <item>pt_PT</item>
+        <item>ro_RO</item>
+        <item>ru_RU</item>
+        <item>sk_SK</item>
+        <item>sv_SE</item>
+        <item>th_TH</item>
+        <item>tr_TR</item>
+        <item>uk_UA</item>
+        <item>vi_VN</item>
+        <item>zh_CN</item>
+        <item>zh_HK</item>
+        <item>zh_TW</item>
+    </string-array>
+
+    <string-array name="vkbasalt_sharpness_entries">
+        <item>None</item>
+        <item>CAS</item>
+        <item>DLS</item>
+    </string-array>
+
+    <string-array name="vkbasalt_sharpness_values">
+        <item>None</item>
+        <item>CAS</item>
+        <item>DLS</item>
+    </string-array>
 </resources>

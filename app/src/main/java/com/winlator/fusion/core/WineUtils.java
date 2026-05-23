@@ -429,4 +429,21 @@ public abstract class WineUtils {
         registryEditor.setStringValues("Software\\Microsoft\\Windows\\CurrentVersion\\Fonts", wineFonts);
         registryEditor.setStringValues("Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts", wineFonts);
     }
+
+    public static void setJoystickRegistryKeys(Container container, boolean dinputEnabled, boolean exclusiveXInput) {
+        File userRegFile = new File(container.getRootDir(), ".wine/user.reg");
+        final String joysticksKey = "Software\\Wine\\DirectInput\\Joysticks";
+        final String value = dinputEnabled ? "override" : "disabled";
+        try (WineRegistryEditor registryEditor = new WineRegistryEditor(userRegFile)) {
+            for (int i = 0; i < 4; i++) {
+                if (exclusiveXInput) {
+                    registryEditor.setStringValue(joysticksKey, "Generic HID Gamepad " + i, value);
+                    registryEditor.setStringValue(joysticksKey, "ric HID Gamepad " + i, value);
+                } else {
+                    registryEditor.removeValue(joysticksKey, "Generic HID Gamepad " + i);
+                    registryEditor.removeValue(joysticksKey, "ric HID Gamepad " + i);
+                }
+            }
+        }
+    }
 }
