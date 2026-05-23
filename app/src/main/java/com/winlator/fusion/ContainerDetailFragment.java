@@ -182,7 +182,7 @@ public class ContainerDetailFragment extends Fragment {
         updateRendererSummary(tvRendererSummary, btRendererOptions);
         btRendererOptions.setOnClickListener((v) -> {
             RendererOptionsDialog dialog = new RendererOptionsDialog(btRendererOptions);
-            dialog.setOnConfirmCallback(() -> updateRendererSummary(tvRendererSummary, btRendererOptions));
+            dialog.setAfterConfirmCallback(() -> updateRendererSummary(tvRendererSummary, btRendererOptions));
             dialog.show();
         });
 

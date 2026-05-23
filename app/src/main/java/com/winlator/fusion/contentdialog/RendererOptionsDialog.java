@@ -8,6 +8,8 @@ import com.winlator.fusion.R;
 import com.winlator.fusion.container.Container;
 
 public class RendererOptionsDialog extends ContentDialog {
+    private Runnable afterConfirmCallback;
+
     public RendererOptionsDialog(final View anchor) {
         super(anchor.getContext(), R.layout.renderer_options_dialog);
         setIcon(R.drawable.icon_settings);
@@ -39,7 +41,12 @@ public class RendererOptionsDialog extends ContentDialog {
             anchor.setTag(R.id.rendererPresentMode, (byte) sPresentMode.getSelectedItemPosition());
             anchor.setTag(R.id.rendererFilterMode, (byte) sFilterMode.getSelectedItemPosition());
             anchor.setTag(R.id.rendererRefreshRate, indexToRefreshRate(sRefreshRate.getSelectedItemPosition()));
+            if (afterConfirmCallback != null) afterConfirmCallback.run();
         });
+    }
+
+    public void setAfterConfirmCallback(Runnable callback) {
+        this.afterConfirmCallback = callback;
     }
 
     private static int refreshRateToIndex(byte refreshRate) {
