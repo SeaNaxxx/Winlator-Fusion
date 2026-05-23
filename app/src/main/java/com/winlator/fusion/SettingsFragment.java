@@ -632,42 +632,45 @@ public class SettingsFragment extends Fragment {
 
     private void loadMIDIInputDeviceSpinner(final Spinner sMIDIInputDevice, final String selectedValue) {
         Context context = getContext();
-        MidiManager mm = (MidiManager)context.getSystemService(Context.MIDI_SERVICE);
-        if (mm == null) {
-            ArrayList<String> items = new ArrayList<>();
-            items.add(context.getString(R.string.none));
-            items.add(context.getString(R.string.auto));
-            sMIDIInputDevice.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, items));
-            if (selectedValue.equals("none")) sMIDIInputDevice.setSelection(0, false);
-            else sMIDIInputDevice.setSelection(1, false);
-            return;
-        }
-
-        MidiDeviceInfo[] infos = mm.getDevices();
-
-        if (!midiDeviceCallbackRegistered) {
-            midiDeviceCallbackRegistered = true;
-            mm.registerDeviceCallback(new MidiManager.DeviceCallback() {
-                @Override
-                public void onDeviceAdded(MidiDeviceInfo device) {
-                    loadMIDIInputDeviceSpinner(sMIDIInputDevice, selectedValue);
-                }
-
-                @Override
-                public void onDeviceRemoved(MidiDeviceInfo device) {
-                    loadMIDIInputDeviceSpinner(sMIDIInputDevice, selectedValue);
-                }
-            }, new Handler(Looper.getMainLooper()));
-        }
-
+        if (context == null || sMIDIInputDevice == null) return;
+        
         ArrayList<String> items = new ArrayList<>();
         items.add(context.getString(R.string.none));
         items.add(context.getString(R.string.auto));
 
-        for (MidiDeviceInfo info : infos) {
-            if (info.getOutputPortCount() > 0) {
-                Bundle properties = info.getProperties();
-                items.add(properties.getString(MidiDeviceInfo.PROPERTY_NAME));
+        MidiManager mm = null;
+        try {
+            mm = (MidiManager)context.getSystemService(Context.MIDI_SERVICE);
+        } catch (Exception e) {
+            mm = null;
+        }
+        
+        if (mm != null) {
+            MidiDeviceInfo[] infos = mm.getDevices();
+
+            if (!midiDeviceCallbackRegistered) {
+                midiDeviceCallbackRegistered = true;
+                try {
+                    mm.registerDeviceCallback(new MidiManager.DeviceCallback() {
+                        @Override
+                        public void onDeviceAdded(MidiDeviceInfo device) {
+                            loadMIDIInputDeviceSpinner(sMIDIInputDevice, selectedValue);
+                        }
+
+                        @Override
+                        public void onDeviceRemoved(MidiDeviceInfo device) {
+                            loadMIDIInputDeviceSpinner(sMIDIInputDevice, selectedValue);
+                        }
+                    }, new Handler(Looper.getMainLooper()));
+                } catch (Exception e) {}
+            }
+
+            for (MidiDeviceInfo info : infos) {
+                if (info.getOutputPortCount() > 0) {
+                    Bundle properties = info.getProperties();
+                    String deviceName = properties.getString(MidiDeviceInfo.PROPERTY_NAME);
+                    if (deviceName != null) items.add(deviceName);
+                }
             }
         }
 

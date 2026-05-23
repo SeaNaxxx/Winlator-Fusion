@@ -434,7 +434,9 @@ public class BigPictureActivity extends AppCompatActivity {
             recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
             recyclerView.setAdapter(adapter);
 
-            loadShortcutData(shortcuts.get(0));
+            if (!shortcuts.isEmpty()) {
+                loadShortcutData(shortcuts.get(0));
+            }
         }
     }
 
@@ -475,6 +477,7 @@ public class BigPictureActivity extends AppCompatActivity {
     }
 
     private void runFromShortcut(Shortcut shortcut) {
+        if (shortcut == null || shortcut.container == null) return;
         Intent intent = new Intent(this, XServerDisplayActivity.class);
         intent.putExtra("container_id", shortcut.container.id);
         intent.putExtra("shortcut_path", shortcut.file.getPath());
@@ -619,8 +622,13 @@ public class BigPictureActivity extends AppCompatActivity {
             loadYouTubeVideo(videoId);
         } else {
             String mp3Path = preferences.getString("selected_mp3_path", "");
-            if (!mp3Path.isEmpty() && new File(mp3Path).exists()) {
-                playMp3(new File(mp3Path));
+            if (!mp3Path.isEmpty()) {
+                File mp3File = new File(mp3Path);
+                if (mp3File.exists()) {
+                    playMp3(mp3File);
+                } else {
+                    playDefaultMp3FromAssets();
+                }
             } else {
                 playDefaultMp3FromAssets();
             }

@@ -93,8 +93,8 @@ public abstract class FusionFSInstaller {
                     if (size > 0) {
                         long totalSize = totalSizeRef.addAndGet(size);
                         final int progress = Math.min((int)(((float)totalSize / totalContentLength) * 70), 70);
-                        if (!activity.isFinishing()) activity.runOnUiThread(() -> {
-                            if (!activity.isFinishing()) dialog.setProgress(progress);
+                        if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
+                            if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(progress);
                         });
                     }
                     return file;
@@ -106,23 +106,23 @@ public abstract class FusionFSInstaller {
                     renameExtractedDirs(rootDir);
                     applyPatches(activity, rootDir);
                     copySharedRuntimeLibraries(fusionFS);
-                    if (!activity.isFinishing()) activity.runOnUiThread(() -> {
-                        if (!activity.isFinishing()) dialog.setProgress(75);
+                    if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
+                        if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(75);
                     });
                     createWineSymlink(fusionFS);
                     createCompatibilitySymlinks(activity, fusionFS);
                     installWineFromAssets(activity, fusionFS, dialog);
                     installContainerPatternsFromAssets(activity, fusionFS);
-                    if (!activity.isFinishing()) activity.runOnUiThread(() -> {
-                        if (!activity.isFinishing()) dialog.setProgress(95);
+                    if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
+                        if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(95);
                     });
                     installDriversFromAssets(activity);
                     fusionFS.createVersionFile(LATEST_VERSION);
                     try {
                         resetContainerVersions(activity);
                     } catch (Exception e) {}
-                    if (!activity.isFinishing()) activity.runOnUiThread(() -> {
-                        if (!activity.isFinishing()) dialog.setProgress(100);
+                    if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
+                        if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(100);
                     });
                 } catch (Exception e) {
                     success = false;
@@ -130,9 +130,11 @@ public abstract class FusionFSInstaller {
             }
 
             if (!success) {
-                AppUtils.showToast(activity, R.string.unable_to_install_system_files);
+                if (!activity.isFinishing() && !activity.isDestroyed()) {
+                    activity.runOnUiThread(() -> AppUtils.showToast(activity, R.string.unable_to_install_system_files));
+                }
             }
-            if (!activity.isFinishing()) dialog.closeOnUiThread();
+            if (!activity.isFinishing() && !activity.isDestroyed()) dialog.closeOnUiThread();
         });
     }
 
@@ -169,10 +171,10 @@ public abstract class FusionFSInstaller {
                 }
             }
 
-            if (dialog != null && !activity.isFinishing()) {
+            if (dialog != null && !activity.isFinishing() && !activity.isDestroyed()) {
                 int progress = Math.min(versionProgress, 94);
                 activity.runOnUiThread(() -> {
-                    if (!activity.isFinishing()) dialog.setProgress(progress);
+                    if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(progress);
                 });
             }
         }
