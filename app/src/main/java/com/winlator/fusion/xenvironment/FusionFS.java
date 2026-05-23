@@ -242,8 +242,7 @@ public class FusionFS {
 
     public String getPathForGlibc() {
         StringBuilder path = new StringBuilder();
-        File resolvedWineDir = wineGlibcDir.isDirectory() ? wineGlibcDir : (wineBionicDir.isDirectory() ? wineBionicDir : this.wineDir);
-        path.append(resolvedWineDir).append("/bin");
+        path.append(getWineDir()).append("/bin");
         path.append(":").append(glibcDir).append("/usr/local/bin");
         path.append(":").append(glibcDir).append("/usr/bin");
         return path.toString();
