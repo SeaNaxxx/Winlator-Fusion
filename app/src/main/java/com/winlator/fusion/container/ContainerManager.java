@@ -37,7 +37,9 @@ public class ContainerManager {
         FusionFS fusionFS = FusionFS.find(context);
         File rootfsDir = fusionFS.getGlibcDir();
         File imagefsDir = fusionFS.getBionicDir();
-        if (!imagefsDir.isDirectory()) imagefsDir.mkdirs();
+        try {
+            if (!imagefsDir.isDirectory()) imagefsDir.mkdirs();
+        } catch (Exception e) {}
         rootfsHomeDir = new File(rootfsDir, "home");
         imagefsHomeDir = new File(imagefsDir, "home");
         loadContainers();

@@ -93,12 +93,19 @@ public class ContainersFragment extends Fragment {
         if (menuItem.getItemId() == R.id.menu_item_add) {
             FusionFS fusionFS = FusionFS.find(getContext());
             boolean fsAvailable = fusionFS.isValid();
-            if (!fsAvailable) return false;
-            FragmentManager fragmentManager = getParentFragmentManager();
-            fragmentManager.beginTransaction()
-                .addToBackStack(null)
-                .replace(R.id.FLFragmentContainer, new ContainerDetailFragment())
-                .commit();
+            if (!fsAvailable) {
+                AppUtils.showToast(getContext(), R.string.unable_to_install_wine);
+                return false;
+            }
+            try {
+                FragmentManager fragmentManager = getParentFragmentManager();
+                fragmentManager.beginTransaction()
+                    .addToBackStack(null)
+                    .replace(R.id.FLFragmentContainer, new ContainerDetailFragment())
+                    .commit();
+            } catch (Exception e) {
+                return false;
+            }
             return true;
         }
         else return super.onOptionsItemSelected(menuItem);

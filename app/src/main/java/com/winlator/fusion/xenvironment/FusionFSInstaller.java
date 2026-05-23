@@ -118,7 +118,9 @@ public abstract class FusionFSInstaller {
                     });
                     installDriversFromAssets(activity);
                     fusionFS.createVersionFile(LATEST_VERSION);
-                    resetContainerVersions(activity);
+                    try {
+                        resetContainerVersions(activity);
+                    } catch (Exception e) {}
                     if (!activity.isFinishing()) activity.runOnUiThread(() -> {
                         if (!activity.isFinishing()) dialog.setProgress(100);
                     });
