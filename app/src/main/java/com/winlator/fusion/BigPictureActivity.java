@@ -281,7 +281,7 @@ public class BigPictureActivity extends AppCompatActivity {
         }
 
         // Load shortcuts
-        if (manager != null) loadShortcutsList();
+        if (manager != null && recyclerView != null) loadShortcutsList();
 
         // Play button click
         if (playButton != null) {
@@ -308,7 +308,9 @@ public class BigPictureActivity extends AppCompatActivity {
 
         try {
             setupMusicControls();
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            android.util.Log.w("BigPictureActivity", "setupMusicControls failed", e);
+        }
     }
 
     @Override
@@ -340,6 +342,9 @@ public class BigPictureActivity extends AppCompatActivity {
         if (requestCode == 1070 && resultCode == RESULT_OK && data != null) {
             android.net.Uri uri = data.getData();
             if (uri != null) {
+                try {
+                    getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                } catch (Exception ignored) {}
                 preferences.edit().putString("selected_mp3_path", uri.toString()).apply();
                 if (preferences.getBoolean("bg_music_enabled", false)) {
                     stopBackgroundMusic();
@@ -434,9 +439,7 @@ public class BigPictureActivity extends AppCompatActivity {
             recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
             recyclerView.setAdapter(adapter);
 
-            if (!shortcuts.isEmpty()) {
-                loadShortcutData(shortcuts.get(0));
-            }
+            loadShortcutData(shortcuts.get(0));
         }
     }
 
@@ -585,9 +588,10 @@ public class BigPictureActivity extends AppCompatActivity {
         Button selectMp3Btn = findViewById(R.id.selectMp3Button);
         if (selectMp3Btn != null) {
             selectMp3Btn.setOnClickListener(v -> {
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.setType("audio/*");
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
                 startActivityForResult(Intent.createChooser(intent, "Select MP3"), 1070);
             });
         }
@@ -623,10 +627,19 @@ public class BigPictureActivity extends AppCompatActivity {
         } else {
             String mp3Path = preferences.getString("selected_mp3_path", "");
             if (!mp3Path.isEmpty()) {
-                File mp3File = new File(mp3Path);
-                if (mp3File.exists()) {
-                    playMp3(mp3File);
-                } else {
+                try {
+                    android.net.Uri uri = android.net.Uri.parse(mp3Path);
+                    if (uri.getScheme() != null && uri.getScheme().startsWith("content")) {
+                        playMp3FromUri(uri);
+                    } else {
+                        File mp3File = new File(mp3Path);
+                        if (mp3File.exists()) {
+                            playMp3(mp3File);
+                        } else {
+                            playDefaultMp3FromAssets();
+                        }
+                    }
+                } catch (Exception e) {
                     playDefaultMp3FromAssets();
                 }
             } else {
@@ -637,7 +650,9 @@ public class BigPictureActivity extends AppCompatActivity {
 
     private void stopBackgroundMusic() {
         if (mediaPlayer != null) {
-            mediaPlayer.stop();
+            try {
+                mediaPlayer.stop();
+            } catch (IllegalStateException ignored) {}
             mediaPlayer.release();
             mediaPlayer = null;
         }
@@ -687,20 +702,49 @@ public class BigPictureActivity extends AppCompatActivity {
                 is.close();
             }
             playMp3(tempFile);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            android.util.Log.w("BigPictureActivity", "playDefaultMp3FromAssets failed", e);
+        }
     }
 
     private void playMp3(File mp3File) {
         try {
             if (mediaPlayer != null) {
-                mediaPlayer.stop();
+                try { mediaPlayer.stop(); } catch (IllegalStateException ignored) {}
                 mediaPlayer.release();
+                mediaPlayer = null;
             }
             mediaPlayer = new MediaPlayer();
             mediaPlayer.setDataSource(mp3File.getPath());
             mediaPlayer.setLooping(true);
             mediaPlayer.prepare();
             mediaPlayer.start();
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            if (mediaPlayer != null) {
+                mediaPlayer.release();
+                mediaPlayer = null;
+            }
+        }
+    }
+
+    private void playMp3FromUri(android.net.Uri uri) {
+        try {
+            if (mediaPlayer != null) {
+                try { mediaPlayer.stop(); } catch (IllegalStateException ignored) {}
+                mediaPlayer.release();
+                mediaPlayer = null;
+            }
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.setDataSource(this, uri);
+            mediaPlayer.setLooping(true);
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+        } catch (Exception e) {
+            if (mediaPlayer != null) {
+                mediaPlayer.release();
+                mediaPlayer = null;
+            }
+            playDefaultMp3FromAssets();
+        }
     }
 }

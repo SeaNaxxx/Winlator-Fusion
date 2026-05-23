@@ -124,6 +124,7 @@
     <string name="install_wine">Install Wine</string>
     <string name="version">Version</string>
     <string name="unable_to_install_wine">Unable to install Wine</string>
+    <string name="unable_to_open_big_picture">Unable to open Big Picture mode</string>
     <string name="bionic_not_available">Bionic runtime is not installed. Please reinstall the app with Bionic support enabled.</string>
     <string name="proton_not_installed">Proton is not installed. Please install Proton via Settings to start Bionic containers.</string>
     <string name="cannot_change_container_variant">Cannot change runtime type of an existing container. Please create a new container instead.</string>

@@ -181,8 +181,9 @@ public class ContainerDetailFragment extends Fragment {
         }
         updateRendererSummary(tvRendererSummary, btRendererOptions);
         btRendererOptions.setOnClickListener((v) -> {
-            new RendererOptionsDialog(btRendererOptions).show();
-            btRendererOptions.postDelayed(() -> updateRendererSummary(tvRendererSummary, btRendererOptions), 100);
+            RendererOptionsDialog dialog = new RendererOptionsDialog(btRendererOptions);
+            dialog.setOnConfirmCallback(() -> updateRendererSummary(tvRendererSummary, btRendererOptions));
+            dialog.show();
         });
 
         if (sContainerVariant != null) {
@@ -418,11 +419,16 @@ public class ContainerDetailFragment extends Fragment {
                     data.put("desktopTheme", desktopTheme);
                     data.put("containerVariant", containerVariant);
                     data.put("emulator", emulator);
-                    data.put("rendererType", (int)(byte) btRendererOptions.getTag(R.id.rendererType));
-                    data.put("rendererNative", (boolean) btRendererOptions.getTag(R.id.rendererNative));
-                    data.put("rendererPresentMode", (int)(byte) btRendererOptions.getTag(R.id.rendererPresentMode));
-                    data.put("rendererFilterMode", (int)(byte) btRendererOptions.getTag(R.id.rendererFilterMode));
-                    data.put("rendererRefreshRate", (int)(byte) btRendererOptions.getTag(R.id.rendererRefreshRate));
+                    Object rtObj = btRendererOptions.getTag(R.id.rendererType);
+                    data.put("rendererType", rtObj instanceof Integer ? (int)(byte)(Integer)rtObj : rtObj != null ? (int)(byte)rtObj : Container.RENDERER_GL);
+                    Object rnObj = btRendererOptions.getTag(R.id.rendererNative);
+                    data.put("rendererNative", rnObj instanceof Boolean ? (boolean) rnObj : false);
+                    Object pmObj = btRendererOptions.getTag(R.id.rendererPresentMode);
+                    data.put("rendererPresentMode", pmObj instanceof Integer ? (int)(byte)(Integer)pmObj : pmObj != null ? (int)(byte)pmObj : Container.PRESENT_MODE_FIFO);
+                    Object fmObj = btRendererOptions.getTag(R.id.rendererFilterMode);
+                    data.put("rendererFilterMode", fmObj instanceof Integer ? (int)(byte)(Integer)fmObj : fmObj != null ? (int)(byte)fmObj : Container.FILTER_MODE_LINEAR);
+                    Object rrObj = btRendererOptions.getTag(R.id.rendererRefreshRate);
+                    data.put("rendererRefreshRate", rrObj instanceof Integer ? (int)(byte)(Integer)rrObj : rrObj != null ? (int)(byte)rrObj : 0);
                     if (containerVariant.equals(Container.BIONIC)) {
                         if (sFEXCoreVersion.getSelectedItem() != null)
                             data.put("fexcoreVersion", sFEXCoreVersion.getSelectedItem().toString());
