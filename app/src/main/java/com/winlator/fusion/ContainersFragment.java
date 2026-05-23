@@ -33,6 +33,7 @@ import com.winlator.fusion.contentdialog.ContentDialog;
 import com.winlator.fusion.contentdialog.StorageInfoDialog;
 import com.winlator.fusion.core.PreloaderDialog;
 import com.winlator.fusion.core.WineInfo;
+import com.winlator.fusion.xenvironment.FusionFS;
 import com.winlator.fusion.xenvironment.ImageFs;
 import com.winlator.fusion.xenvironment.RootFS;
 
@@ -90,9 +91,9 @@ public class ContainersFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
         if (menuItem.getItemId() == R.id.menu_item_add) {
-            boolean rootfsAvailable = RootFS.find(getContext()).isValid();
-            boolean imagefsAvailable = ImageFs.find(getContext()).isValid();
-            if (!rootfsAvailable && !imagefsAvailable) return false;
+            FusionFS fusionFS = FusionFS.find(getContext());
+            boolean fsAvailable = fusionFS.isValid();
+            if (!fsAvailable) return false;
             FragmentManager fragmentManager = getParentFragmentManager();
             fragmentManager.beginTransaction()
                 .addToBackStack(null)
