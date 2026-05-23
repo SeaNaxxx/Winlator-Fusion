@@ -305,7 +305,7 @@ public class WinHandler {
             }
             case RequestCodes.GET_GAMEPAD: {
                 if (!xinputDisabledInitialized) {
-                    xinputDisabled = activity.getPreferences().getBoolean("xinput_toggle", true) == false;
+                    xinputDisabled = !activity.getPreferences().getBoolean("xinput_toggle", true);
                     xinputDisabledInitialized = true;
                 }
                 boolean isXInputRequest = receiveData.get(receiveData.position()) == 1;
