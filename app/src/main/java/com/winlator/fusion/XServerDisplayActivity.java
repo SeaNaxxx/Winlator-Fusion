@@ -339,6 +339,10 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             }
         });
 
+        if (!NotificationService.isRunning()) {
+            startForegroundService(new Intent(this, NotificationService.class));
+        }
+
         setupUI();
 
         Executors.newSingleThreadExecutor().execute(() -> {
@@ -391,29 +395,20 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             xServerView.onResume();
             environment.onResume();
         }
-        if (!NotificationService.isRunning()) {
-            startForegroundService(new Intent(this, NotificationService.class));
-        }
-        if (NotificationService.wakeLock != null && !NotificationService.wakeLock.isHeld()) {
-            NotificationService.wakeLock.acquire();
-        } else if (NotificationService.isRunning() && NotificationService.wakeLock == null) {
-            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-                if (NotificationService.wakeLock != null && !NotificationService.wakeLock.isHeld()) {
-                    NotificationService.wakeLock.acquire();
-                }
-            }, 500);
+        if (NotificationService.wakeLock != null && NotificationService.wakeLock.isHeld()) {
+            NotificationService.wakeLock.release();
         }
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        if (NotificationService.wakeLock != null && !NotificationService.wakeLock.isHeld()) {
+            NotificationService.wakeLock.acquire();
+        }
         if (environment != null && !isInPictureInPictureMode()) {
             environment.onPause();
             xServerView.onPause();
-        }
-        if (NotificationService.wakeLock != null && NotificationService.wakeLock.isHeld()) {
-            NotificationService.wakeLock.release();
         }
     }
 
