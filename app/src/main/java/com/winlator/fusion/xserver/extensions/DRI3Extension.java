@@ -171,7 +171,8 @@ public class DRI3Extension extends Extension {
             drawable.setData(buffer);
             drawable.setTexture(null);
             drawable.setOnDestroyListener(onDestroyDrawableListener);
-            xServer.pixmapManager.createPixmap(drawable);
+            Pixmap pixmap = xServer.pixmapManager.createPixmap(drawable);
+            client.registerAsOwnerOfResource(pixmap);
         }
         finally {
             XConnectorEpoll.closeFd(fd);
