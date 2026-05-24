@@ -77,6 +77,7 @@ Java_com_winlator_fusion_xserver_Drawable_drawBitmap(JNIEnv *env, jclass obj,
                                               jobject dstData) {
     uint8_t *srcDataAddr = (*env)->GetDirectBufferAddress(env, srcData);
     int *dstDataAddr = (*env)->GetDirectBufferAddress(env, dstData);
+    if (!srcDataAddr || !dstDataAddr) return;
 
     int stride = getBitmapBytePad(width);
     for (int16_t y = 0, x; y < height; y++) {
@@ -93,6 +94,7 @@ Java_com_winlator_fusion_xserver_Drawable_copyArea(JNIEnv *env, jclass obj, jsho
                                             jobject dstData) {
     uint8_t *srcDataAddr = (*env)->GetDirectBufferAddress(env, srcData);
     uint8_t *dstDataAddr = (*env)->GetDirectBufferAddress(env, dstData);
+    if (!srcDataAddr || !dstDataAddr) return;
 
     srcDataAddr += (srcX + srcY * srcStride) * 4;
     dstDataAddr += (dstX + dstY * dstStride) * 4;
@@ -122,6 +124,7 @@ Java_com_winlator_fusion_xserver_Drawable_copyAreaOp(JNIEnv *env, jclass obj, js
     int i, j, srcColor, dstColor;
     uint8_t *srcDataAddr = (*env)->GetDirectBufferAddress(env, srcData);
     uint8_t *dstDataAddr = (*env)->GetDirectBufferAddress(env, dstData);
+    if (!srcDataAddr || !dstDataAddr) return;
 
     for (int16_t x, y = 0; y < height; y++) {
         for (x = 0; x < width; x++) {
@@ -144,12 +147,14 @@ Java_com_winlator_fusion_xserver_Drawable_fillRect(JNIEnv *env, jclass obj, jsho
                                             jshort width, jshort height, jint color, jshort stride,
                                             jobject data) {
     uint8_t *dataAddr = (*env)->GetDirectBufferAddress(env, data);
+    if (!dataAddr) return;
 
     uint8_t rgba[4];
     unpackColor(color, rgba);
 
     int rowSize = width * 4;
     uint8_t *row = malloc(rowSize);
+    if (!row) return;
 
     for (int i = 0; i < rowSize; i += 4) memcpy(row + i, rgba, 4);
     for (int16_t i = 0; i < height; i++) {
@@ -164,6 +169,7 @@ Java_com_winlator_fusion_xserver_Drawable_drawLine(JNIEnv *env, jclass obj, jsho
                                             jshort x1, jshort y1, jint color, jshort lineWidth,
                                             jshort stride, jobject data) {
     uint8_t *dataAddr = (*env)->GetDirectBufferAddress(env, data);
+    if (!dataAddr) return;
     int dx =  abs(x1-x0);
     int dy = -abs(y1-y0);
     int8_t sx = x0 < x1 ? 1 : -1;
@@ -175,6 +181,7 @@ Java_com_winlator_fusion_xserver_Drawable_drawLine(JNIEnv *env, jclass obj, jsho
 
     int rowSize = lineWidth * 4;
     uint8_t *row = malloc(lineWidth * 4);
+    if (!row) return;
 
     int16_t i;
     for (i = 0; i < rowSize; i += 4) memcpy(row + i, rgba, 4);
@@ -207,6 +214,7 @@ Java_com_winlator_fusion_xserver_Drawable_drawAlphaMaskedBitmap(JNIEnv *env, jcl
     int *srcDataAddr = (*env)->GetDirectBufferAddress(env, srcData);
     int *maskDataAddr = (*env)->GetDirectBufferAddress(env, maskData);
     int *dstDataAddr = (*env)->GetDirectBufferAddress(env, dstData);
+    if (!srcDataAddr || !maskDataAddr || !dstDataAddr) return;
 
     int foreColor = packColor(foreRed, foreGreen, foreBlue);
     int backColor = packColor(backRed, backGreen, backBlue);
@@ -221,6 +229,7 @@ JNIEXPORT void JNICALL
 Java_com_winlator_fusion_xserver_Drawable_fromBitmap(JNIEnv *env, jclass obj, jobject bitmap,
                                               jobject data) {
     char *dataAddr = (*env)->GetDirectBufferAddress(env, data);
+    if (!dataAddr) return;
 
     AndroidBitmapInfo info;
     uint8_t *pixels;
@@ -240,6 +249,7 @@ Java_com_winlator_fusion_xserver_Pixmap_toBitmap(JNIEnv *env, jclass obj, jobjec
                                           jobject maskData, jobject bitmap) {
     char *colorDataAddr = (*env)->GetDirectBufferAddress(env, colorData);
     char *maskDataAddr = maskData ? (*env)->GetDirectBufferAddress(env, maskData) : NULL;
+    if (!colorDataAddr) return;
 
     AndroidBitmapInfo info;
     uint8_t *pixels;
