@@ -38,7 +38,7 @@ public class Container {
         THUMBSTICK_UP, THUMBSTICK_DOWN, THUMBSTICK_LEFT, THUMBSTICK_RIGHT
     }
 
-    public static final String DEFAULT_ENV_VARS_GLIBIC = "ZINK_DESCRIPTORS=lazy ZINK_DEBUG=compact MESA_SHADER_CACHE_DISABLE=false MESA_SHADER_CACHE_MAX_SIZE=512MB mesa_glthread=true WINEESYNC=1";
+    public static final String DEFAULT_ENV_VARS_GLIBC = "ZINK_DESCRIPTORS=lazy ZINK_DEBUG=compact MESA_SHADER_CACHE_DISABLE=false MESA_SHADER_CACHE_MAX_SIZE=512MB mesa_glthread=true WINEESYNC=1";
     public static final String DEFAULT_ENV_VARS_BIONIC = "WRAPPER_MAX_IMAGE_COUNT=0 RENDERER_SWAPCHAIN=0 VKD3D_SHADER_MODEL=6_6 ZINK_DESCRIPTORS=lazy ZINK_DEBUG=compact MESA_SHADER_CACHE_DISABLE=false MESA_SHADER_CACHE_MAX_SIZE=512MB mesa_glthread=true WINEESYNC=1 TU_DEBUG=noconform,sysmem DXVK_HUD=/0";
     public static final String DEFAULT_ENV_VARS = DEFAULT_ENV_VARS_BIONIC;
     public static final String DEFAULT_SCREEN_SIZE = "1280x720";
@@ -159,7 +159,7 @@ public class Container {
     }
 
     public String getDefaultEnvVarsForType() {
-        return isBionic() ? DEFAULT_ENV_VARS_BIONIC : DEFAULT_ENV_VARS_GLIBIC;
+        return isBionic() ? DEFAULT_ENV_VARS_BIONIC : DEFAULT_ENV_VARS_GLIBC;
     }
 
     public String getDefaultGraphicsDriverForType() {
@@ -492,7 +492,14 @@ public class Container {
                 case "rendererType": setRendererType((byte)data.getInt(key)); break;
                 case "rendererNative": setRendererNative(data.getBoolean(key)); break;
                 case "rendererPresentMode": {
-                    try { setRendererPresentMode(String.valueOf(data.getInt(key))); }
+                    try {
+                        int mode = data.getInt(key);
+                        switch (mode) {
+                            case 1: setRendererPresentMode("mailbox"); break;
+                            case 2: setRendererPresentMode("immediate"); break;
+                            default: setRendererPresentMode("fifo"); break;
+                        }
+                    }
                     catch (Exception e) { setRendererPresentMode(data.optString(key, "fifo")); }
                     break;
                 }
@@ -622,7 +629,7 @@ public class Container {
                     shouldPatch = appVersion < 16;
                 }
                 if (shouldPatch) {
-                    EnvVars defaultEnvVars = new EnvVars(isBionic ? DEFAULT_ENV_VARS_BIONIC : DEFAULT_ENV_VARS_GLIBIC);
+                    EnvVars defaultEnvVars = new EnvVars(isBionic ? DEFAULT_ENV_VARS_BIONIC : DEFAULT_ENV_VARS_GLIBC);
                     EnvVars envVars = new EnvVars(data.getString("envVars"));
                     for (String name : defaultEnvVars) if (!envVars.has(name)) envVars.put(name, defaultEnvVars.get(name));
                     data.put("envVars", envVars.toString());

@@ -274,7 +274,7 @@ public class Shortcut {
 
     public String getRendererDriverId() {
         String v = getExtra("rendererDriverId", null);
-        return v != null ? v : container.getRendererDriverId();
+        return v != null && !v.isEmpty() ? v : container.getRendererDriverId();
     }
 
     public void setRendererDriverId(String v) { putExtra("rendererDriverId", v != null ? v : ""); }
@@ -308,12 +308,7 @@ public class Shortcut {
             if (newShortcutFile.getParentFile() != null && !newShortcutFile.getParentFile().exists()) {
                 newShortcutFile.getParentFile().mkdirs();
             }
-            java.util.ArrayList<String> lines = FileUtils.readLines(this.file);
-            StringBuilder updatedContent = new StringBuilder();
-            for (String line : lines) {
-                updatedContent.append(line).append("\n");
-            }
-            FileUtils.writeString(newShortcutFile, updatedContent.toString());
+            FileUtils.copy(this.file, newShortcutFile);
 
             if (this.iconFile != null && this.iconFile.isFile()) {
                 File newIconDir = newContainer.getIconsDir(64);

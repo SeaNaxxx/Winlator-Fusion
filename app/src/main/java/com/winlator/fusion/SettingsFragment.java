@@ -223,7 +223,7 @@ public class SettingsFragment extends Fragment {
             if (savedUriString == null) tvWinlatorPath.setText(DEFAULT_WINLATOR_PATH);
             else {
                 Uri savedUri = Uri.parse(savedUriString);
-                String displayPath = FileUtils.getFilePathFromUri(context, savedUri);
+                String displayPath = FileUtils.getFilePathFromUri(savedUri);
                 tvWinlatorPath.setText(displayPath != null ? displayPath : savedUriString);
             }
         }
@@ -235,9 +235,11 @@ public class SettingsFragment extends Fragment {
                 ed.apply();
                 try {
                     requireContext().getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                } catch (SecurityException e) {}
+                } catch (SecurityException e) {
+                    android.util.Log.w("SettingsFragment", "Failed to persist URI permission", e);
+                }
                 if (tvWinlatorPath != null) {
-                    String p = FileUtils.getFilePathFromUri(requireContext(), uri);
+                    String p = FileUtils.getFilePathFromUri(uri);
                     tvWinlatorPath.setText(p != null ? p : uri.toString());
                 }
             };
@@ -250,7 +252,7 @@ public class SettingsFragment extends Fragment {
             String savedUriString2 = preferences.getString("shortcuts_export_path_uri", null);
             if (savedUriString2 != null) {
                 Uri savedUri2 = Uri.parse(savedUriString2);
-                String displayPath2 = FileUtils.getFilePathFromUri(context, savedUri2);
+                String displayPath2 = FileUtils.getFilePathFromUri(savedUri2);
                 tvShortcutExportPath.setText(displayPath2 != null ? displayPath2 : savedUriString2);
             } else tvShortcutExportPath.setText(DEFAULT_SHORTCUT_EXPORT_PATH);
         }
@@ -262,9 +264,11 @@ public class SettingsFragment extends Fragment {
                 ed.apply();
                 try {
                     requireContext().getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                } catch (SecurityException e) {}
+                } catch (SecurityException e) {
+                    android.util.Log.w("SettingsFragment", "Failed to persist URI permission", e);
+                }
                 if (tvShortcutExportPath != null) {
-                    String p = FileUtils.getFilePathFromUri(requireContext(), uri);
+                    String p = FileUtils.getFilePathFromUri(uri);
                     tvShortcutExportPath.setText(p != null ? p : uri.toString());
                 }
             };
