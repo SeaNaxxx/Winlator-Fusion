@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -166,6 +167,13 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
         final PreloaderDialog preloaderDialog = new PreloaderDialog(this);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        if (preferences.getBoolean("high_refresh_rate_mode", false)) {
+            WindowManager.LayoutParams params = getWindow().getAttributes();
+            params.preferredRefreshRate = pickHighestRefreshRate();
+            getWindow().setAttributes(params);
+        }
+
         boolean useAndroidClipboardOnWine = preferences.getBoolean("use_android_clipboard_on_wine", false);
         clipboardManager = useAndroidClipboardOnWine ? (ClipboardManager)getSystemService(CLIPBOARD_SERVICE) : null;
 
@@ -886,6 +894,17 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         }
 
         inputControlsView.invalidate();
+    }
+
+    private float pickHighestRefreshRate() {
+        Display display = getWindowManager().getDefaultDisplay();
+        Display.Mode[] modes = display.getSupportedModes();
+        float maxRefresh = 0f;
+        for (Display.Mode mode : modes) {
+            if (mode.getRefreshRate() > maxRefresh)
+                maxRefresh = mode.getRefreshRate();
+        }
+        return maxRefresh;
     }
 
     private void extractGraphicsDriverFiles() {
