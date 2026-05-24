@@ -5,12 +5,14 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.ServiceCompat;
 import androidx.core.content.ContextCompat;
 
 import com.winlator.fusion.MainActivity;
@@ -38,7 +40,7 @@ public class NotificationService extends Service {
 
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), PendingIntent.FLAG_IMMUTABLE);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, MainActivity.NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_ab_gear_0011)
             .setContentTitle(getString(R.string.app_name))
             .setContentText("Winlator Fusion is running, do not kill or swipe this notification")
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -47,7 +49,11 @@ public class NotificationService extends Service {
             .setOngoing(true);
 
         Notification notification = builder.build();
-        startForeground(MainActivity.NOTIFICATION_ID, notification);
+        if (Build.VERSION.SDK_INT >= 34) {
+            ServiceCompat.startForeground(this, MainActivity.NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+        } else {
+            startForeground(MainActivity.NOTIFICATION_ID, notification);
+        }
 
         isRunning = true;
 
