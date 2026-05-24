@@ -103,6 +103,7 @@ public class GlibcRuntimeEnvironment implements RuntimeEnvironment {
             PulseAudioComponent pulseAudioComponent = new PulseAudioComponent(
                 UnixSocketConfig.create(rootPath, UnixSocketConfig.PULSE_SERVER_PATH)
             );
+            pulseAudioComponent.setAudioProfile(PulseAudioComponent.PROFILE_MINIMAL);
             envVars.put("PULSE_SERVER", rootPath + UnixSocketConfig.PULSE_SERVER_PATH);
 
             if (!audioDriverConfig.isEmpty()) {

@@ -7,9 +7,15 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -19,7 +25,9 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSnapHelper;
@@ -36,6 +44,9 @@ import com.winlator.fusion.container.Shortcut;
 import android.animation.ObjectAnimator;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,19 +64,9 @@ public class BigPictureActivity extends AppCompatActivity {
 
     private TextView emptyStateTextView;
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        TiledBackgroundView backgroundView = findViewById(R.id.parallaxBackgroundView);
-        if (backgroundView != null) backgroundView.startAnimation();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        TiledBackgroundView backgroundView = findViewById(R.id.parallaxBackgroundView);
-        if (backgroundView != null) backgroundView.stopAnimation();
-    }
+    private MediaPlayer mediaPlayer;
+    private WebView musicWebView;
+    private SharedPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +76,7 @@ public class BigPictureActivity extends AppCompatActivity {
 
         TiledBackgroundView backgroundView = findViewById(R.id.parallaxBackgroundView);
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        this.preferences = preferences;
 
         // Restore frame duration
         int storedFrameDuration = preferences.getInt("frame_duration", 66);
@@ -261,18 +263,24 @@ public class BigPictureActivity extends AppCompatActivity {
             }
         }
 
-        // Add item decoration for reduced spacing
-        recyclerView.addItemDecoration(new CarouselItemDecoration(15));
-
         // Initialize ContainerManager
-        manager = new ContainerManager(this);
+        try {
+            manager = new ContainerManager(this);
+        } catch (Exception e) {
+            manager = null;
+        }
+
+        // Add item decoration for reduced spacing
+        if (recyclerView != null) {
+            recyclerView.addItemDecoration(new CarouselItemDecoration(15));
+
+            // Setup snapping for RecyclerView
+            SnapHelper snapHelper = new LinearSnapHelper();
+            snapHelper.attachToRecyclerView(recyclerView);
+        }
 
         // Load shortcuts
-        loadShortcutsList();
-
-        // Setup snapping for RecyclerView
-        SnapHelper snapHelper = new LinearSnapHelper();
-        snapHelper.attachToRecyclerView(recyclerView);
+        if (manager != null && recyclerView != null) loadShortcutsList();
 
         // Play button click
         if (playButton != null) {
@@ -284,7 +292,7 @@ public class BigPictureActivity extends AppCompatActivity {
         }
 
         // RecyclerView scroll listener to update current shortcut
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        if (recyclerView != null) recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
@@ -296,6 +304,53 @@ public class BigPictureActivity extends AppCompatActivity {
                 }
             }
         });
+
+        try {
+            setupMusicControls();
+        } catch (Exception e) {
+            android.util.Log.w("BigPictureActivity", "setupMusicControls failed", e);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        TiledBackgroundView backgroundView = findViewById(R.id.parallaxBackgroundView);
+        if (backgroundView != null) backgroundView.startAnimation();
+        if (preferences != null && preferences.getBoolean("bg_music_enabled", false)) startBackgroundMusic();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        TiledBackgroundView backgroundView = findViewById(R.id.parallaxBackgroundView);
+        if (backgroundView != null) backgroundView.stopAnimation();
+        stopBackgroundMusic();
+    }
+
+    @Override
+    protected void onDestroy() {
+        stopBackgroundMusic();
+        if (musicWebView != null) musicWebView.destroy();
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1070 && resultCode == RESULT_OK && data != null) {
+            android.net.Uri uri = data.getData();
+            if (uri != null) {
+                try {
+                    getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                } catch (Exception ignored) {}
+                preferences.edit().putString("selected_mp3_path", uri.toString()).apply();
+                if (preferences.getBoolean("bg_music_enabled", false)) {
+                    stopBackgroundMusic();
+                    startBackgroundMusic();
+                }
+            }
+        }
     }
 
     @Override
@@ -338,6 +393,7 @@ public class BigPictureActivity extends AppCompatActivity {
     }
 
     private int getCenterItemPosition() {
+        if (recyclerView == null) return RecyclerView.NO_POSITION;
         LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
         if (layoutManager == null) return RecyclerView.NO_POSITION;
         int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
@@ -423,6 +479,7 @@ public class BigPictureActivity extends AppCompatActivity {
     }
 
     private void runFromShortcut(Shortcut shortcut) {
+        if (shortcut == null || shortcut.container == null) return;
         Intent intent = new Intent(this, XServerDisplayActivity.class);
         intent.putExtra("container_id", shortcut.container.id);
         intent.putExtra("shortcut_path", shortcut.file.getPath());
@@ -476,5 +533,212 @@ public class BigPictureActivity extends AppCompatActivity {
                 settingsLayout.setVisibility(View.GONE);
             }
         });
+    }
+
+    private void setupMusicControls() {
+        SwitchCompat bgMusicSwitch = findViewById(R.id.bgMusicSwitch);
+        if (bgMusicSwitch == null) return;
+
+        boolean bgMusicEnabled = preferences.getBoolean("bg_music_enabled", false);
+        bgMusicSwitch.setChecked(bgMusicEnabled);
+        bgMusicSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            preferences.edit().putBoolean("bg_music_enabled", isChecked).apply();
+            if (isChecked) startBackgroundMusic();
+            else stopBackgroundMusic();
+        });
+
+        RadioGroup musicSourceGroup = findViewById(R.id.musicSourceGroup);
+        if (musicSourceGroup != null) {
+            String musicSource = preferences.getString("music_source", "mp3");
+            if (musicSource.equals("youtube")) {
+                RadioButton rb = findViewById(R.id.rbYouTube);
+                if (rb != null) rb.setChecked(true);
+            } else {
+                RadioButton rb = findViewById(R.id.rbMP3);
+                if (rb != null) rb.setChecked(true);
+            }
+            musicSourceGroup.setOnCheckedChangeListener((group, checkedId) -> {
+                String source = (checkedId == R.id.rbYouTube) ? "youtube" : "mp3";
+                preferences.edit().putString("music_source", source).apply();
+                if (bgMusicSwitch.isChecked()) {
+                    stopBackgroundMusic();
+                    startBackgroundMusic();
+                }
+            });
+        }
+
+        EditText youtubeUrlInput = findViewById(R.id.youtubeUrlInput);
+        Button loadYoutubeBtn = findViewById(R.id.loadYoutubeButton);
+        if (youtubeUrlInput != null) {
+            String savedUrl = preferences.getString("saved_youtube_url", "");
+            youtubeUrlInput.setText(savedUrl);
+        }
+        if (loadYoutubeBtn != null) {
+            loadYoutubeBtn.setOnClickListener(v -> {
+                String url = youtubeUrlInput != null ? youtubeUrlInput.getText().toString() : "";
+                String videoId = extractYouTubeId(url);
+                if (!videoId.isEmpty() && musicWebView != null) {
+                    preferences.edit().putString("saved_youtube_url", url).apply();
+                    loadYouTubeVideo(videoId);
+                }
+            });
+        }
+
+        Button selectMp3Btn = findViewById(R.id.selectMp3Button);
+        if (selectMp3Btn != null) {
+            selectMp3Btn.setOnClickListener(v -> {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.setType("audio/*");
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                startActivityForResult(Intent.createChooser(intent, "Select MP3"), 1070);
+            });
+        }
+
+        Button resetMp3Btn = findViewById(R.id.resetMp3Button);
+        if (resetMp3Btn != null) {
+            resetMp3Btn.setOnClickListener(v -> {
+                preferences.edit().remove("selected_mp3_path").apply();
+                if (bgMusicSwitch.isChecked() && preferences.getString("music_source", "mp3").equals("mp3")) {
+                    stopBackgroundMusic();
+                    playDefaultMp3FromAssets();
+                }
+            });
+        }
+
+        musicWebView = findViewById(R.id.musicWebView);
+        if (musicWebView != null) {
+            WebSettings webSettings = musicWebView.getSettings();
+            webSettings.setJavaScriptEnabled(true);
+            musicWebView.setVisibility(View.GONE);
+        }
+
+        if (bgMusicEnabled) startBackgroundMusic();
+    }
+
+    private void startBackgroundMusic() {
+        String musicSource = preferences.getString("music_source", "mp3");
+        if (musicSource.equals("youtube")) {
+            String savedUrl = preferences.getString("saved_youtube_url", "yNwKYgM6SkM");
+            String videoId = extractYouTubeId(savedUrl);
+            if (videoId.isEmpty()) videoId = "yNwKYgM6SkM";
+            loadYouTubeVideo(videoId);
+        } else {
+            String mp3Path = preferences.getString("selected_mp3_path", "");
+            if (!mp3Path.isEmpty()) {
+                try {
+                    android.net.Uri uri = android.net.Uri.parse(mp3Path);
+                    if (uri.getScheme() != null && uri.getScheme().startsWith("content")) {
+                        playMp3FromUri(uri);
+                    } else {
+                        File mp3File = new File(mp3Path);
+                        if (mp3File.exists()) {
+                            playMp3(mp3File);
+                        } else {
+                            playDefaultMp3FromAssets();
+                        }
+                    }
+                } catch (Exception e) {
+                    playDefaultMp3FromAssets();
+                }
+            } else {
+                playDefaultMp3FromAssets();
+            }
+        }
+    }
+
+    private void stopBackgroundMusic() {
+        if (mediaPlayer != null) {
+            try {
+                mediaPlayer.stop();
+            } catch (IllegalStateException ignored) {}
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+        if (musicWebView != null) {
+            musicWebView.loadUrl("about:blank");
+        }
+    }
+
+    private void loadYouTubeVideo(String videoId) {
+        if (musicWebView == null) return;
+        String html = "<!DOCTYPE html><html><body><div id=\"yt-player\"></div>" +
+            "<script src=\"https://www.youtube.com/iframe_api\"></script>" +
+            "<script>var player;function onYouTubeIframeAPIReady(){" +
+            "player=new YT.Player('yt-player',{" +
+            "height:'1',width:'1'," +
+            "videoId:'" + videoId + "'," +
+            "playerVars:{autoplay:1,mute:1,loop:1,playlist:'" + videoId + "'}," +
+            "events:{'onReady':function(e){e.target.unMute();}}});}" +
+            "</script></body></html>";
+        musicWebView.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "utf-8", null);
+    }
+
+    private String extractYouTubeId(String url) {
+        if (url == null || url.isEmpty()) return "";
+        if (url.matches("^[a-zA-Z0-9_-]{11}$")) return url;
+        String pattern = "(?:youtube\\.com/watch\\?v=|youtu\\.be/|youtube\\.com/embed/)([a-zA-Z0-9_-]{11})";
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile(pattern).matcher(url);
+        if (matcher.find()) return matcher.group(1);
+        return "";
+    }
+
+    private void playDefaultMp3FromAssets() {
+        try {
+            File tempFile = new File(getCacheDir(), "default_music.mp3");
+            if (!tempFile.exists()) {
+                InputStream is = getAssets().open("default_music.mp3");
+                FileOutputStream fos = new FileOutputStream(tempFile);
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = is.read(buffer)) > 0) fos.write(buffer, 0, len);
+                fos.close();
+                is.close();
+            }
+            playMp3(tempFile);
+        } catch (Exception e) {
+            android.util.Log.w("BigPictureActivity", "playDefaultMp3FromAssets failed", e);
+        }
+    }
+
+    private void playMp3(File mp3File) {
+        try {
+            if (mediaPlayer != null) {
+                try { mediaPlayer.stop(); } catch (IllegalStateException ignored) {}
+                mediaPlayer.release();
+                mediaPlayer = null;
+            }
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.setDataSource(mp3File.getPath());
+            mediaPlayer.setLooping(true);
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+        } catch (Exception e) {
+            if (mediaPlayer != null) {
+                mediaPlayer.release();
+                mediaPlayer = null;
+            }
+        }
+    }
+
+    private void playMp3FromUri(android.net.Uri uri) {
+        try {
+            if (mediaPlayer != null) {
+                try { mediaPlayer.stop(); } catch (IllegalStateException ignored) {}
+                mediaPlayer.release();
+                mediaPlayer = null;
+            }
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.setDataSource(this, uri);
+            mediaPlayer.setLooping(true);
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+        } catch (Exception e) {
+            if (mediaPlayer != null) {
+                mediaPlayer.release();
+                mediaPlayer = null;
+            }
+            playDefaultMp3FromAssets();
+        }
     }
 }

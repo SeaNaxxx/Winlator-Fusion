@@ -25,6 +25,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -41,6 +42,7 @@ import com.winlator.fusion.container.GraphicsDrivers;
 import com.winlator.fusion.contentdialog.AddEnvVarDialog;
 import com.winlator.fusion.contentdialog.AudioDriverConfigDialog;
 import com.winlator.fusion.contentdialog.ContentDialog;
+import com.winlator.fusion.contentdialog.RendererOptionsDialog;
 import com.winlator.fusion.contentdialog.VortekConfigDialog;
 import com.winlator.fusion.core.AppUtils;
 import com.winlator.fusion.core.Callback;
@@ -110,7 +112,8 @@ public class ContainerDetailFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(isEditMode() ? R.string.edit_container : R.string.new_container);
+        ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
+        if (actionBar != null) actionBar.setTitle(isEditMode() ? R.string.edit_container : R.string.new_container);
     }
 
     public boolean isEditMode() {
@@ -133,8 +136,17 @@ public class ContainerDetailFragment extends Fragment {
         }
         else etName.setText(getString(R.string.container)+"-"+manager.getNextContainerId());
 
-        final ArrayList<WineInfo> wineInfos = WineInstaller.getInstalledWineInfos(context, isEditMode() ? container.getContainerVariant() : Container.DEFAULT_VARIANT);
-        // Use non-final wrapper to allow re-filtering when variant changes
+        // Determine current variant for variant-aware driver/wrapper selection
+        String currentVariant = isEditMode() ? container.getContainerVariant() : Container.DEFAULT_VARIANT;
+        boolean isBionic = currentVariant.equals(Container.BIONIC);
+
+        final ArrayList<WineInfo> wineInfos = WineInstaller.getInstalledWineInfos(context, currentVariant);
+        if (wineInfos == null || wineInfos.isEmpty()) {
+            if (!Container.BIONIC.equals(currentVariant)) {
+                currentVariant = Container.BIONIC;
+                isBionic = true;
+            }
+        }
         final ArrayList<WineInfo>[] wineInfosRef = new ArrayList[]{wineInfos};
         final Spinner sWineVersion = view.findViewById(R.id.SWineVersion);
         if (wineInfosRef[0].size() > 1) loadWineVersionSpinner(view, sWineVersion, wineInfosRef[0]);
@@ -143,10 +155,6 @@ public class ContainerDetailFragment extends Fragment {
         final Spinner sContainerVariant = view.findViewById(R.id.SContainerVariant);
         final View llBionicOptions = view.findViewById(R.id.LLBionicOptions);
         final Spinner sEmulator = view.findViewById(R.id.SEmulator);
-
-        // Determine current variant for variant-aware driver/wrapper selection
-        String currentVariant = isEditMode() ? container.getContainerVariant() : Container.DEFAULT_VARIANT;
-        boolean isBionic = currentVariant.equals(Container.BIONIC);
 
         // Define picker refs before variant listener so they are accessible
         final String oldGraphicsDriverConfig = isEditMode() ? container.getGraphicsDriverConfig() : "";
@@ -160,6 +168,23 @@ public class ContainerDetailFragment extends Fragment {
         dxwrapperPickerRef[0] = new DXWrapperPicker(view.findViewById(R.id.LLDXWrapper), graphicsDriverPickerRef[0], selectedDXWrapper, oldDXWrapperConfig, isBionic);
 
         view.findViewById(R.id.BTHelpDXWrapper).setOnClickListener((v) -> AppUtils.showHelpBox(context, v, R.string.dxwrapper_help_content));
+
+        final View btRendererOptions = view.findViewById(R.id.BTRendererOptions);
+        final TextView tvRendererSummary = view.findViewById(R.id.TVRendererSummary);
+        if (isEditMode()) RendererOptionsDialog.loadFromContainer(btRendererOptions, container);
+        else {
+            btRendererOptions.setTag(R.id.rendererType, Container.RENDERER_GL);
+            btRendererOptions.setTag(R.id.rendererNative, false);
+            btRendererOptions.setTag(R.id.rendererPresentMode, Container.PRESENT_MODE_FIFO);
+            btRendererOptions.setTag(R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR);
+            btRendererOptions.setTag(R.id.rendererRefreshRate, (byte) 0);
+        }
+        updateRendererSummary(tvRendererSummary, btRendererOptions);
+        btRendererOptions.setOnClickListener((v) -> {
+            RendererOptionsDialog dialog = new RendererOptionsDialog(btRendererOptions);
+            dialog.setAfterConfirmCallback(() -> updateRendererSummary(tvRendererSummary, btRendererOptions));
+            dialog.show();
+        });
 
         if (sContainerVariant != null) {
             String variant = isEditMode() ? container.getContainerVariant() : Container.DEFAULT_VARIANT;
@@ -356,6 +381,7 @@ public class ContainerDetailFragment extends Fragment {
                     container.setDesktopTheme(desktopTheme);
                     container.setContainerVariant(containerVariant);
                     container.setEmulator(emulator);
+                    RendererOptionsDialog.applyToContainer(btRendererOptions, container);
                     if (containerVariant.equals(Container.BIONIC)) {
                         if (sFEXCoreVersion.getSelectedItem() != null)
                             container.setFEXCoreVersion(sFEXCoreVersion.getSelectedItem().toString());
@@ -393,6 +419,11 @@ public class ContainerDetailFragment extends Fragment {
                     data.put("desktopTheme", desktopTheme);
                     data.put("containerVariant", containerVariant);
                     data.put("emulator", emulator);
+                    data.put("rendererType", RendererOptionsDialog.getTagByte(btRendererOptions, R.id.rendererType, Container.RENDERER_GL));
+                    data.put("rendererNative", RendererOptionsDialog.getTagBoolean(btRendererOptions, R.id.rendererNative, false));
+                    data.put("rendererPresentMode", RendererOptionsDialog.getTagByte(btRendererOptions, R.id.rendererPresentMode, Container.PRESENT_MODE_FIFO));
+                    data.put("rendererFilterMode", RendererOptionsDialog.getTagByte(btRendererOptions, R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR));
+                    data.put("rendererRefreshRate", RendererOptionsDialog.getTagByte(btRendererOptions, R.id.rendererRefreshRate, (byte) 0));
                     if (containerVariant.equals(Container.BIONIC)) {
                         if (sFEXCoreVersion.getSelectedItem() != null)
                             data.put("fexcoreVersion", sFEXCoreVersion.getSelectedItem().toString());
@@ -723,6 +754,20 @@ public class ContainerDetailFragment extends Fragment {
         sWineVersion.setEnabled(!isEditMode());
         view.findViewById(R.id.LLWineVersion).setVisibility(View.VISIBLE);
         sWineVersion.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, wineInfos));
-        if (isEditMode()) AppUtils.setSpinnerSelectionFromValue(sWineVersion, WineInfo.fromIdentifier(context, container.getWineVersion()).toString());
+        if (isEditMode()) {
+            WineInfo wineInfo = WineInfo.fromIdentifier(context, container.getWineVersion());
+            if (wineInfo != null) AppUtils.setSpinnerSelectionFromValue(sWineVersion, wineInfo.toString());
+        }
+    }
+
+    private void updateRendererSummary(TextView tvRendererSummary, View anchor) {
+        Object rt = anchor.getTag(R.id.rendererType);
+        byte rendererType = rt != null ? (byte) rt : Container.RENDERER_GL;
+        String type = rendererType == Container.RENDERER_VULKAN ? "Vulkan" : "OpenGL";
+        Object nm = anchor.getTag(R.id.rendererNative);
+        boolean nativeMode = nm != null && (boolean) nm;
+        String summary = type;
+        if (nativeMode && rendererType == Container.RENDERER_VULKAN) summary += " +Native";
+        tvRendererSummary.setText(summary);
     }
 }

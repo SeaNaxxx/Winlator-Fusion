@@ -201,7 +201,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else if (id == R.id.menu_item_adrenotools_gpu_drivers) {
             showFragment(new AdrenotoolsFragment());
         } else if (id == R.id.menu_item_big_picture) {
-            startActivity(new Intent(this, BigPictureActivity.class));
+            try {
+                startActivity(new Intent(this, BigPictureActivity.class));
+            } catch (Exception e) {
+                android.util.Log.e("MainActivity", "Failed to launch BigPictureActivity", e);
+                AppUtils.showToast(this, R.string.unable_to_open_big_picture);
+            }
         } else if (id == R.id.menu_item_about) {
             (new AboutDialog(this)).show();
         }

@@ -23,6 +23,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -93,7 +94,8 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(R.string.settings);
+        ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
+        if (actionBar != null) actionBar.setTitle(R.string.settings);
     }
 
     @Override
@@ -114,8 +116,15 @@ public class SettingsFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.settings_fragment, container, false);
+        View view;
+        try {
+            view = inflater.inflate(R.layout.settings_fragment, container, false);
+        } catch (Exception e) {
+            android.util.Log.e("SettingsFragment", "Failed to inflate settings layout", e);
+            return null;
+        }
         final Context context = getContext();
+        if (context == null) return null;
         preferences = PreferenceManager.getDefaultSharedPreferences(context);
 
         final Spinner sSoundFont = view.findViewById(R.id.SSoundFont);
@@ -624,32 +633,47 @@ public class SettingsFragment extends Fragment {
 
     private void loadMIDIInputDeviceSpinner(final Spinner sMIDIInputDevice, final String selectedValue) {
         Context context = getContext();
-        MidiManager mm = (MidiManager)context.getSystemService(Context.MIDI_SERVICE);
-        MidiDeviceInfo[] infos = mm.getDevices();
-
-        if (!midiDeviceCallbackRegistered) {
-            midiDeviceCallbackRegistered = true;
-            mm.registerDeviceCallback(new MidiManager.DeviceCallback() {
-                @Override
-                public void onDeviceAdded(MidiDeviceInfo device) {
-                    loadMIDIInputDeviceSpinner(sMIDIInputDevice, selectedValue);
-                }
-
-                @Override
-                public void onDeviceRemoved(MidiDeviceInfo device) {
-                    loadMIDIInputDeviceSpinner(sMIDIInputDevice, selectedValue);
-                }
-            }, new Handler(Looper.getMainLooper()));
-        }
-
+        if (context == null || sMIDIInputDevice == null) return;
+        
         ArrayList<String> items = new ArrayList<>();
         items.add(context.getString(R.string.none));
         items.add(context.getString(R.string.auto));
 
-        for (MidiDeviceInfo info : infos) {
-            if (info.getOutputPortCount() > 0) {
-                Bundle properties = info.getProperties();
-                items.add(properties.getString(MidiDeviceInfo.PROPERTY_NAME));
+        MidiManager mm = null;
+        try {
+            mm = (MidiManager)context.getSystemService(Context.MIDI_SERVICE);
+        } catch (Exception e) {
+            mm = null;
+        }
+        
+        if (mm != null) {
+            MidiDeviceInfo[] infos = mm.getDevices();
+
+            if (!midiDeviceCallbackRegistered) {
+                try {
+                    mm.registerDeviceCallback(new MidiManager.DeviceCallback() {
+                        @Override
+                        public void onDeviceAdded(MidiDeviceInfo device) {
+                            loadMIDIInputDeviceSpinner(sMIDIInputDevice, selectedValue);
+                        }
+
+                        @Override
+                        public void onDeviceRemoved(MidiDeviceInfo device) {
+                            loadMIDIInputDeviceSpinner(sMIDIInputDevice, selectedValue);
+                        }
+                    }, new Handler(Looper.getMainLooper()));
+                    midiDeviceCallbackRegistered = true;
+                } catch (Exception e) {
+                    android.util.Log.w("SettingsFragment", "Failed to register MIDI device callback", e);
+                }
+            }
+
+            for (MidiDeviceInfo info : infos) {
+                if (info.getOutputPortCount() > 0) {
+                    Bundle properties = info.getProperties();
+                    String deviceName = properties.getString(MidiDeviceInfo.PROPERTY_NAME);
+                    if (deviceName != null) items.add(deviceName);
+                }
             }
         }
 

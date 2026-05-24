@@ -19,6 +19,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.Executors;
@@ -36,7 +37,11 @@ public class ContainerManager {
         FusionFS fusionFS = FusionFS.find(context);
         File rootfsDir = fusionFS.getGlibcDir();
         File imagefsDir = fusionFS.getBionicDir();
-        if (!imagefsDir.isDirectory()) imagefsDir.mkdirs();
+        try {
+            if (!imagefsDir.isDirectory()) imagefsDir.mkdirs();
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to create bionic directory: " + imagefsDir, e);
+        }
         rootfsHomeDir = new File(rootfsDir, "home");
         imagefsHomeDir = new File(imagefsDir, "home");
         loadContainers();
@@ -68,7 +73,9 @@ public class ContainerManager {
                             if (getContainerById(id) != null) continue;
                             Container container = new Container(id);
                             container.setRootDir(new File(homeDir, RootFS.USER+"-"+container.id));
-                            JSONObject data = new JSONObject(FileUtils.readString(container.getConfigFile()));
+                            File configFile = container.getConfigFile();
+                            if (configFile == null || !configFile.isFile()) continue;
+                            JSONObject data = new JSONObject(FileUtils.readString(configFile));
                             container.loadData(data);
                             if (container.isBionic() != isBionicDir) {
                                 Log.w(TAG, "Container " + id + " variant mismatch: isBionic=" + container.isBionic() + " but found in " + (isBionicDir ? "imagefs" : "rootfs") + " - skipping");
@@ -202,6 +209,16 @@ public class ContainerManager {
         dstContainer.setBox64Version(srcContainer.getBox64Version());
         dstContainer.setFEXCorePreset(srcContainer.getFEXCorePreset());
         dstContainer.setWineVersion(srcContainer.getWineVersion());
+        dstContainer.setRendererType(srcContainer.getRendererType());
+        dstContainer.setRendererNative(srcContainer.isRendererNative());
+        dstContainer.setRendererPresentMode(srcContainer.getRendererPresentMode());
+        dstContainer.setRendererFilterMode(srcContainer.getRendererFilterMode());
+        dstContainer.setRendererRefreshRate(srcContainer.getRendererRefreshRate());
+        dstContainer.setFullscreenStretched(srcContainer.isFullscreenStretched());
+        dstContainer.setMIDISoundFont(srcContainer.getMIDISoundFont());
+        dstContainer.setInputType(srcContainer.getInputType());
+        dstContainer.setLC_ALL(srcContainer.getLC_ALL());
+        dstContainer.setExclusiveXInput(srcContainer.isExclusiveXInput());
         String srcExtraData = srcContainer.getExtraData();
         if (srcExtraData != null && !srcExtraData.isEmpty()) {
             try {
@@ -223,6 +240,7 @@ public class ContainerManager {
         ArrayList<Shortcut> shortcuts = new ArrayList<>();
 
         if (selectedFolder != null) {
+            if (selectedFolder.file == null) return shortcuts;
             File[] files = selectedFolder.file.listFiles();
             if (files != null) {
                 for (File file : files) {
@@ -234,7 +252,9 @@ public class ContainerManager {
         }
         else {
             for (Container container : containers) {
-                File desktopDir = new File(container.getUserDir(), "Desktop");
+                File userDir = container.getUserDir();
+                if (userDir == null) continue;
+                File desktopDir = new File(userDir, "Desktop");
                 File[] files = desktopDir.listFiles();
                 if (files != null) {
                     for (File file : files) {
@@ -257,6 +277,8 @@ public class ContainerManager {
     public ArrayList<FileInfo> loadFiles(Container container, FileInfo parent) {
         ArrayList<FileInfo> fileInfos = new ArrayList<>();
 
+        if (container == null || container.getRootDir() == null) return fileInfos;
+
         if (parent != null) {
             fileInfos = parent.list();
         }
@@ -268,11 +290,13 @@ public class ContainerManager {
             }
 
             File userDir = container.getUserDir();
-            File documentsDir = new File(userDir, "Documents");
-            File favoritesDir = new File(userDir, "Favorites");
+            if (userDir != null) {
+                File documentsDir = new File(userDir, "Documents");
+                File favoritesDir = new File(userDir, "Favorites");
 
-            fileInfos.add(new FileInfo(container, documentsDir.getName(), documentsDir.getPath(), FileInfo.Type.DIRECTORY));
-            fileInfos.add(new FileInfo(container, favoritesDir.getName(), favoritesDir.getPath(), FileInfo.Type.DIRECTORY));
+                fileInfos.add(new FileInfo(container, documentsDir.getName(), documentsDir.getPath(), FileInfo.Type.DIRECTORY));
+                fileInfos.add(new FileInfo(container, favoritesDir.getName(), favoritesDir.getPath(), FileInfo.Type.DIRECTORY));
+            }
 
             Collections.sort(fileInfos);
         }
@@ -303,16 +327,33 @@ public class ContainerManager {
     private boolean extractContainerPatternFile(String wineVersion, File containerDir, String containerVariant) {
         try {
             if (containerVariant != null && containerVariant.equals(Container.BIONIC)) {
-                String containerPattern = wineVersion + "_container_pattern.tzst";
+                String containerPattern = WineInfo.getContainerPatternAssetName(wineVersion);
                 boolean result = false;
                 if (assetExists(context, containerPattern)) {
                     result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, containerPattern, containerDir);
                 }
                 if (!result) {
+                    FusionFS fusionFS = FusionFS.find(context);
+                    File installedPattern = new File(fusionFS.getInstalledWineDir(), containerPattern);
+                    if (installedPattern.isFile()) {
+                        result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, installedPattern, containerDir);
+                    }
+                    if (!result) {
+                        String legacyVersion = WineInfo.fromIdentifier(context, wineVersion).fullVersion();
+                        String legacyName = "container-pattern-" + legacyVersion + ".tzst";
+                        File legacyPattern = new File(fusionFS.getInstalledWineDir(), legacyName);
+                        if (legacyPattern.isFile()) {
+                            result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, legacyPattern, containerDir);
+                        }
+                    }
+                }
+                if (!result) {
                     WineInfo wineInfo = WineInfo.fromIdentifier(context, wineVersion);
                     if (wineInfo.path != null) {
                         File prefixPackFile = new File(wineInfo.path + "/prefixPack.txz");
-                        result = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, prefixPackFile, containerDir);
+                        if (prefixPackFile.isFile()) {
+                            result = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, prefixPackFile, containerDir);
+                        }
                     }
                 }
 
@@ -338,28 +379,49 @@ public class ContainerManager {
                 }
                 return result;
             } else {
-                if (WineInfo.isMainWineVersion(wineVersion)) {
-                    String patternAsset = "wine-10.10-x86_64_container_pattern.tzst";
-                    boolean result = false;
-                    if (assetExists(context, patternAsset)) {
-                        result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, patternAsset, containerDir);
+                String patternAsset = WineInfo.getContainerPatternAssetName(wineVersion);
+                boolean result = false;
+
+                if (assetExists(context, patternAsset)) {
+                    result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, patternAsset, containerDir);
+                }
+
+                if (!result) {
+                    FusionFS fusionFS = FusionFS.find(context);
+                    File installedPattern = new File(fusionFS.getInstalledWineDir(), patternAsset);
+                    if (installedPattern.isFile()) {
+                        result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, installedPattern, containerDir);
                     }
-                    if (result) {
-                        try {
-                            JSONObject commonDlls = new JSONObject(FileUtils.readString(context, "common_dlls.json"));
-                            copyCommonDlls("x86_64-windows", "system32", commonDlls, containerDir);
-                            copyCommonDlls("i386-windows", "syswow64", commonDlls, containerDir);
-                        } catch (JSONException e) {
-                            return false;
+                    if (!result) {
+                        String legacyVersion = WineInfo.fromIdentifier(context, wineVersion).fullVersion();
+                        String legacyName = "container-pattern-" + legacyVersion + ".tzst";
+                        File legacyPattern = new File(fusionFS.getInstalledWineDir(), legacyName);
+                        if (legacyPattern.isFile()) {
+                            result = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, legacyPattern, containerDir);
                         }
                     }
-                    return result;
-                } else {
-                    File installedWineDir = FusionFS.find(context).getInstalledWineDir();
-                    WineInfo wineInfo = WineInfo.fromIdentifier(context, wineVersion);
-                    File file = new File(installedWineDir, "container-pattern-" + wineInfo.fullVersion() + ".tzst");
-                    return TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, file, containerDir);
                 }
+
+                if (!result) {
+                    WineInfo wineInfo = WineInfo.fromIdentifier(context, wineVersion);
+                    if (wineInfo.path != null) {
+                        File prefixPackFile = new File(wineInfo.path + "/prefixPack.txz");
+                        if (prefixPackFile.isFile()) {
+                            result = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, prefixPackFile, containerDir);
+                        }
+                    }
+                }
+
+                if (result && WineInfo.isMainWineVersion(wineVersion)) {
+                    try {
+                        JSONObject commonDlls = new JSONObject(FileUtils.readString(context, "common_dlls.json"));
+                        copyCommonDlls("x86_64-windows", "system32", commonDlls, containerDir);
+                        copyCommonDlls("i386-windows", "syswow64", commonDlls, containerDir);
+                    } catch (JSONException e) {
+                        return false;
+                    }
+                }
+                return result;
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to extract container pattern for " + wineVersion, e);

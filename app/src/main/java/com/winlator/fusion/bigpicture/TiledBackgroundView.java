@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Shader;
@@ -25,6 +26,7 @@ public class TiledBackgroundView extends View {
     private int frameDuration = 66;
     private boolean isAnimating = false;
     private boolean enableParallax = true;
+    private boolean hasValidFrames = false;
 
     private float scrollX = 0;
     private float scrollY = 0;
@@ -38,11 +40,22 @@ public class TiledBackgroundView extends View {
 
     private void loadAnimationFrames(String animationBaseName) {
         frames = new Bitmap[39];
+        int loadedCount = 0;
         for (int i = 1; i <= frames.length; i++) {
             int resId = getResources().getIdentifier(animationBaseName + "_" + String.format("%04d", i), "drawable", getContext().getPackageName());
-            frames[i - 1] = BitmapFactory.decodeResource(getResources(), resId);
+            if (resId != 0) {
+                frames[i - 1] = BitmapFactory.decodeResource(getResources(), resId);
+                if (frames[i - 1] != null) loadedCount++;
+            }
         }
-        updateShader();
+        hasValidFrames = loadedCount > 0;
+        if (hasValidFrames) {
+            updateShader();
+        } else {
+            paint = new Paint();
+            paint.setColor(Color.parseColor("#1a1a2e"));
+            paint.setStyle(Paint.Style.FILL);
+        }
     }
 
     public void setAnimation(String animationBaseName) {
@@ -50,17 +63,18 @@ public class TiledBackgroundView extends View {
         staticWallpaper = null;
         loadAnimationFrames(animationBaseName);
         enableParallax = !animationBaseName.equals("ab_quilt");
-        startAnimation();
+        if (hasValidFrames) startAnimation();
     }
 
     private void updateShader() {
-        if (frames == null || frames.length == 0 || frames[currentFrame] == null) return;
+        if (frames == null || frames.length == 0 || currentFrame >= frames.length || frames[currentFrame] == null) return;
         BitmapShader shader = new BitmapShader(frames[currentFrame], Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
         paint = new Paint();
         paint.setShader(shader);
     }
 
     public void startAnimation() {
+        if (!hasValidFrames) return;
         isAnimating = true;
         handler.post(animationRunnable);
     }
@@ -73,11 +87,11 @@ public class TiledBackgroundView extends View {
     private final Runnable animationRunnable = new Runnable() {
         @Override
         public void run() {
-            if (isAnimating) {
+            if (isAnimating && frames != null && hasValidFrames) {
                 currentFrame = (currentFrame + 1) % frames.length;
                 updateShader();
 
-                if (enableParallax) {
+                if (enableParallax && frames[currentFrame] != null) {
                     scrollX += scrollSpeedX;
                     scrollY += scrollSpeedY;
 
@@ -96,13 +110,13 @@ public class TiledBackgroundView extends View {
         super.onDraw(canvas);
 
         if (staticWallpaper != null) {
-            if (paint.getShader() != null) {
+            if (paint != null && paint.getShader() != null) {
                 canvas.drawPaint(paint);
             } else {
                 canvas.drawBitmap(staticWallpaper, (getWidth() - staticWallpaper.getWidth()) / 2f,
                         (getHeight() - staticWallpaper.getHeight()) / 2f, paint);
             }
-        } else {
+        } else if (hasValidFrames) {
             if (paint == null || paint.getShader() == null) return;
             Matrix matrix = new Matrix();
             if (enableParallax) {
@@ -111,6 +125,8 @@ public class TiledBackgroundView extends View {
                 matrix.setTranslate(0, 0);
             }
             paint.getShader().setLocalMatrix(matrix);
+            canvas.drawPaint(paint);
+        } else {
             canvas.drawPaint(paint);
         }
     }
@@ -131,6 +147,7 @@ public class TiledBackgroundView extends View {
         stopAnimation();
         staticWallpaper = wallpaper;
         enableParallax = false;
+        hasValidFrames = false;
 
         BitmapShader shader;
         switch (mode) {
@@ -164,6 +181,7 @@ public class TiledBackgroundView extends View {
 
         enableParallax = true;
         currentFrame = 0;
+        hasValidFrames = true;
         updateShader();
         startAnimation();
     }
@@ -178,6 +196,7 @@ public class TiledBackgroundView extends View {
 
         enableParallax = true;
         currentFrame = 0;
+        hasValidFrames = true;
         updateShader();
         startAnimation();
     }

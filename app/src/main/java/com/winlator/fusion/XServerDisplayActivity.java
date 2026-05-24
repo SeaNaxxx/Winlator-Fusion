@@ -64,12 +64,18 @@ import com.winlator.fusion.core.WineInstaller;
 import com.winlator.fusion.core.WineRegistryEditor;
 import com.winlator.fusion.core.WineStartMenuCreator;
 import com.winlator.fusion.core.WineThemeManager;
+import com.winlator.fusion.core.WineRequestHandler;
 import com.winlator.fusion.core.WineUtils;
 import com.winlator.fusion.inputcontrols.ControlsProfile;
 import com.winlator.fusion.inputcontrols.ExternalController;
 import com.winlator.fusion.inputcontrols.InputControlsManager;
 import com.winlator.fusion.math.Mathf;
 import com.winlator.fusion.renderer.GLRenderer;
+import com.winlator.fusion.renderer.Renderer;
+import com.winlator.fusion.renderer.VulkanRenderer;
+import cn.sherlock.com.sun.media.sound.SF2Soundbank;
+import com.winlator.fusion.midi.MidiHandler;
+import com.winlator.fusion.midi.MidiManager;
 import com.winlator.fusion.widget.FrameRating;
 import com.winlator.fusion.widget.InputControlsView;
 import com.winlator.fusion.widget.MagnifierView;
@@ -145,6 +151,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
     private String screenEffectProfile;
     private boolean isPaused = false;
     private long sessionStartTime = 0;
+    private WineRequestHandler wineRequestHandler;
+    private MidiHandler midiHandler;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -270,6 +278,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             this.dxwrapperConfig = DXWrappers.parseConfigs(dxwrapper, dxwrapperConfig);
 
             winHandler.gamepadHandler.setPreferredInputApi(GamepadHandler.PreferredInputApi.values()[preferredInputApiIdx]);
+
+            if (container != null) {
+                winHandler.setInputType((byte) container.getInputType());
+            }
+            if (shortcut != null) {
+                String shortcutInputType = shortcut.getExtra("inputType");
+                if (!shortcutInputType.isEmpty()) winHandler.setInputType(Byte.parseByte(shortcutInputType));
+            }
         }
 
         preloaderDialog.showWithCountdown(R.string.starting_up, 15);
@@ -287,7 +303,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             @Override
             public void onMapWindow(Window window) {
                 if (!flags[0] && window.isRenderable() && !window.getClassName().isEmpty()) {
-                    xServerView.getRenderer().setCursorVisible(true);
+                    Renderer r = xServer.getRenderer();
+                    if (r != null) r.setCursorVisible(true);
                     preloaderDialog.closeOnUiThread();
                     flags[0] = true;
                 }
@@ -379,6 +396,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             shortcut.saveData();
             sessionStartTime = 0; // Prevent double-counting
         }
+        if (wineRequestHandler != null) wineRequestHandler.stop();
+        if (midiHandler != null) midiHandler.stop();
         winHandler.stop();
         if (environment != null) environment.stopEnvironmentComponents();
         super.onDestroy();
@@ -396,7 +415,6 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        final GLRenderer renderer = xServerView.getRenderer();
         int id = item.getItemId();
         if (id == R.id.menu_item_keyboard) {
             AppUtils.showKeyboard(this);
@@ -405,7 +423,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             showInputControlsDialog();
             drawerLayout.closeDrawers();
         } else if (id == R.id.menu_item_toggle_fullscreen) {
-            renderer.toggleFullscreen();
+            Renderer r = xServer.getRenderer();
+            if (r != null) r.toggleFullscreen();
             drawerLayout.closeDrawers();
         } else if (id == R.id.menu_item_task_manager) {
             (new TaskManagerDialog(this)).show();
@@ -418,10 +437,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 final FrameLayout container = findViewById(R.id.FLXServerDisplay);
                 magnifierView = new MagnifierView(this);
                 magnifierView.setZoomButtonCallback((value) -> {
-                    renderer.setMagnifierZoom(Mathf.clamp(renderer.getMagnifierZoom() + value, 1.0f, 3.0f));
-                    magnifierView.setZoomValue(renderer.getMagnifierZoom());
+                    Renderer r = xServer.getRenderer();
+                    if (r != null) r.setMagnifierZoom(Mathf.clamp(r.getMagnifierZoom() + value, 1.0f, 3.0f));
+                    if (r != null) magnifierView.setZoomValue(r.getMagnifierZoom());
                 });
-                magnifierView.setZoomValue(renderer.getMagnifierZoom());
+                magnifierView.setZoomValue(xServer.getRenderer() != null ? xServer.getRenderer().getMagnifierZoom() : 1.0f);
                 magnifierView.setHideButtonCallback(() -> {
                     container.removeView(magnifierView);
                     magnifierView = null;
@@ -472,6 +492,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             shortcut.saveData();
             sessionStartTime = 0; // Prevent double-counting
         }
+        if (wineRequestHandler != null) wineRequestHandler.stop();
+        if (midiHandler != null) midiHandler.stop();
         winHandler.stop();
         if (environment != null) environment.stopEnvironmentComponents();
 
@@ -509,7 +531,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
         String desktopTheme = container.getDesktopTheme();
         if (!(desktopTheme+","+xServer.screenInfo).equals(container.getExtra("desktopTheme"))) {
-            WineThemeManager.apply(this, new WineThemeManager.ThemeInfo(desktopTheme), xServer.screenInfo, rootFS.getRootDir());
+            WineThemeManager.apply(this, new WineThemeManager.ThemeInfo(desktopTheme), xServer.screenInfo, FusionFS.find(this).getDirForVariant(container.getContainerVariant()));
             container.putExtra("desktopTheme", desktopTheme+","+xServer.screenInfo);
             containerDataChanged = true;
         }
@@ -529,6 +551,24 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         if (!openAndroidBrowserFromWineStr.equals(container.getExtra("openAndroidBrowserFromWine")) || wineprefixWasUpdated) {
             WineUtils.changeBrowsersRegistryKey(container, openAndroidBrowserFromWine);
             container.putExtra("openAndroidBrowserFromWine", openAndroidBrowserFromWineStr);
+            containerDataChanged = true;
+        }
+
+        String currentInputType = String.valueOf(container.getInputType());
+        String currentExclusiveXInput = String.valueOf(container.isExclusiveXInput());
+        if (shortcut != null) {
+            String shortcutInputType = shortcut.getExtra("inputType", "");
+            if (!shortcutInputType.isEmpty()) currentInputType = shortcutInputType;
+            String shortcutExclusive = shortcut.getExtra("exclusiveXInput", "");
+            if (!shortcutExclusive.isEmpty()) currentExclusiveXInput = shortcutExclusive;
+        }
+        if (!currentInputType.equals(container.getExtra("inputType")) || !currentExclusiveXInput.equals(container.getExtra("exclusiveXInput")) || wineprefixWasUpdated) {
+            int inputType = Integer.parseInt(currentInputType);
+            boolean dinputEnabled = (inputType & WinHandler.FLAG_INPUT_TYPE_DINPUT) == WinHandler.FLAG_INPUT_TYPE_DINPUT;
+            boolean exclusiveXInput = currentExclusiveXInput.equals("true") || currentExclusiveXInput.equals("1");
+            WineUtils.setJoystickRegistryKeys(container, dinputEnabled, exclusiveXInput);
+            container.putExtra("inputType", currentInputType);
+            container.putExtra("exclusiveXInput", currentExclusiveXInput);
             containerDataChanged = true;
         }
 
@@ -573,6 +613,31 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             envVars.putAll(container.getEnvVars());
             if (shortcut != null) envVars.putAll(shortcut.getExtra("envVars"));
             if (!envVars.has("WINEESYNC")) envVars.put("WINEESYNC", "1");
+
+            String lcAll = container.getLC_ALL();
+            if (shortcut != null) {
+                String shortcutLcAll = shortcut.getExtra("lc_all", "");
+                if (!shortcutLcAll.isEmpty()) lcAll = shortcutLcAll;
+            }
+            if (!lcAll.isEmpty()) envVars.put("LC_ALL", lcAll);
+
+            String vkbasaltConfig = "";
+            if (shortcut != null) {
+                String sharpnessEffect = shortcut.getExtra("sharpnessEffect", "None");
+                if (!sharpnessEffect.equals("None")) {
+                    double sharpnessLevel = Double.parseDouble(shortcut.getExtra("sharpnessLevel", "100"));
+                    double sharpnessDenoise = Double.parseDouble(shortcut.getExtra("sharpnessDenoise", "100"));
+                    vkbasaltConfig = "effects=" + sharpnessEffect.toLowerCase() + ";"
+                        + "casSharpness=" + sharpnessLevel / 100 + ";"
+                        + "dlsSharpness=" + sharpnessLevel / 100 + ";"
+                        + "dlsDenoise=" + sharpnessDenoise / 100 + ";"
+                        + "enableOnLaunch=True";
+                }
+            }
+            if (!vkbasaltConfig.isEmpty()) {
+                envVars.put("ENABLE_VKBASALT", "1");
+                envVars.put("VKBASALT_CONFIG", vkbasaltConfig);
+            }
         }
 
         environment = new XEnvironment(this, rootFS, xServer);
@@ -603,6 +668,30 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         environment.startEnvironmentComponents();
 
         winHandler.start();
+        wineRequestHandler = new WineRequestHandler(this);
+        wineRequestHandler.start();
+
+        String midiSoundFont = container != null ? container.getMIDISoundFont() : "";
+        if (shortcut != null) {
+            String shortcutMidi = shortcut.getExtra("midiSoundFont", "");
+            if (!shortcutMidi.isEmpty()) midiSoundFont = shortcutMidi;
+        }
+        if (!midiSoundFont.isEmpty()) {
+            try {
+                midiHandler = new MidiHandler();
+                SF2Soundbank soundbank;
+                if (midiSoundFont.equals(MidiManager.DEFAULT_SF2_FILE)) {
+                    soundbank = new SF2Soundbank(getAssets().open(MidiManager.SF2_ASSETS_DIR + "/" + MidiManager.DEFAULT_SF2_FILE));
+                } else {
+                    soundbank = new SF2Soundbank(new File(MidiManager.getSoundFontDir(this), midiSoundFont));
+                }
+                midiHandler.setSoundBank(soundbank);
+                midiHandler.start();
+            } catch (Exception e) {
+                midiHandler = null;
+            }
+        }
+
         envVars.clear();
         graphicsDriver = null;
         dxwrapperConfig = null;
@@ -614,14 +703,40 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
     private void setupUI() {
         FrameLayout rootView = findViewById(R.id.FLXServerDisplay);
-        xServerView = new XServerView(this, xServer);
-        final GLRenderer renderer = xServerView.getRenderer();
-        renderer.setCursorVisible(false);
-        renderer.setCursorColor(preferences.getInt("cursor_color", 0xffffff));
-        renderer.setCursorScale(preferences.getFloat("cursor_scale", 1.0f));
-        renderer.setForceWindowsFullscreen(shortcut != null && shortcut.getExtra("forceFullscreen", "0").equals("1"));
+        boolean useVulkan = !isGenerateWineprefix() && container != null && container.isVulkanRenderer();
+        xServerView = new XServerView(this, xServer, useVulkan);
 
-        xServer.setRenderer(renderer);
+        if (useVulkan) {
+            VulkanRenderer vkRenderer = xServerView.getVulkanRenderer();
+            vkRenderer.setCursorVisible(false);
+            vkRenderer.setVkPresentMode(container.getRendererPresentMode());
+            vkRenderer.setFilterMode(container.getRendererFilterMode());
+            vkRenderer.setNativeMode(container.isRendererNative());
+            if (container.getRendererRefreshRate() > 0) {
+                vkRenderer.setRefreshRateLimit(container.getRendererRefreshRate());
+            }
+            xServer.setRenderer(vkRenderer);
+        } else {
+            final GLRenderer renderer = xServerView.getRenderer();
+            renderer.setCursorVisible(false);
+            renderer.setCursorColor(preferences.getInt("cursor_color", 0xffffff));
+            renderer.setCursorScale(preferences.getFloat("cursor_scale", 1.0f));
+            renderer.setForceWindowsFullscreen(shortcut != null && shortcut.getExtra("forceFullscreen", "0").equals("1"));
+            xServer.setRenderer(renderer);
+        }
+
+        if (container != null) {
+            boolean shouldStretch = container.isFullscreenStretched();
+            if (shortcut != null) {
+                String shortcutStretched = shortcut.getExtra("fullscreenStretched", "");
+                if (!shortcutStretched.isEmpty()) shouldStretch = shortcutStretched.equals("1");
+            }
+            if (shouldStretch) {
+                Renderer r = xServer.getRenderer();
+                if (r != null) r.toggleFullscreen();
+            }
+        }
+
         rootView.addView(xServerView);
 
         globalCursorSpeed = preferences.getFloat("cursor_speed", 1.0f);
@@ -657,7 +772,10 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         }
 
         if (MainActivity.DEBUG_MODE) rootView.addView(AppUtils.createDebugMsgTextView(this));
-        AppUtils.observeSoftKeyboardVisibility(drawerLayout, renderer::setScreenOffsetYRelativeToCursor);
+        AppUtils.observeSoftKeyboardVisibility(drawerLayout, (visible) -> {
+            Renderer r = xServer.getRenderer();
+            if (r != null) r.setScreenOffsetYRelativeToCursor(visible);
+        });
     }
 
     private void showInputControlsDialog() {
@@ -722,13 +840,12 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         touchpadView.setSensitivity(profile.getCursorSpeed() * globalCursorSpeed);
         touchpadView.setPointerButtonRightEnabled(false);
 
-        GLRenderer renderer = xServerView.getRenderer();
         if (profile.isDisableMouseInput()) {
-            renderer.setCursorVisible(false);
+            Renderer r = xServer.getRenderer(); if (r != null) r.setCursorVisible(false);
             touchpadView.setEnabled(false);
         }
         else {
-            renderer.setCursorVisible(true);
+            Renderer r = xServer.getRenderer(); if (r != null) r.setCursorVisible(true);
             touchpadView.setEnabled(true);
         }
 
@@ -746,7 +863,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
         if (!touchpadView.isEnabled()) {
             touchpadView.setEnabled(true);
-            xServerView.getRenderer().setCursorVisible(true);
+            Renderer r = xServer.getRenderer(); if (r != null) r.setCursorVisible(true);
         }
 
         inputControlsView.invalidate();
@@ -1199,7 +1316,9 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, FusionFS.ASSET_FUSIONFS_PATCHES, rootDir);
         }
 
-        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "pulseaudio.tzst", new File(getFilesDir(), "pulseaudio"));
+        String pulseaudioAsset = isBionic ? "pulseaudio-full.tzst" : "pulseaudio.tzst";
+        String pulseaudioDir = isBionic ? "pulseaudio/bionic" : "pulseaudio/glibc";
+        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, pulseaudioAsset, new File(getFilesDir(), pulseaudioDir));
         WineUtils.applySystemTweaks(this, wineInfo, rootDir);
         container.putExtra("graphicsDriver", null);
         container.putExtra("dxwrapper", null);

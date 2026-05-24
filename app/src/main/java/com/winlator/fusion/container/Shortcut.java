@@ -62,7 +62,9 @@ public class Shortcut {
                         if (key.equals("Exec")) execArgs = value;
                         if (key.equals("Icon")) {
                             for (short iconSize : iconSizes) {
-                                iconFile = new File(container.getIconsDir(iconSize), value+".png");
+                                File iconsDir = container.getIconsDir(iconSize);
+                                if (iconsDir == null) continue;
+                                iconFile = new File(iconsDir, value+".png");
                                 if (iconFile.isFile()){
                                     icon = BitmapFactory.decodeFile(iconFile.getPath());
                                     break;
