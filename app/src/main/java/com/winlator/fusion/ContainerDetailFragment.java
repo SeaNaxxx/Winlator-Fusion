@@ -175,9 +175,9 @@ public class ContainerDetailFragment extends Fragment {
         else {
             btRendererOptions.setTag(R.id.rendererType, Container.RENDERER_GL);
             btRendererOptions.setTag(R.id.rendererNative, false);
-            btRendererOptions.setTag(R.id.rendererPresentMode, Container.PRESENT_MODE_FIFO);
+            btRendererOptions.setTag(R.id.rendererPresentMode, "fifo");
             btRendererOptions.setTag(R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR);
-            btRendererOptions.setTag(R.id.rendererRefreshRate, (byte) 0);
+            btRendererOptions.setTag(R.id.rendererRefreshRate, 0);
         }
         updateRendererSummary(tvRendererSummary, btRendererOptions);
         btRendererOptions.setOnClickListener((v) -> {
@@ -245,8 +245,8 @@ public class ContainerDetailFragment extends Fragment {
                     // Update env vars to variant-specific defaults if user hasn't modified them
                     EnvVarsView envVarsView = view.findViewById(R.id.EnvVarsView);
                     if (envVarsView != null) {
-                        String previousVariantDefaults = nowBionic ? Container.DEFAULT_ENV_VARS : Container.DEFAULT_ENV_VARS_BIONIC;
-                        String targetVariantDefaults = nowBionic ? Container.DEFAULT_ENV_VARS_BIONIC : Container.DEFAULT_ENV_VARS;
+                        String previousVariantDefaults = nowBionic ? Container.DEFAULT_ENV_VARS_GLIBIC : Container.DEFAULT_ENV_VARS_BIONIC;
+                        String targetVariantDefaults = nowBionic ? Container.DEFAULT_ENV_VARS_BIONIC : Container.DEFAULT_ENV_VARS_GLIBIC;
                         String currentEnvVars = envVarsView.getEnvVars();
                         if (currentEnvVars.equals(previousVariantDefaults)) {
                             envVarsView.setEnvVars(new EnvVars(targetVariantDefaults));
@@ -421,9 +421,9 @@ public class ContainerDetailFragment extends Fragment {
                     data.put("emulator", emulator);
                     data.put("rendererType", RendererOptionsDialog.getTagByte(btRendererOptions, R.id.rendererType, Container.RENDERER_GL));
                     data.put("rendererNative", RendererOptionsDialog.getTagBoolean(btRendererOptions, R.id.rendererNative, false));
-                    data.put("rendererPresentMode", RendererOptionsDialog.getTagByte(btRendererOptions, R.id.rendererPresentMode, Container.PRESENT_MODE_FIFO));
-                    data.put("rendererFilterMode", RendererOptionsDialog.getTagByte(btRendererOptions, R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR));
-                    data.put("rendererRefreshRate", RendererOptionsDialog.getTagByte(btRendererOptions, R.id.rendererRefreshRate, (byte) 0));
+                    data.put("rendererPresentMode", RendererOptionsDialog.getTagString(btRendererOptions, R.id.rendererPresentMode, "fifo"));
+                    data.put("rendererFilterMode", RendererOptionsDialog.getTagInt(btRendererOptions, R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR));
+                    data.put("rendererRefreshRate", RendererOptionsDialog.getTagInt(btRendererOptions, R.id.rendererRefreshRate, 0));
                     if (containerVariant.equals(Container.BIONIC)) {
                         if (sFEXCoreVersion.getSelectedItem() != null)
                             data.put("fexcoreVersion", sFEXCoreVersion.getSelectedItem().toString());
@@ -646,7 +646,7 @@ public class ContainerDetailFragment extends Fragment {
             if (selected != null && !selected.isEmpty()) variant = selected;
         }
         String defaultEnvVars = isEditMode() ? container.getEnvVars() :
-            (variant.equals(Container.BIONIC) ? Container.DEFAULT_ENV_VARS_BIONIC : Container.DEFAULT_ENV_VARS);
+            (variant.equals(Container.BIONIC) ? Container.DEFAULT_ENV_VARS_BIONIC : Container.DEFAULT_ENV_VARS_GLIBIC);
         envVarsView.setEnvVars(new EnvVars(defaultEnvVars));
         view.findViewById(R.id.BTAddEnvVar).setOnClickListener((v) -> (new AddEnvVarDialog(context, envVarsView)).show());
         return envVarsView;

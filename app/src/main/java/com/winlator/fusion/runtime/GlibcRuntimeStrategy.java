@@ -134,7 +134,7 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
 
     @Override
     public String getDefaultEnvVars() {
-        return Container.DEFAULT_ENV_VARS;
+        return Container.DEFAULT_ENV_VARS_GLIBIC;
     }
 
     @Override
