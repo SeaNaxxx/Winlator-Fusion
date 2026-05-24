@@ -112,6 +112,7 @@ public class WinlatorFilesProvider extends DocumentsProvider {
     @Override
     public Cursor queryRoots(String[] projection) {
         final MatrixCursor result = new MatrixCursor(projection != null ? projection : DEFAULT_ROOT_PROJECTION);
+        if (!enabled) return result;
         final String applicationName = getContext().getString(R.string.app_name);
 
         final MatrixCursor.RowBuilder row = result.newRow();
@@ -244,9 +245,16 @@ public class WinlatorFilesProvider extends DocumentsProvider {
         return file.getAbsolutePath();
     }
 
-    private static File getFileForDocId(String docId) throws FileNotFoundException {
+    private File getFileForDocId(String docId) throws FileNotFoundException {
         final File f = new File(docId);
         if (!f.exists()) throw new FileNotFoundException(f.getAbsolutePath() + " not found");
+        try {
+            if (!f.getCanonicalPath().startsWith(BASE_DIR.getCanonicalPath())) {
+                throw new FileNotFoundException("Access denied");
+            }
+        } catch (IOException e) {
+            throw new FileNotFoundException("Access denied");
+        }
         return f;
     }
 
