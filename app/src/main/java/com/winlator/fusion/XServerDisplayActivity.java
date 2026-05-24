@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.view.Display;
+import android.view.WindowManager;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -319,7 +320,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             public void onMapWindow(Window window) {
                 if (!flags[0] && window.isRenderable() && !window.getClassName().isEmpty()) {
                     Renderer r = xServer.getRenderer();
-                    if (r != null && !xServer.isSimulateTouchScreen()) r.setCursorVisible(true);
+                    if (r != null) r.setCursorVisible(true);
                     preloaderDialog.closeOnUiThread();
                     flags[0] = true;
                 }
