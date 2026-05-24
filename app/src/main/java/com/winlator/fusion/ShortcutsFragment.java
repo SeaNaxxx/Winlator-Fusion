@@ -233,10 +233,10 @@ public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
                 try (FileOutputStream fos = new FileOutputStream(destFile)) { bmp.compress(Bitmap.CompressFormat.PNG, 100, fos); }
                 bmp.recycle();
                 if (onSuccess != null) onSuccess.run();
-                inFlightFetches.remove(fetchKey);
             } catch (Exception e) {
-                inFlightFetches.remove(fetchKey);
                 if (onFail != null) onFail.run();
+            } finally {
+                inFlightFetches.remove(fetchKey);
             }
         });
     }
