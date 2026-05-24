@@ -736,11 +736,18 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         if (useVulkan) {
             VulkanRenderer vkRenderer = xServerView.getVulkanRenderer();
             vkRenderer.setCursorVisible(false);
-            vkRenderer.setVkPresentMode(container.getRendererPresentMode());
-            vkRenderer.setFilterMode(container.getRendererFilterMode());
+            String presentMode = container.getRendererPresentMode();
+            byte vkPresentMode;
+            switch (presentMode) {
+                case "mailbox": vkPresentMode = Container.PRESENT_MODE_MAILBOX; break;
+                case "immediate": vkPresentMode = Container.PRESENT_MODE_IMMEDIATE; break;
+                default: vkPresentMode = Container.PRESENT_MODE_FIFO; break;
+            }
+            vkRenderer.setVkPresentMode(vkPresentMode);
+            vkRenderer.setFilterMode((byte)container.getRendererFilterMode());
             vkRenderer.setNativeMode(container.isRendererNative());
-            if (container.getRendererRefreshRate() > 0) {
-                vkRenderer.setRefreshRateLimit(container.getRendererRefreshRate());
+            if (container.getRendererRefreshRateLimit() > 0) {
+                vkRenderer.setRefreshRateLimit((byte)container.getRendererRefreshRateLimit());
             }
             xServer.setRenderer(vkRenderer);
         } else {

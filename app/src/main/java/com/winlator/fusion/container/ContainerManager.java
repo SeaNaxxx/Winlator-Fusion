@@ -213,7 +213,9 @@ public class ContainerManager {
         dstContainer.setRendererNative(srcContainer.isRendererNative());
         dstContainer.setRendererPresentMode(srcContainer.getRendererPresentMode());
         dstContainer.setRendererFilterMode(srcContainer.getRendererFilterMode());
-        dstContainer.setRendererRefreshRate(srcContainer.getRendererRefreshRate());
+        dstContainer.setRendererRefreshRateLimit(srcContainer.getRendererRefreshRateLimit());
+        dstContainer.setRendererDriverId(srcContainer.getRendererDriverId());
+        dstContainer.setRendererSwapRB(srcContainer.getRendererSwapRB());
         dstContainer.setFullscreenStretched(srcContainer.isFullscreenStretched());
         dstContainer.setMIDISoundFont(srcContainer.getMIDISoundFont());
         dstContainer.setInputType(srcContainer.getInputType());

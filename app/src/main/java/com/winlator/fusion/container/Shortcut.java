@@ -96,26 +96,15 @@ public class Shortcut {
         }
     }
 
-    public String getExtra(String name) {
-        return getExtra(name, "");
-    }
+    public String getExtra(String name) { return getExtra(name, ""); }
 
     public String getExtra(String name, String fallback) {
-        try {
-            return extraData.has(name) ? extraData.getString(name) : fallback;
-        }
-        catch (JSONException e) {
-            return fallback;
-        }
+        try { return extraData.has(name) ? extraData.getString(name) : fallback; }
+        catch (JSONException e) { return fallback; }
     }
 
     public void putExtra(String name, String value) {
-        try {
-            if (value != null) {
-                extraData.put(name, value);
-            }
-            else extraData.remove(name);
-        }
+        try { if (value != null) extraData.put(name, value); else extraData.remove(name); }
         catch (JSONException e) {}
     }
 
@@ -131,9 +120,7 @@ public class Shortcut {
             Iterator<String> keys = extraData.keys();
             while (keys.hasNext()) {
                 String key = keys.next();
-                try {
-                    content += key + "=" + extraData.getString(key) + "\n";
-                }
+                try { content += key + "=" + extraData.getString(key) + "\n"; }
                 catch (JSONException e) {}
             }
         }
@@ -159,105 +146,85 @@ public class Shortcut {
         }
     }
 
+    public int getContainerId() { return container.id; }
+
     public String getExecutionBackend() {
         String v = getExtra("executionBackend", null);
         return v != null ? v : container.getEmulator();
     }
 
-    public void setExecutionBackend(String backend) {
-        putExtra("executionBackend", backend);
-    }
+    public void setExecutionBackend(String backend) { putExtra("executionBackend", backend); }
 
     public boolean isFEXCoreEnabled() {
         String v = getExtra("useFex", null);
         return v != null ? v.equals("1") : container.getEmulator().equals(EXECUTION_BACKEND_FEXCORE);
     }
 
-    public void setFEXCoreEnabled(boolean enabled) {
-        putExtra("useFex", enabled ? "1" : "0");
-    }
+    public void setFEXCoreEnabled(boolean enabled) { putExtra("useFex", enabled ? "1" : "0"); }
 
     public boolean isWOWBox64Enabled() {
         String v = getExtra("useWowBox64", null);
         return v != null ? v.equals("1") : container.getEmulator().equals(EXECUTION_BACKEND_WOWBOX64);
     }
 
-    public void setWOWBox64Enabled(boolean enabled) {
-        putExtra("useWowBox64", enabled ? "1" : "0");
-    }
+    public void setWOWBox64Enabled(boolean enabled) { putExtra("useWowBox64", enabled ? "1" : "0"); }
 
     public boolean isHODLLEnabled() {
         String v = getExtra("hodll", null);
         return v != null ? v.equals("1") : container.getEmulator().equals(EXECUTION_BACKEND_HODLL);
     }
 
-    public void setHODLLEnabled(boolean enabled) {
-        putExtra("hodll", enabled ? "1" : "0");
-    }
+    public void setHODLLEnabled(boolean enabled) { putExtra("hodll", enabled ? "1" : "0"); }
 
     public String getWoW64Backend() {
         String v = getExtra("wow64Backend", null);
         return v != null ? v : "";
     }
 
-    public void setWoW64Backend(String backend) {
-        putExtra("wow64Backend", backend);
-    }
+    public void setWoW64Backend(String backend) { putExtra("wow64Backend", backend); }
 
     public boolean isARM64ECMode() {
         String v = getExtra("arm64ecMode", null);
         if (v != null) return v.equals("1");
-        return container.getWineVersion() != null && container.getWineVersion().contains("arm64ec");
+        return container.isArm64EC();
     }
 
-    public void setARM64ECMode(boolean enabled) {
-        putExtra("arm64ecMode", enabled ? "1" : "0");
-    }
+    public void setARM64ECMode(boolean enabled) { putExtra("arm64ecMode", enabled ? "1" : "0"); }
 
     public String getGraphicsDriver() {
         String v = getExtra("graphicsDriver", null);
         return v != null ? v : container.getGraphicsDriver();
     }
 
-    public void setGraphicsDriver(String driver) {
-        putExtra("graphicsDriver", driver);
-    }
+    public void setGraphicsDriver(String driver) { putExtra("graphicsDriver", driver); }
 
     public String getDXWrapper() {
         String v = getExtra("dxwrapper", null);
         return v != null ? v : container.getDXWrapper();
     }
 
-    public void setDXWrapper(String wrapper) {
-        putExtra("dxwrapper", wrapper);
-    }
+    public void setDXWrapper(String wrapper) { putExtra("dxwrapper", wrapper); }
 
     public String getAudioDriver() {
         String v = getExtra("audioDriver", null);
         return v != null ? v : container.getAudioDriver();
     }
 
-    public void setAudioDriver(String driver) {
-        putExtra("audioDriver", driver);
-    }
+    public void setAudioDriver(String driver) { putExtra("audioDriver", driver); }
 
     public String getBox64Preset() {
         String v = getExtra("box64Preset", null);
         return v != null ? v : container.getBox64Preset();
     }
 
-    public void setBox64Preset(String preset) {
-        putExtra("box64Preset", preset);
-    }
+    public void setBox64Preset(String preset) { putExtra("box64Preset", preset); }
 
     public String getFEXCorePreset() {
         String v = getExtra("fexcorePreset", null);
         return v != null ? v : container.getFEXCorePreset();
     }
 
-    public void setFEXCorePreset(String preset) {
-        putExtra("fexcorePreset", preset);
-    }
+    public void setFEXCorePreset(String preset) { putExtra("fexcorePreset", preset); }
 
     public byte getStartupSelection() {
         String v = getExtra("startupSelection", null);
@@ -268,34 +235,97 @@ public class Shortcut {
         return container.getStartupSelection();
     }
 
-    public void setStartupSelection(byte selection) {
-        putExtra("startupSelection", String.valueOf(selection));
-    }
+    public void setStartupSelection(byte selection) { putExtra("startupSelection", String.valueOf(selection)); }
 
     public String getEnvVars() {
         String v = getExtra("envVars", null);
         return v != null ? v : container.getEnvVars();
     }
 
-    public void setEnvVars(String envVars) {
-        putExtra("envVars", envVars);
-    }
+    public void setEnvVars(String envVars) { putExtra("envVars", envVars); }
 
     public boolean isEsyncEnabled() {
         String v = getExtra("wineEsync", null);
         return v != null ? v.equals("1") : container.getEnvVars().contains("WINEESYNC=1");
     }
 
-    public void setEsyncEnabled(boolean enabled) {
-        putExtra("wineEsync", enabled ? "1" : "0");
-    }
+    public void setEsyncEnabled(boolean enabled) { putExtra("wineEsync", enabled ? "1" : "0"); }
 
     public boolean isFsyncEnabled() {
         String v = getExtra("wineFsync", null);
         return v != null ? v.equals("1") : container.getEnvVars().contains("WINEFSYNC=1");
     }
 
-    public void setFsyncEnabled(boolean enabled) {
-        putExtra("wineFsync", enabled ? "1" : "0");
+    public void setFsyncEnabled(boolean enabled) { putExtra("wineFsync", enabled ? "1" : "0"); }
+
+    public boolean getRendererNative() {
+        String v = getExtra("rendererNative", null);
+        return v != null ? v.equals("1") : container.isRendererNative();
+    }
+
+    public void setRendererNative(boolean v) { putExtra("rendererNative", v ? "1" : "0"); }
+
+    public String getRendererPresentMode() {
+        String v = getExtra("rendererPresentMode", null);
+        return v != null && !v.isEmpty() ? v : container.getRendererPresentMode();
+    }
+
+    public void setRendererPresentMode(String v) { putExtra("rendererPresentMode", v != null ? v : "fifo"); }
+
+    public String getRendererDriverId() {
+        String v = getExtra("rendererDriverId", null);
+        return v != null ? v : container.getRendererDriverId();
+    }
+
+    public void setRendererDriverId(String v) { putExtra("rendererDriverId", v != null ? v : ""); }
+
+    public int getRendererFilterMode() {
+        String v = getExtra("rendererFilterMode", null);
+        try { return v != null && !v.isEmpty() ? Integer.parseInt(v) : container.getRendererFilterMode(); }
+        catch (NumberFormatException e) { return 0; }
+    }
+
+    public void setRendererFilterMode(int v) { putExtra("rendererFilterMode", String.valueOf(v)); }
+
+    public int getRendererRefreshRateLimit() {
+        String v = getExtra("rendererRefreshRateLimit", null);
+        try { return v != null && !v.isEmpty() ? Integer.parseInt(v) : container.getRendererRefreshRateLimit(); }
+        catch (NumberFormatException e) { return 60; }
+    }
+
+    public void setRendererRefreshRateLimit(int v) { putExtra("rendererRefreshRateLimit", String.valueOf(v > 0 ? v : 0)); }
+
+    public boolean getRendererSwapRB() {
+        String v = getExtra("rendererSwapRB", null);
+        return v != null ? v.equals("1") : container.getRendererSwapRB();
+    }
+
+    public void setRendererSwapRB(boolean v) { putExtra("rendererSwapRB", v ? "1" : "0"); }
+
+    public boolean cloneToContainer(Container newContainer) {
+        try {
+            File newShortcutFile = new File(newContainer.getDesktopDir(), this.file.getName());
+            if (newShortcutFile.getParentFile() != null && !newShortcutFile.getParentFile().exists()) {
+                newShortcutFile.getParentFile().mkdirs();
+            }
+            java.util.ArrayList<String> lines = FileUtils.readLines(this.file);
+            StringBuilder updatedContent = new StringBuilder();
+            for (String line : lines) {
+                updatedContent.append(line).append("\n");
+            }
+            FileUtils.writeString(newShortcutFile, updatedContent.toString());
+
+            if (this.iconFile != null && this.iconFile.isFile()) {
+                File newIconDir = newContainer.getIconsDir(64);
+                if (newIconDir != null) {
+                    if (!newIconDir.exists()) newIconDir.mkdirs();
+                    File newIconFile = new File(newIconDir, this.iconFile.getName());
+                    FileUtils.copy(this.iconFile, newIconFile);
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
