@@ -124,6 +124,7 @@
     <string name="install_wine">Install Wine</string>
     <string name="version">Version</string>
     <string name="unable_to_install_wine">Unable to install Wine</string>
+    <string name="unable_to_open_big_picture">Unable to open Big Picture mode</string>
     <string name="bionic_not_available">Bionic runtime is not installed. Please reinstall the app with Bionic support enabled.</string>
     <string name="proton_not_installed">Proton is not installed. Please install Proton via Settings to start Bionic containers.</string>
     <string name="cannot_change_container_variant">Cannot change runtime type of an existing container. Please create a new container instead.</string>
@@ -472,4 +473,16 @@
     <string name="download">Download</string>
     <string name="add_to_home_screen">Add to Home Screen</string>
     <string name="shortcut_not_available">Shortcut not available</string>
+    <string name="renderer_type">Renderer Type</string>
+    <string name="native_display_mode">Native Display Mode (Direct Scanout)</string>
+    <string name="present_mode">Present Mode</string>
+    <string name="filter_mode">Filter Mode</string>
+    <string name="refresh_rate_limit">Refresh Rate Limit</string>
+    <string name="renderer_options">Renderer Options</string>
+    <string name="bg_music">Background Music</string>
+    <string name="enable_bg_music">Enable background music</string>
+    <string name="youtube_url_hint">YouTube URL or video ID</string>
+    <string name="load">Load</string>
+    <string name="select_mp3">Select MP3</string>
+    <string name="reset_mp3">Reset</string>
 </resources>

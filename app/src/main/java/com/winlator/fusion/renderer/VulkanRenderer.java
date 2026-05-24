@@ -21,7 +21,7 @@ import com.winlator.fusion.xserver.XServer;
 
 import java.util.ArrayList;
 
-public class VulkanRenderer implements WindowManager.OnWindowModificationListener,
+public class VulkanRenderer implements Renderer, WindowManager.OnWindowModificationListener,
                                        Pointer.OnPointerMotionListener {
 
     static { System.loadLibrary("vulkan_renderer"); }
@@ -58,8 +58,8 @@ public class VulkanRenderer implements WindowManager.OnWindowModificationListene
     private volatile ArrayList<RenderableWindow> renderableWindows = new ArrayList<>();
     private static final java.util.concurrent.atomic.AtomicLong ID_GEN =
         new java.util.concurrent.atomic.AtomicLong(1);
-    private final java.util.WeakHashMap<Drawable, Long> drawableIds =
-        new java.util.WeakHashMap<>();
+    private final java.util.concurrent.ConcurrentHashMap<Drawable, Long> drawableIds =
+        new java.util.concurrent.ConcurrentHashMap<>();
     private final java.util.concurrent.atomic.AtomicBoolean scenePending =
         new java.util.concurrent.atomic.AtomicBoolean(false);
     private android.view.SurfaceControl scanoutGameSC;
@@ -523,7 +523,9 @@ public class VulkanRenderer implements WindowManager.OnWindowModificationListene
 
     @Override
     public void onDestroyWindow(Window window) {
-        final long id = did(window.getContent());
+        Drawable content = window.getContent();
+        final long id = did(content);
+        drawableIds.remove(content);
         xServerView.queueEvent(() -> {
             synchronized (lock) { if (nativeHandle != 0) nativeRemoveWindow(nativeHandle, id); }
             queueSceneUpdate();
@@ -698,6 +700,8 @@ public class VulkanRenderer implements WindowManager.OnWindowModificationListene
     public boolean isScreenOffsetYRelativeToCursor() { return screenOffsetYRelativeToCursor; }
     public void setMagnifierZoom(float zoom) { magnifierZoom = zoom; }
     public float getMagnifierZoom() { return magnifierZoom; }
+    @Override
+    public XServerView getXServerView() { return xServerView; }
     public void setUnviewableWMClasses(String... classes) { this.unviewableWMClasses = classes; }
     private int fpsLimit = 0;
     private int refreshRateLimit = 60;

@@ -15,6 +15,7 @@ import com.winlator.fusion.runtime.BionicRuntimeStrategy;
 import com.winlator.fusion.runtime.GlibcRuntimeStrategy;
 import com.winlator.fusion.runtime.RuntimeStrategy;
 import com.winlator.fusion.widget.FrameRating;
+import com.winlator.fusion.winhandler.WinHandler;
 import com.winlator.fusion.xenvironment.RootFS;
 
 import org.json.JSONException;
@@ -72,6 +73,24 @@ public class Container {
     private String box64Version = DefaultVersion.BOX64;
     private String emulator = "FEXCore";
     private String fexcorePreset = FEXCorePreset.DEFAULT;
+    private byte rendererType = 0;
+    private boolean rendererNative = false;
+    private byte rendererPresentMode = 0;
+    private byte rendererFilterMode = 1;
+    private byte rendererRefreshRate = 0;
+    private boolean fullscreenStretched;
+    private String midiSoundFont = "";
+    private int inputType = WinHandler.DEFAULT_INPUT_TYPE;
+    private String lc_all = "";
+    private boolean exclusiveXInput = true;
+
+    public static final byte RENDERER_GL = 0;
+    public static final byte RENDERER_VULKAN = 1;
+    public static final byte PRESENT_MODE_FIFO = 0;
+    public static final byte PRESENT_MODE_MAILBOX = 1;
+    public static final byte PRESENT_MODE_IMMEDIATE = 2;
+    public static final byte FILTER_MODE_NEAREST = 0;
+    public static final byte FILTER_MODE_LINEAR = 1;
 
     public Container(int id) {
         this.id = id;
@@ -263,19 +282,19 @@ public class Container {
     }
 
     public File getConfigFile() {
-        return new File(rootDir, ".container");
+        return rootDir != null ? new File(rootDir, ".container") : null;
     }
 
     public File getUserDir() {
-        return new File(rootDir, ".wine/drive_c/users/"+ RootFS.USER+"/");
+        return rootDir != null ? new File(rootDir, ".wine/drive_c/users/"+ RootFS.USER+"/") : null;
     }
 
     public File getStartMenuDir() {
-        return new File(rootDir, ".wine/drive_c/ProgramData/Microsoft/Windows/Start Menu/");
+        return rootDir != null ? new File(rootDir, ".wine/drive_c/ProgramData/Microsoft/Windows/Start Menu/") : null;
     }
 
     public File getIconsDir(int size) {
-        return new File(rootDir, ".local/share/icons/hicolor/"+size+"x"+size+"/apps/");
+        return rootDir != null ? new File(rootDir, ".local/share/icons/hicolor/"+size+"x"+size+"/apps/") : null;
     }
 
     public String getDesktopTheme() {
@@ -377,7 +396,31 @@ public class Container {
     }
     public void setFEXCorePreset(String v) { this.fexcorePreset = v; }
 
+    public byte getRendererType() { return rendererType; }
+    public void setRendererType(byte rendererType) { this.rendererType = rendererType; }
+    public boolean isRendererNative() { return rendererNative; }
+    public void setRendererNative(boolean rendererNative) { this.rendererNative = rendererNative; }
+    public byte getRendererPresentMode() { return rendererPresentMode; }
+    public void setRendererPresentMode(byte rendererPresentMode) { this.rendererPresentMode = rendererPresentMode; }
+    public byte getRendererFilterMode() { return rendererFilterMode; }
+    public void setRendererFilterMode(byte rendererFilterMode) { this.rendererFilterMode = rendererFilterMode; }
+    public byte getRendererRefreshRate() { return rendererRefreshRate; }
+    public void setRendererRefreshRate(byte rendererRefreshRate) { this.rendererRefreshRate = rendererRefreshRate; }
+    public boolean isVulkanRenderer() { return rendererType == RENDERER_VULKAN; }
+    public boolean isFullscreenStretched() { return fullscreenStretched; }
+    public void setFullscreenStretched(boolean fullscreenStretched) { this.fullscreenStretched = fullscreenStretched; }
+    public String getMIDISoundFont() { return midiSoundFont; }
+    public void setMIDISoundFont(String fileName) { midiSoundFont = fileName; }
+    public int getInputType() { return inputType; }
+    public void setInputType(int inputType) { this.inputType = inputType; }
+    public String getLC_ALL() { return lc_all; }
+    public void setLC_ALL(String lc_all) { this.lc_all = lc_all; }
+    public boolean isExclusiveXInput() { return exclusiveXInput; }
+    public void setExclusiveXInput(boolean exclusiveXInput) { this.exclusiveXInput = exclusiveXInput; }
+
     public void saveData() {
+        File configFile = getConfigFile();
+        if (configFile == null) return;
         try {
             JSONObject data = new JSONObject();
             data.put("id", id);
@@ -408,8 +451,20 @@ public class Container {
             data.put("primaryController", primaryController);
             data.put("controllerMapping", controllerMapping);
 
+            if (rendererType != RENDERER_GL) data.put("rendererType", rendererType);
+            if (rendererNative) data.put("rendererNative", true);
+            if (rendererPresentMode != PRESENT_MODE_FIFO) data.put("rendererPresentMode", rendererPresentMode);
+            if (rendererFilterMode != FILTER_MODE_LINEAR) data.put("rendererFilterMode", rendererFilterMode);
+            if (rendererRefreshRate > 0) data.put("rendererRefreshRate", rendererRefreshRate);
+
+            if (fullscreenStretched) data.put("fullscreenStretched", fullscreenStretched);
+            data.put("inputType", inputType);
+            if (!midiSoundFont.isEmpty()) data.put("midiSoundFont", midiSoundFont);
+            if (!lc_all.isEmpty()) data.put("lc_all", lc_all);
+            data.put("exclusiveXInput", exclusiveXInput);
+
             if (!WineInfo.isMainWineVersion(wineVersion)) data.put("wineVersion", wineVersion);
-            FileUtils.writeString(getConfigFile(), data.toString());
+            FileUtils.writeString(configFile, data.toString());
         }
         catch (JSONException e) {}
     }
@@ -447,10 +502,18 @@ public class Container {
                     setWinComponents(data.getString(key));
                     break;
                 case "dxwrapper" :
-                    setDXWrapper(data.getString(key));
+                    String dxw = data.getString(key);
+                    if ("dxvk+vkd3d".equals(dxw)) dxw = DXWrappers.DXVK;
+                    setDXWrapper(dxw);
                     break;
                 case "dxwrapperConfig" :
-                    setDXWrapperConfig(data.getString(key));
+                    String cfg = data.getString(key);
+                    if (cfg.contains("vkd3dVersion=") && !cfg.contains("|")) {
+                        String[] parts = migrateLudashiDXWrapperConfig(cfg);
+                        setDXWrapperConfig(parts[0] + "|" + parts[1]);
+                    } else {
+                        setDXWrapperConfig(cfg);
+                    }
                     break;
                 case "graphicsDriverConfig" :
                     setGraphicsDriverConfig(data.getString(key));
@@ -506,6 +569,34 @@ public class Container {
                 case "fexcorePreset":
                     setFEXCorePreset(data.getString(key));
                     break;
+                case "rendererType":
+                    setRendererType((byte)data.getInt(key));
+                    break;
+                case "rendererNative":
+                    setRendererNative(data.getBoolean(key));
+                    break;
+                case "rendererPresentMode":
+                    try {
+                        setRendererPresentMode((byte)data.getInt(key));
+                    } catch (Exception e) {
+                        String modeStr = data.optString(key, "fifo");
+                        switch (modeStr) {
+                            case "mailbox": setRendererPresentMode(PRESENT_MODE_MAILBOX); break;
+                            case "immediate": setRendererPresentMode(PRESENT_MODE_IMMEDIATE); break;
+                            default: setRendererPresentMode(PRESENT_MODE_FIFO); break;
+                        }
+                    }
+                    break;
+                case "rendererFilterMode":
+                    setRendererFilterMode((byte)data.getInt(key));
+                    break;
+                case "rendererRefreshRate":
+                    try {
+                        setRendererRefreshRate((byte)data.getInt(key));
+                    } catch (Exception e) {
+                        setRendererRefreshRate((byte)0);
+                    }
+                    break;
                 case "fexcoreTSOPreset": {
                     if (!data.has("fexcorePreset")) {
                         String legacyTSO = data.getString(key);
@@ -529,6 +620,21 @@ public class Container {
                     break;
                 case "desktopTheme" :
                     setDesktopTheme(data.getString(key));
+                    break;
+                case "fullscreenStretched" :
+                    fullscreenStretched = data.getBoolean(key);
+                    break;
+                case "inputType" :
+                    inputType = data.getInt(key);
+                    break;
+                case "midiSoundFont" :
+                    midiSoundFont = data.getString(key);
+                    break;
+                case "lc_all" :
+                    lc_all = data.getString(key);
+                    break;
+                case "exclusiveXInput" :
+                    exclusiveXInput = data.getBoolean(key);
                     break;
             }
         }
@@ -563,6 +669,47 @@ public class Container {
                 graphicsDriver = GraphicsDrivers.TURNIP + "," + driverIds[1];
             }
         }
+    }
+
+    private static String[] migrateLudashiDXWrapperConfig(String flatConfig) {
+        String dxvkPart = "";
+        String vkd3dPart = "";
+        String[] pairs = flatConfig.split(",");
+        for (String pair : pairs) {
+            if (pair.isEmpty()) continue;
+            String[] kv = pair.split("=", 2);
+            if (kv.length != 2) continue;
+            String key = kv[0].trim();
+            String val = kv[1].trim();
+            switch (key) {
+                case "version":
+                case "framerate":
+                case "async":
+                case "asyncCache":
+                case "ddrawrapper":
+                case "csmt":
+                case "gpuName":
+                case "videoMemorySize":
+                case "strict_shader_math":
+                case "OffscreenRenderingMode":
+                case "renderer":
+                    dxvkPart += (dxvkPart.isEmpty() ? "" : ",") + key + "=" + val;
+                    break;
+                case "vkd3dVersion":
+                    vkd3dPart += (vkd3dPart.isEmpty() ? "" : ",") + "version=" + val;
+                    break;
+                case "vkd3dLevel":
+                    String featureLevel = val.replace("_", ".");
+                    vkd3dPart += (vkd3dPart.isEmpty() ? "" : ",") + "featureLevel=" + featureLevel;
+                    break;
+            }
+        }
+        return new String[]{dxvkPart, vkd3dPart};
+    }
+
+    public static KeyValueSet[] migrateLudashiDXWrapperConfigToKeyValueSet(String flatConfig) {
+        String[] parts = migrateLudashiDXWrapperConfig(flatConfig);
+        return new KeyValueSet[]{new KeyValueSet(parts[0]), new KeyValueSet(parts[1])};
     }
 
     public static void checkObsoleteOrMissingProperties(JSONObject data) {

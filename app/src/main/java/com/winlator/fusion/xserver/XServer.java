@@ -3,7 +3,7 @@ package com.winlator.fusion.xserver;
 import com.winlator.fusion.XServerDisplayActivity;
 import com.winlator.fusion.contentdialog.DebugDialog;
 import com.winlator.fusion.core.CursorLocker;
-import com.winlator.fusion.renderer.GLRenderer;
+import com.winlator.fusion.renderer.Renderer;
 import com.winlator.fusion.winhandler.WinHandler;
 import com.winlator.fusion.xserver.extensions.BigReqExtension;
 import com.winlator.fusion.xserver.extensions.DRI3Extension;
@@ -13,6 +13,7 @@ import com.winlator.fusion.xserver.extensions.MITSHMExtension;
 import com.winlator.fusion.xserver.extensions.PresentExtension;
 import com.winlator.fusion.xserver.extensions.SyncExtension;
 import com.winlator.fusion.xserver.extensions.XComposite;
+import com.winlator.fusion.xserver.extensions.XInput2Extension;
 
 import java.nio.charset.Charset;
 import java.util.EnumMap;
@@ -39,10 +40,11 @@ public class XServer {
     public final GrabManager grabManager;
     public final CursorLocker cursorLocker;
     private SHMSegmentManager shmSegmentManager;
-    private GLRenderer renderer;
+    private Renderer renderer;
     private WinHandler winHandler;
     private final EnumMap<Lockable, ReentrantLock> locks = new EnumMap<>(Lockable.class);
     private boolean relativeMouseMovement = false;
+    private XInput2Extension xinput2Extension;
 
     public XServer(XServerDisplayActivity activity, ScreenInfo screenInfo) {
         this.activity = activity;
@@ -75,11 +77,11 @@ public class XServer {
         windowManager.setRenderingEnabled(enabled);
     }
 
-    public GLRenderer getRenderer() {
+    public Renderer getRenderer() {
         return renderer;
     }
 
-    public void setRenderer(GLRenderer renderer) {
+    public void setRenderer(Renderer renderer) {
         this.renderer = renderer;
     }
 
@@ -155,18 +157,21 @@ public class XServer {
     public void injectPointerMoveDelta(int dx, int dy) {
         try (XLock lock = lock(Lockable.WINDOW_MANAGER, Lockable.INPUT_DEVICE)) {
             pointer.setPosition(pointer.getX() + dx, pointer.getY() + dy);
+            xinput2Extension.emitRawMotion(2, dx, dy);
         }
     }
 
     public void injectPointerButtonPress(Pointer.Button buttonCode) {
         try (XLock lock = lock(Lockable.WINDOW_MANAGER, Lockable.INPUT_DEVICE)) {
             pointer.setButton(buttonCode, true);
+            xinput2Extension.emitRawButton(2, buttonCode.code(), true);
         }
     }
 
     public void injectPointerButtonRelease(Pointer.Button buttonCode) {
         try (XLock lock = lock(Lockable.WINDOW_MANAGER, Lockable.INPUT_DEVICE)) {
             pointer.setButton(buttonCode, false);
+            xinput2Extension.emitRawButton(2, buttonCode.code(), false);
         }
     }
 
@@ -186,17 +191,34 @@ public class XServer {
         }
     }
 
+    private void registerExtension(Extension ext, int[] nextEventId, int[] nextErrorId) {
+        if (ext.getNumEvents() > 0) {
+            ext.setFirstEventId((byte) nextEventId[0]);
+            nextEventId[0] += ext.getNumEvents();
+        }
+        if (ext.getNumErrors() > 0) {
+            ext.setFirstErrorId((byte) nextErrorId[0]);
+            nextErrorId[0] += ext.getNumErrors();
+        }
+    }
+
     private Extension[] setupExtensions() {
         byte opcode = Extension.START_MAJOR_OPCODE;
-        return new Extension[]{
-            new BigReqExtension(this, opcode--),
-            new MITSHMExtension(this, opcode--),
-            new DRI3Extension(this, opcode--),
-            new PresentExtension(this, opcode--),
-            new SyncExtension(this, opcode--),
-            new XComposite(this, opcode--),
-            new GLXExtension(this, opcode--)
-        };
+        int[] nextEventId = {64};
+        int[] nextErrorId = {128};
+
+        BigReqExtension bigReq = new BigReqExtension(this, opcode--);
+        MITSHMExtension mitshm = new MITSHMExtension(this, opcode--);
+        DRI3Extension dri3 = new DRI3Extension(this, opcode--);
+        PresentExtension present = new PresentExtension(this, opcode--);
+        SyncExtension sync = new SyncExtension(this, opcode--);
+        XComposite xcomposite = new XComposite(this, opcode--);
+        GLXExtension glx = new GLXExtension(this, opcode--);
+        xinput2Extension = new XInput2Extension(this, opcode--);
+
+        registerExtension(xinput2Extension, nextEventId, nextErrorId);
+
+        return new Extension[]{bigReq, mitshm, dri3, present, sync, xcomposite, glx, xinput2Extension};
     }
 
     public <T extends Extension> T getExtension(byte opcode) {
