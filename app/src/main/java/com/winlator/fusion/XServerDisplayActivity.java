@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,6 +34,7 @@ import com.winlator.fusion.container.ContainerManager;
 import com.winlator.fusion.container.DXWrappers;
 import com.winlator.fusion.container.GraphicsDrivers;
 import com.winlator.fusion.container.Shortcut;
+import com.winlator.fusion.services.NotificationService;
 import com.winlator.fusion.contentdialog.ActiveWindowsDialog;
 import com.winlator.fusion.contents.AdrenotoolsManager;
 import com.winlator.fusion.contents.ContentsManager;
@@ -376,6 +378,12 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             xServerView.onResume();
             environment.onResume();
         }
+        if (!NotificationService.isRunning()) {
+            startForegroundService(new Intent(this, NotificationService.class));
+        }
+        if (NotificationService.wakeLock != null && !NotificationService.wakeLock.isHeld()) {
+            NotificationService.wakeLock.acquire();
+        }
     }
 
     @Override
@@ -384,6 +392,9 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         if (environment != null && !isInPictureInPictureMode()) {
             environment.onPause();
             xServerView.onPause();
+        }
+        if (NotificationService.wakeLock != null && NotificationService.wakeLock.isHeld()) {
+            NotificationService.wakeLock.release();
         }
     }
 
@@ -394,12 +405,15 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             long existingPlaytime = Long.parseLong(shortcut.getExtra("playtime", "0"));
             shortcut.putExtra("playtime", String.valueOf(existingPlaytime + playtimeMillis));
             shortcut.saveData();
-            sessionStartTime = 0; // Prevent double-counting
+            sessionStartTime = 0;
         }
         if (wineRequestHandler != null) wineRequestHandler.stop();
         if (midiHandler != null) midiHandler.stop();
         winHandler.stop();
         if (environment != null) environment.stopEnvironmentComponents();
+        if (NotificationService.isRunning()) {
+            stopService(new Intent(this, NotificationService.class));
+        }
         super.onDestroy();
     }
 

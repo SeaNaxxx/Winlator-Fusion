@@ -2,12 +2,15 @@ package com.winlator.fusion;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
 
@@ -30,6 +33,7 @@ import com.winlator.fusion.core.AppUtils;
 import com.winlator.fusion.core.Callback;
 import com.winlator.fusion.core.LocaleHelper;
 import com.winlator.fusion.core.PreloaderDialog;
+import com.winlator.fusion.services.NotificationService;
 import com.winlator.fusion.xenvironment.FusionFSInstaller;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -39,6 +43,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public static final byte OPEN_FILE_REQUEST_CODE = 2;
     public static final byte EDIT_INPUT_CONTROLS_REQUEST_CODE = 3;
     public static final byte OPEN_DIRECTORY_REQUEST_CODE = 4;
+    public static final int PERMISSION_POST_NOTIFICATIONS_REQUEST_CODE = 501;
+    public static final String NOTIFICATION_CHANNEL_ID = "WinlatorFusion";
+    public static final int NOTIFICATION_ID = 100;
     private DrawerLayout drawerLayout;
     public final PreloaderDialog preloaderDialog = new PreloaderDialog(this);
     private boolean editInputControls = false;
@@ -62,6 +69,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         actionBar.setDisplayHomeAsUpEnabled(true);
 
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        createNotificationChannel();
 
         Intent intent = getIntent();
         editInputControls = intent.getBooleanExtra("edit_input_controls", false);
@@ -211,6 +220,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             (new AboutDialog(this)).show();
         }
         return true;
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = getString(R.string.app_name);
+            int importance = NotificationManager.IMPORTANCE_LOW;
+            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance);
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
     }
 
     public void showFragment(Fragment fragment) {
