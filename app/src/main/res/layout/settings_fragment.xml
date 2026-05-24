@@ -98,6 +98,13 @@
                         android:layout_height="wrap_content"
                         android:text="@string/high_refresh_rate_mode"
                         android:layout_marginTop="8dp" />
+
+                    <CheckBox
+                        android:id="@+id/CBCursorLock"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/cursor_lock"
+                        android:layout_marginTop="8dp" />
                 </LinearLayout>
 
                 <TextView
@@ -177,6 +184,13 @@
                                 android:src="@drawable/icon_reset" />
                         </LinearLayout>
                     </LinearLayout>
+
+                    <CheckBox
+                        android:id="@+id/CBXinputToggle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/xinput_toggle"
+                        android:layout_marginTop="8dp" />
                 </LinearLayout>
 
                 <TextView
@@ -413,6 +427,39 @@
                     </RadioGroup>
 
                     <CheckBox
+                        android:id="@+id/CBDarkMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dark_mode"
+                        android:layout_marginTop="8dp" />
+
+                    <CheckBox
+                        android:id="@+id/CBEnableBigPictureMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/enable_big_picture_mode"
+                        android:layout_marginTop="8dp" />
+
+                    <CheckBox
+                        android:id="@+id/CBEnableCustomApiKey"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/enable_custom_api_key"
+                        android:layout_marginTop="8dp" />
+
+                    <EditText
+                        style="@style/EditText"
+                        android:id="@+id/ETCustomApiKey"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/custom_api_key"
+                        android:visibility="gone" />
+
+                    <ImageView
+                        android:id="@+id/BTHelpApiKey"
+                        style="@style/HelpButton" />
+
+                    <CheckBox
                         android:id="@+id/CBOpenAndroidBrowserFromWine"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -425,6 +472,37 @@
                         android:layout_height="wrap_content"
                         android:text="@string/use_android_clipboard_on_Wine"
                         android:layout_marginTop="8dp" />
+
+                    <CheckBox
+                        android:id="@+id/CBOpenWithAndroidBrowser"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/open_with_android_browser"
+                        android:layout_marginTop="8dp" />
+
+                    <CheckBox
+                        android:id="@+id/CBShareAndroidClipboard"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/share_android_clipboard"
+                        android:layout_marginTop="8dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <CheckBox
+                            android:id="@+id/CBEnableFileProvider"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/enable_file_provider" />
+
+                        <ImageView
+                            android:id="@+id/BTHelpFileProvider"
+                            style="@style/HelpButton" />
+                    </LinearLayout>
                 </LinearLayout>
 
                 <TextView
@@ -467,6 +545,13 @@
                         android:id="@+id/SBox64Logs"
                         android:layout_width="match_parent"
                         android:entries="@array/box64_logs" />
+
+                    <CheckBox
+                        android:id="@+id/CBEnableBox64Logs"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/enable_box64_logs"
+                        android:layout_marginTop="8dp" />
 
                     <CheckBox
                         android:id="@+id/CBSaveLogsToFile"
@@ -523,6 +608,83 @@
                             </LinearLayout>
                         </LinearLayout>
                     </LinearLayout>
+
+                    <CheckBox
+                        android:id="@+id/CBUseDRI3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/use_dri3"
+                        android:layout_marginTop="8dp" />
+
+                    <CheckBox
+                        android:id="@+id/CBUseXR"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/use_xr"
+                        android:layout_marginTop="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/winlator_path" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/TVWinlatorPath"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="/storage/emulated/0/Winlator" />
+
+                        <Button
+                            style="@style/ButtonNeutral"
+                            android:id="@+id/BTChooseWinlatorPath"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/choose" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/shortcut_export_path" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/TVShortcutExportPath"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+
+                        <Button
+                            style="@style/ButtonNeutral"
+                            android:id="@+id/BTChooseShortcutExportPath"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/choose" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/downloadable_contents_url" />
+
+                    <EditText
+                        style="@style/EditText"
+                        android:id="@+id/ETDownloadableContentsURL"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textUri" />
 
                     <View style="@style/FieldSeparator" />
 
