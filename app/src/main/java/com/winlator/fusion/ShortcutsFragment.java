@@ -63,6 +63,7 @@ public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
     private static String STEAMGRID_API_KEY = "0324c52513634547a7b32d6d323635d0";
     private Shortcut shortcutForIconUpdate;
     private ActivityResultLauncher<String> iconPickerLauncher;
+    private final java.util.Set<String> inFlightFetches = java.util.Collections.synchronizedSet(new java.util.HashSet<>());
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -187,19 +188,27 @@ public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
         return null;
     }
 
-    private void fetchCoverFromSteamGrid(Shortcut shortcut, File destFile, Runnable onSuccess, Runnable onFail) {
+    private String resolveApiKey() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
         if (prefs.getBoolean("enable_custom_api_key", false)) {
             String custom = prefs.getString("custom_api_key", "");
-            if (custom != null && !custom.isEmpty()) STEAMGRID_API_KEY = custom;
+            if (custom != null && !custom.isEmpty()) return custom;
         }
+        return STEAMGRID_API_KEY;
+    }
+
+    private void fetchCoverFromSteamGrid(Shortcut shortcut, File destFile, Runnable onSuccess, Runnable onFail) {
+        String fetchKey = shortcut.name;
+        if (!inFlightFetches.add(fetchKey)) return;
+        String apiKey = resolveApiKey();
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 String searchUrl = STEAMGRID_BASE_URL + "search/autocomplete/" + java.net.URLEncoder.encode(shortcut.name, "UTF-8");
                 HttpURLConnection conn = (HttpURLConnection) new URL(searchUrl).openConnection();
-                conn.setRequestProperty("Authorization", "Bearer " + STEAMGRID_API_KEY);
+                conn.setRequestProperty("Authorization", "Bearer " + apiKey);
                 conn.connect();
-                String response = new String(conn.getInputStream().readAllBytes());
+                String response;
+                try (InputStream is = conn.getInputStream()) { response = new String(is.readAllBytes()); }
                 conn.disconnect();
                 org.json.JSONObject json = new org.json.JSONObject(response);
                 org.json.JSONArray data = json.optJSONArray("data");
@@ -207,9 +216,10 @@ public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
                 int gameId = data.getJSONObject(0).getInt("id");
                 String gridUrl = STEAMGRID_BASE_URL + "grids/game/" + gameId + "?dimensions=600x900&types=static";
                 HttpURLConnection gridConn = (HttpURLConnection) new URL(gridUrl).openConnection();
-                gridConn.setRequestProperty("Authorization", "Bearer " + STEAMGRID_API_KEY);
+                gridConn.setRequestProperty("Authorization", "Bearer " + apiKey);
                 gridConn.connect();
-                String gridResponse = new String(gridConn.getInputStream().readAllBytes());
+                String gridResponse;
+                try (InputStream is = gridConn.getInputStream()) { gridResponse = new String(is.readAllBytes()); }
                 gridConn.disconnect();
                 org.json.JSONObject gridJson = new org.json.JSONObject(gridResponse);
                 org.json.JSONArray gridData = gridJson.optJSONArray("data");
@@ -223,7 +233,9 @@ public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
                 try (FileOutputStream fos = new FileOutputStream(destFile)) { bmp.compress(Bitmap.CompressFormat.PNG, 100, fos); }
                 bmp.recycle();
                 if (onSuccess != null) onSuccess.run();
+                inFlightFetches.remove(fetchKey);
             } catch (Exception e) {
+                inFlightFetches.remove(fetchKey);
                 if (onFail != null) onFail.run();
             }
         });
@@ -281,6 +293,29 @@ public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
         } catch (IOException e) {}
     }
 
+    private android.graphics.Bitmap decodeSampledBitmap(String path, int reqWidth, int reqHeight) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(path, options);
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeFile(path, options);
+    }
+
+    private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        int height = options.outHeight;
+        int width = options.outWidth;
+        int inSampleSize = 1;
+        if (height > reqHeight || width > reqWidth) {
+            int halfHeight = height / 2;
+            int halfWidth = width / 2;
+            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+        return inSampleSize;
+    }
+
     private class ShortcutsAdapter extends RecyclerView.Adapter<ShortcutsAdapter.ViewHolder> {
         private final List<Shortcut> data;
 
@@ -329,21 +364,24 @@ public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
                 File autoIcon = new File(getImagesDir(false), baseName + ".png");
 
                 if (userIcon.exists()) {
-                    holder.imageView.setImageBitmap(BitmapFactory.decodeFile(userIcon.getPath()));
+                    holder.imageView.setImageBitmap(decodeSampledBitmap(userIcon.getPath(), 256, 256));
                 } else if (coverFile.exists()) {
-                    holder.imageView.setImageBitmap(BitmapFactory.decodeFile(coverFile.getPath()));
+                    holder.imageView.setImageBitmap(decodeSampledBitmap(coverFile.getPath(), 256, 256));
                 } else if (autoIcon.exists()) {
-                    holder.imageView.setImageBitmap(BitmapFactory.decodeFile(autoIcon.getPath()));
+                    holder.imageView.setImageBitmap(decodeSampledBitmap(autoIcon.getPath(), 256, 256));
                 } else {
+                    int adapterPosition = holder.getAdapterPosition();
                     fetchCoverFromSteamGrid(item, coverFile,
                         () -> { if (getActivity() != null) getActivity().runOnUiThread(() -> {
-                            if (coverFile.exists()) holder.imageView.setImageBitmap(BitmapFactory.decodeFile(coverFile.getPath()));
+                            if (holder.getAdapterPosition() != RecyclerView.NO_POSITION && holder.getAdapterPosition() == adapterPosition && coverFile.exists())
+                                holder.imageView.setImageBitmap(decodeSampledBitmap(coverFile.getPath(), 256, 256));
                         }); },
                         () -> {
                             File exeFile = resolveExeFile(item);
                             if (exeFile != null) ExeIconExtractor.extractAsync(exeFile, autoIcon, false, () -> {
                                 if (getActivity() != null) getActivity().runOnUiThread(() -> {
-                                    if (autoIcon.exists()) holder.imageView.setImageBitmap(BitmapFactory.decodeFile(autoIcon.getPath()));
+                                    if (holder.getAdapterPosition() != RecyclerView.NO_POSITION && holder.getAdapterPosition() == adapterPosition && autoIcon.exists())
+                                        holder.imageView.setImageBitmap(decodeSampledBitmap(autoIcon.getPath(), 256, 256));
                                 });
                             });
                         });

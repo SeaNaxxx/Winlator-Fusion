@@ -49,7 +49,7 @@ public class WinlatorFilesProvider extends DocumentsProvider {
         if (!source.exists())
             throw new FileNotFoundException("Source file not found: " + sourceDocumentId);
 
-        if (Objects.equals(source.getParentFile(), sourceParent))
+        if (!Objects.equals(source.getParentFile(), sourceParent))
             throw new FileNotFoundException("Source has wrong parent: " + sourceDocumentId + " " + sourceParentDocumentId);
 
         if (!targetParent.exists())
@@ -137,8 +137,11 @@ public class WinlatorFilesProvider extends DocumentsProvider {
     public Cursor queryChildDocuments(String parentDocumentId, String[] projection, String sortOrder) throws FileNotFoundException {
         final MatrixCursor result = new MatrixCursor(projection != null ? projection : DEFAULT_DOCUMENT_PROJECTION);
         final File parent = getFileForDocId(parentDocumentId);
-        for (File file : parent.listFiles()) {
-            includeFile(result, null, file);
+        File[] children = parent.listFiles();
+        if (children != null) {
+            for (File file : children) {
+                includeFile(result, null, file);
+            }
         }
         return result;
     }
@@ -218,7 +221,8 @@ public class WinlatorFilesProvider extends DocumentsProvider {
             }
             if (isInsideHome) {
                 if (file.isDirectory()) {
-                    Collections.addAll(pending, file.listFiles());
+                    File[] subFiles = file.listFiles();
+                    if (subFiles != null) Collections.addAll(pending, subFiles);
                 } else {
                     if (file.getName().toLowerCase().contains(query)) {
                         includeFile(result, null, file);
@@ -232,7 +236,8 @@ public class WinlatorFilesProvider extends DocumentsProvider {
 
     @Override
     public boolean isChildDocument(String parentDocumentId, String documentId) {
-        return documentId.startsWith(parentDocumentId);
+        String parentPath = parentDocumentId.endsWith("/") ? parentDocumentId : parentDocumentId + "/";
+        return documentId.startsWith(parentPath);
     }
 
     private static String getDocIdForFile(File file) {

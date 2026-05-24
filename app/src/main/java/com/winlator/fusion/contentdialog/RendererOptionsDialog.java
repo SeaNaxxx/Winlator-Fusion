@@ -23,7 +23,7 @@ public class RendererOptionsDialog extends ContentDialog {
 
         byte rendererType = getTagByte(anchor, R.id.rendererType, Container.RENDERER_GL);
         boolean nativeMode = getTagBoolean(anchor, R.id.rendererNative, false);
-        String presentMode = getTagString(anchor, R.id.rendererPresentMode, "fifo");
+        String presentMode = getTagPresentMode(anchor, R.id.rendererPresentMode, "fifo");
         int filterMode = getTagInt(anchor, R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR);
         int refreshRate = getTagInt(anchor, R.id.rendererRefreshRate, 0);
 
@@ -90,7 +90,7 @@ public class RendererOptionsDialog extends ContentDialog {
     public static void applyToContainer(View anchor, Container container) {
         container.setRendererType(getTagByte(anchor, R.id.rendererType, Container.RENDERER_GL));
         container.setRendererNative(getTagBoolean(anchor, R.id.rendererNative, false));
-        container.setRendererPresentMode(getTagString(anchor, R.id.rendererPresentMode, "fifo"));
+        container.setRendererPresentMode(getTagPresentMode(anchor, R.id.rendererPresentMode, "fifo"));
         container.setRendererFilterMode(getTagInt(anchor, R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR));
         container.setRendererRefreshRateLimit(getTagInt(anchor, R.id.rendererRefreshRate, 0));
     }
@@ -123,7 +123,7 @@ public class RendererOptionsDialog extends ContentDialog {
         return defaultValue;
     }
 
-    public static String getTagString(View anchor, int key, String defaultValue) {
+    public static String getTagPresentMode(View anchor, int key, String defaultValue) {
         Object val = anchor.getTag(key);
         if (val instanceof String) return (String) val;
         if (val instanceof Byte) return indexToPresentMode(((Byte) val).intValue());
