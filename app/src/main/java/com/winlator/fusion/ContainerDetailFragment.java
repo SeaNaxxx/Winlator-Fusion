@@ -21,6 +21,7 @@ import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
+import android.widget.CheckBox;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -67,6 +68,9 @@ import com.winlator.fusion.widget.ImagePickerView;
 import com.winlator.fusion.widget.SeekBar;
 import com.winlator.fusion.win32.MSLogFont;
 import com.winlator.fusion.win32.WinVersions;
+import com.winlator.fusion.winhandler.WinHandler;
+import com.winlator.fusion.xserver.XKeycode;
+import com.winlator.fusion.midi.MidiManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -75,6 +79,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 public class ContainerDetailFragment extends Fragment {
     private ContainerManager manager;
@@ -267,6 +272,9 @@ public class ContainerDetailFragment extends Fragment {
                     } else {
                         view.findViewById(R.id.LLWineVersion).setVisibility(View.GONE);
                     }
+
+                    View llTabXR = view.findViewById(R.id.LLTabXR);
+                    if (llTabXR != null) llTabXR.setVisibility(View.GONE);
                 }
 
                 @Override
@@ -300,6 +308,38 @@ public class ContainerDetailFragment extends Fragment {
         vAudioDriverConfig.setTag(isEditMode() ? container.getAudioDriverConfig() : "");
         vAudioDriverConfig.setOnClickListener((v) -> (new AudioDriverConfigDialog(v)).show());
 
+        final Spinner sMIDISoundFont = view.findViewById(R.id.SMIDISoundFont);
+        if (sMIDISoundFont != null) {
+            MidiManager.loadSFSpinner(sMIDISoundFont);
+            AppUtils.setSpinnerSelectionFromValue(sMIDISoundFont, isEditMode() ? container.getMIDISoundFont() : "");
+        }
+
+        final EditText etLC_ALL = view.findViewById(R.id.ETlcall);
+        if (etLC_ALL != null) {
+            Locale systemLocale = Locale.getDefault();
+            etLC_ALL.setText(isEditMode() ? container.getLC_ALL() : systemLocale.getLanguage() + '_' + systemLocale.getCountry() + ".UTF-8");
+        }
+        final View btShowLCALL = view.findViewById(R.id.BTShowLCALL);
+        if (btShowLCALL != null) {
+            btShowLCALL.setOnClickListener((v) -> {
+                PopupMenu popupMenu = new PopupMenu(context, v);
+                String[] lcs = getResources().getStringArray(R.array.some_lc_all);
+                for (int i = 0; i < lcs.length; i++)
+                    popupMenu.getMenu().add(Menu.NONE, i, Menu.NONE, lcs[i]);
+                popupMenu.setOnMenuItemClickListener(item -> {
+                    if (etLC_ALL != null) etLC_ALL.setText(item.toString() + ".UTF-8");
+                    return true;
+                });
+                popupMenu.show();
+            });
+        }
+
+        final CheckBox cbShowFPS = view.findViewById(R.id.CBShowFPS);
+        if (cbShowFPS != null) cbShowFPS.setChecked(!isEditMode() || container.isShowFPS());
+
+        final CheckBox cbFullscreenStretched = view.findViewById(R.id.CBFullscreenStretched);
+        if (cbFullscreenStretched != null) cbFullscreenStretched.setChecked(isEditMode() && container.isFullscreenStretched());
+
         final Spinner sHUDMode = view.findViewById(R.id.SHUDMode);
         sHUDMode.setSelection(isEditMode() ? container.getHUDMode() : FrameRating.Mode.DISABLED.ordinal());
 
@@ -315,11 +355,68 @@ public class ContainerDetailFragment extends Fragment {
         // Hide Box64 preset for Bionic containers (they use their own Box64 in LLBionicOptions)
         if (isBionic && sBox64Preset != null) sBox64Preset.setVisibility(View.GONE);
 
+        final CheckBox cbEnableXInput = view.findViewById(R.id.CBEnableXInput);
+        final CheckBox cbEnableDInput = view.findViewById(R.id.CBEnableDInput);
+        final CheckBox cbExclusiveXInput = view.findViewById(R.id.CBExclusiveXInput);
+        if (cbEnableXInput != null && cbEnableDInput != null && cbExclusiveXInput != null) {
+            int inputType = isEditMode() ? container.getInputType() : WinHandler.DEFAULT_INPUT_TYPE;
+            cbEnableXInput.setChecked((inputType & WinHandler.FLAG_INPUT_TYPE_XINPUT) == WinHandler.FLAG_INPUT_TYPE_XINPUT);
+            cbEnableDInput.setChecked((inputType & WinHandler.FLAG_INPUT_TYPE_DINPUT) == WinHandler.FLAG_INPUT_TYPE_DINPUT);
+            cbExclusiveXInput.setChecked(isEditMode() ? container.isExclusiveXInput() : true);
+
+            cbEnableDInput.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (cbExclusiveXInput.isChecked() && isChecked && cbEnableXInput.isChecked()) cbEnableXInput.setChecked(false);
+            });
+            cbEnableXInput.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (cbExclusiveXInput.isChecked() && isChecked && cbEnableDInput.isChecked()) cbEnableDInput.setChecked(false);
+            });
+            cbExclusiveXInput.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (!isChecked) {
+                    cbEnableXInput.setChecked(true);
+                    cbEnableDInput.setChecked(true);
+                    cbEnableXInput.setEnabled(false);
+                    cbEnableDInput.setEnabled(false);
+                } else {
+                    cbEnableXInput.setEnabled(true);
+                    cbEnableDInput.setEnabled(true);
+                    if (cbEnableXInput.isChecked() && cbEnableDInput.isChecked()) cbEnableDInput.setChecked(false);
+                }
+            });
+            if (!cbExclusiveXInput.isChecked()) {
+                cbEnableXInput.setChecked(true);
+                cbEnableDInput.setChecked(true);
+                cbEnableXInput.setEnabled(false);
+                cbEnableDInput.setEnabled(false);
+            }
+        }
+        final View btHelpXInput = view.findViewById(R.id.BTXInputHelp);
+        final View btHelpDInput = view.findViewById(R.id.BTDInputHelp);
+        final View btHelpExclusiveXInput = view.findViewById(R.id.BTExclusiveXInputHelp);
+        if (btHelpXInput != null) btHelpXInput.setOnClickListener((v) -> AppUtils.showHelpBox(context, v, R.string.help_xinput));
+        if (btHelpDInput != null) btHelpDInput.setOnClickListener((v) -> AppUtils.showHelpBox(context, v, R.string.help_dinput));
+        if (btHelpExclusiveXInput != null) btHelpExclusiveXInput.setOnClickListener((v) -> AppUtils.showHelpBox(context, v, R.string.help_exclusive_xinput));
+
         final CPUListView cpuListView = view.findViewById(R.id.CPUListView);
         final CPUListView cpuListViewWoW64 = view.findViewById(R.id.CPUListViewWoW64);
 
         cpuListView.setCheckedCPUList(isEditMode() ? container.getCPUList(true) : Container.getFallbackCPUList());
         cpuListViewWoW64.setCheckedCPUList(isEditMode() ? container.getCPUListWoW64(true) : Container.getFallbackCPUListWoW64());
+
+        final Spinner sPrimaryController = view.findViewById(R.id.SPrimaryController);
+        if (sPrimaryController != null) sPrimaryController.setSelection(isEditMode() ? container.getPrimaryController() : 1);
+        setupControllerMappingSpinner(view.findViewById(R.id.SButtonA), Container.XrControllerMapping.BUTTON_A, XKeycode.KEY_A.ordinal());
+        setupControllerMappingSpinner(view.findViewById(R.id.SButtonB), Container.XrControllerMapping.BUTTON_B, XKeycode.KEY_B.ordinal());
+        setupControllerMappingSpinner(view.findViewById(R.id.SButtonX), Container.XrControllerMapping.BUTTON_X, XKeycode.KEY_X.ordinal());
+        setupControllerMappingSpinner(view.findViewById(R.id.SButtonY), Container.XrControllerMapping.BUTTON_Y, XKeycode.KEY_Y.ordinal());
+        setupControllerMappingSpinner(view.findViewById(R.id.SButtonGrip), Container.XrControllerMapping.BUTTON_GRIP, XKeycode.KEY_SPACE.ordinal());
+        setupControllerMappingSpinner(view.findViewById(R.id.SButtonTrigger), Container.XrControllerMapping.BUTTON_TRIGGER, XKeycode.KEY_ENTER.ordinal());
+        setupControllerMappingSpinner(view.findViewById(R.id.SThumbstickUp), Container.XrControllerMapping.THUMBSTICK_UP, XKeycode.KEY_UP.ordinal());
+        setupControllerMappingSpinner(view.findViewById(R.id.SThumbstickDown), Container.XrControllerMapping.THUMBSTICK_DOWN, XKeycode.KEY_DOWN.ordinal());
+        setupControllerMappingSpinner(view.findViewById(R.id.SThumbstickLeft), Container.XrControllerMapping.THUMBSTICK_LEFT, XKeycode.KEY_LEFT.ordinal());
+        setupControllerMappingSpinner(view.findViewById(R.id.SThumbstickRight), Container.XrControllerMapping.THUMBSTICK_RIGHT, XKeycode.KEY_RIGHT.ordinal());
+
+        View llTabXR = view.findViewById(R.id.LLTabXR);
+        if (llTabXR != null) llTabXR.setVisibility(View.GONE);
 
         createWineConfigurationTab(view);
         final EnvVarsView envVarsView = createEnvVarsTab(view);
@@ -328,7 +425,7 @@ public class ContainerDetailFragment extends Fragment {
 
         AppUtils.setupTabLayout(view, R.id.TabLayout, (tabResId) -> {
             if (tabResId == R.id.LLTabAdvanced) if ((byte)sWinVersion.getTag() == -1) WinVersions.loadSpinner(container, sWinVersion);
-        }, R.id.LLTabWineConfiguration, R.id.LLTabWinComponents, R.id.LLTabEnvVars, R.id.LLTabDrives, R.id.LLTabAdvanced);
+        }, R.id.LLTabWineConfiguration, R.id.LLTabWinComponents, R.id.LLTabEnvVars, R.id.LLTabDrives, R.id.LLTabAdvanced, R.id.LLTabXR);
 
         view.findViewById(R.id.BTConfirm).setOnClickListener((v) -> {
             try {
@@ -379,6 +476,17 @@ public class ContainerDetailFragment extends Fragment {
                     container.setStartupSelection(startupSelection);
                     container.setBox64Preset(box64Preset);
                     container.setDesktopTheme(desktopTheme);
+                    container.setMIDISoundFont(sMIDISoundFont != null && sMIDISoundFont.getSelectedItemPosition() > 0 ? sMIDISoundFont.getSelectedItem().toString() : "");
+                    if (etLC_ALL != null) container.setLC_ALL(etLC_ALL.getText().toString());
+                    container.setFullscreenStretched(cbFullscreenStretched != null && cbFullscreenStretched.isChecked());
+                    container.setShowFPS(cbShowFPS != null && cbShowFPS.isChecked());
+                    if (cbExclusiveXInput != null) container.setExclusiveXInput(cbExclusiveXInput.isChecked());
+                    int finalInputType = 0;
+                    if (cbEnableXInput != null && cbEnableXInput.isChecked()) finalInputType |= WinHandler.FLAG_INPUT_TYPE_XINPUT;
+                    if (cbEnableDInput != null && cbEnableDInput.isChecked()) finalInputType |= WinHandler.FLAG_INPUT_TYPE_DINPUT;
+                    container.setInputType(finalInputType);
+                    if (sPrimaryController != null) container.setPrimaryController(sPrimaryController.getSelectedItemPosition());
+                    container.setControllerMapping(getControllerMapping(view));
                     container.setContainerVariant(containerVariant);
                     container.setEmulator(emulator);
                     RendererOptionsDialog.applyToContainer(btRendererOptions, container);
@@ -417,6 +525,17 @@ public class ContainerDetailFragment extends Fragment {
                     data.put("startupSelection", startupSelection);
                     data.put("box64Preset", box64Preset);
                     data.put("desktopTheme", desktopTheme);
+                    data.put("midiSoundFont", sMIDISoundFont != null && sMIDISoundFont.getSelectedItemPosition() > 0 ? sMIDISoundFont.getSelectedItem().toString() : "");
+                    if (etLC_ALL != null) data.put("lc_all", etLC_ALL.getText().toString());
+                    data.put("fullscreenStretched", cbFullscreenStretched != null && cbFullscreenStretched.isChecked());
+                    data.put("showFPS", cbShowFPS != null && cbShowFPS.isChecked());
+                    data.put("exclusiveXInput", cbExclusiveXInput != null && cbExclusiveXInput.isChecked());
+                    int finalInputType = 0;
+                    if (cbEnableXInput != null && cbEnableXInput.isChecked()) finalInputType |= WinHandler.FLAG_INPUT_TYPE_XINPUT;
+                    if (cbEnableDInput != null && cbEnableDInput.isChecked()) finalInputType |= WinHandler.FLAG_INPUT_TYPE_DINPUT;
+                    data.put("inputType", finalInputType);
+                    if (sPrimaryController != null) data.put("primaryController", sPrimaryController.getSelectedItemPosition());
+                    data.put("controllerMapping", getControllerMapping(view));
                     data.put("containerVariant", containerVariant);
                     data.put("emulator", emulator);
                     data.put("rendererType", RendererOptionsDialog.getTagByte(btRendererOptions, R.id.rendererType, Container.RENDERER_GL));
@@ -769,5 +888,36 @@ public class ContainerDetailFragment extends Fragment {
         String summary = type;
         if (nativeMode && rendererType == Container.RENDERER_VULKAN) summary += " +Native";
         tvRendererSummary.setText(summary);
+    }
+
+    private void setupControllerMappingSpinner(Spinner spinner, Container.XrControllerMapping mapping, int defaultValue) {
+        if (spinner == null) return;
+        XKeycode[] values = XKeycode.values();
+        ArrayList<String> array = new ArrayList<>();
+        for (XKeycode value : values) array.add(value.name());
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(spinner.getContext(), android.R.layout.simple_spinner_dropdown_item, array);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        byte keycode = isEditMode() ? container.getControllerMapping(mapping) : (byte) defaultValue;
+        int index = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i].id == keycode) { index = i; break; }
+        }
+        spinner.setSelection(isEditMode() && index != 0 ? index : defaultValue);
+    }
+
+    private String getControllerMapping(View view) {
+        int[] ids = {
+            R.id.SButtonA, R.id.SButtonB, R.id.SButtonX, R.id.SButtonY, R.id.SButtonGrip, R.id.SButtonTrigger,
+            R.id.SThumbstickUp, R.id.SThumbstickDown, R.id.SThumbstickLeft, R.id.SThumbstickRight
+        };
+        byte[] controllerMapping = new byte[ids.length];
+        for (int i = 0; i < ids.length; i++) {
+            Spinner spinner = view.findViewById(ids[i]);
+            int index = spinner != null ? spinner.getSelectedItemPosition() : 0;
+            byte value = XKeycode.values()[index].id;
+            controllerMapping[i] = value;
+        }
+        return new String(controllerMapping);
     }
 }
