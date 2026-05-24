@@ -261,6 +261,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 audioDriverConfig = new KeyValueSet(shortcut.getExtra("audioDriverConfig", container.getAudioDriverConfig()));
                 screenInfo = new ScreenInfo(shortcut.getExtra("screenSize", container.getScreenSize()));
 
+                String shortcutFexcoreVersion = shortcut.getExtra("fexcoreVersion", "");
+                if (!shortcutFexcoreVersion.isEmpty()) container.setFEXCoreVersion(shortcutFexcoreVersion);
+                String shortcutBox64Version = shortcut.getExtra("box64Version", "");
+                if (!shortcutBox64Version.isEmpty()) container.setBox64Version(shortcutBox64Version);
+
                 String dinputMapperType = shortcut.getExtra("dinputMapperType");
                 if (!dinputMapperType.isEmpty()) winHandler.gamepadHandler.setDInputMapperType(Byte.parseByte(dinputMapperType));
 
@@ -306,7 +311,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             public void onMapWindow(Window window) {
                 if (!flags[0] && window.isRenderable() && !window.getClassName().isEmpty()) {
                     Renderer r = xServer.getRenderer();
-                    if (r != null) r.setCursorVisible(true);
+                    if (r != null && !xServer.isSimulateTouchScreen()) r.setCursorVisible(true);
                     preloaderDialog.closeOnUiThread();
                     flags[0] = true;
                 }
