@@ -5,14 +5,12 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.ServiceCompat;
 import androidx.core.content.ContextCompat;
 
 import com.winlator.fusion.MainActivity;
@@ -50,7 +48,7 @@ public class NotificationService extends Service {
 
         Notification notification = builder.build();
         if (Build.VERSION.SDK_INT >= 34) {
-            ServiceCompat.startForeground(this, MainActivity.NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+            startForeground(MainActivity.NOTIFICATION_ID, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         } else {
             startForeground(MainActivity.NOTIFICATION_ID, notification);
         }

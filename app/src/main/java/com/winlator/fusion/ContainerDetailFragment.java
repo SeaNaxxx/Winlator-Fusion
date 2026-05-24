@@ -899,11 +899,11 @@ public class ContainerDetailFragment extends Fragment {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
         byte keycode = isEditMode() ? container.getControllerMapping(mapping) : (byte) defaultValue;
-        int index = 0;
+        int index = -1;
         for (int i = 0; i < values.length; i++) {
             if (values[i].id == keycode) { index = i; break; }
         }
-        spinner.setSelection(isEditMode() && index != 0 ? index : defaultValue);
+        spinner.setSelection(index >= 0 ? index : defaultValue);
     }
 
     private String getControllerMapping(View view) {
