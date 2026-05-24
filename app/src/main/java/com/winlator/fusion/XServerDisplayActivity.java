@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.view.Display;
-import android.view.WindowManager;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -170,7 +169,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         if (preferences.getBoolean("high_refresh_rate_mode", false)) {
-            WindowManager.LayoutParams params = getWindow().getAttributes();
+            android.view.WindowManager.LayoutParams params = getWindow().getAttributes();
             params.preferredRefreshRate = pickHighestRefreshRate();
             getWindow().setAttributes(params);
         }
