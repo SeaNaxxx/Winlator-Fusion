@@ -13,7 +13,7 @@
 enum GCFunction {GCF_CLEAR, GCF_AND, GCF_AND_REVERSE, GCF_COPY, GCF_AND_INVERTED, GCF_NO_OP, GCF_XOR, GCF_OR, GCF_NOR, GCF_EQUIV, GCF_INVERT, GCF_OR_REVERSE, GCF_COPY_INVERTED, GCF_OR_INVERTED, GCF_NAND, GCF_SET};
 
 static inline uint32_t packColor(uint8_t r, uint8_t g, uint8_t b) {
-    return ((r & 0xff00) << 8) | (g & 0xff00) | (b >> 8);
+    return ((uint32_t)r << 16) | ((uint32_t)g << 8) | (uint32_t)b;
 }
 
 static void unpackColor(int color, uint8_t *rgba) {
@@ -216,8 +216,8 @@ Java_com_winlator_fusion_xserver_Drawable_drawAlphaMaskedBitmap(JNIEnv *env, jcl
     int *dstDataAddr = (*env)->GetDirectBufferAddress(env, dstData);
     if (!srcDataAddr || !maskDataAddr || !dstDataAddr) return;
 
-    int foreColor = packColor(foreRed, foreGreen, foreBlue);
-    int backColor = packColor(backRed, backGreen, backBlue);
+    int foreColor = packColor((uint8_t)foreRed, (uint8_t)foreGreen, (uint8_t)foreBlue);
+    int backColor = packColor((uint8_t)backRed, (uint8_t)backGreen, (uint8_t)backBlue);
 
     jlong dstLength = (*env)->GetDirectBufferCapacity(env, dstData) / 4;
     for (int i = 0; i < dstLength; i++) {

@@ -44,6 +44,7 @@ import com.winlator.fusion.core.ExeIconExtractor;
 import com.winlator.fusion.core.FileUtils;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -56,14 +57,16 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
     private static final String STEAMGRID_BASE_URL = "https://www.steamgriddb.com/api/v2/";
-    private static String STEAMGRID_API_KEY = "0324c52513634547a7b32d6d323635d0";
+    private static String STEAMGRID_API_KEY = BuildConfig.STEAMGRID_API_KEY;
     private Shortcut shortcutForIconUpdate;
     private ActivityResultLauncher<String> iconPickerLauncher;
     private final java.util.Set<String> inFlightFetches = java.util.Collections.synchronizedSet(new java.util.HashSet<>());
+    private final ExecutorService fetchExecutor = Executors.newSingleThreadExecutor();
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -201,14 +204,20 @@ public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
         String fetchKey = shortcut.name;
         if (!inFlightFetches.add(fetchKey)) return;
         String apiKey = resolveApiKey();
-        Executors.newSingleThreadExecutor().execute(() -> {
+        fetchExecutor.execute(() -> {
             try {
                 String searchUrl = STEAMGRID_BASE_URL + "search/autocomplete/" + java.net.URLEncoder.encode(shortcut.name, "UTF-8");
                 HttpURLConnection conn = (HttpURLConnection) new URL(searchUrl).openConnection();
                 conn.setRequestProperty("Authorization", "Bearer " + apiKey);
                 conn.connect();
                 String response;
-                try (InputStream is = conn.getInputStream()) { response = new String(is.readAllBytes()); }
+                try (InputStream is = conn.getInputStream()) {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    byte[] buf = new byte[4096];
+                    int n;
+                    while ((n = is.read(buf)) != -1) baos.write(buf, 0, n);
+                    response = baos.toString("UTF-8");
+                }
                 conn.disconnect();
                 org.json.JSONObject json = new org.json.JSONObject(response);
                 org.json.JSONArray data = json.optJSONArray("data");
@@ -219,7 +228,13 @@ public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
                 gridConn.setRequestProperty("Authorization", "Bearer " + apiKey);
                 gridConn.connect();
                 String gridResponse;
-                try (InputStream is = gridConn.getInputStream()) { gridResponse = new String(is.readAllBytes()); }
+                try (InputStream is = gridConn.getInputStream()) {
+                    ByteArrayOutputStream baos2 = new ByteArrayOutputStream();
+                    byte[] buf2 = new byte[4096];
+                    int n2;
+                    while ((n2 = is.read(buf2)) != -1) baos2.write(buf2, 0, n2);
+                    gridResponse = baos2.toString("UTF-8");
+                }
                 gridConn.disconnect();
                 org.json.JSONObject gridJson = new org.json.JSONObject(gridResponse);
                 org.json.JSONArray gridData = gridJson.optJSONArray("data");

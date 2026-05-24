@@ -376,6 +376,7 @@ DWORD WINAPI ServerThread(LPVOID lpParam) {
         break;
       case RC_EXEC:
         handleExec(buffer + 5, len - 5);
+        break;
       case RC_KILL_PROCESS:
         handleKillProcess(buffer + 1, len - 1);
         break;

@@ -4,6 +4,10 @@ android {
     namespace 'com.winlator.fusion'
     compileSdk 34
 
+    buildFeatures {
+        buildConfig true
+    }
+
     defaultConfig {
         applicationId 'com.winlator.fusion'
         minSdkVersion 26
@@ -14,6 +18,8 @@ android {
         ndk {
             abiFilters 'arm64-v8a'
         }
+
+        buildConfigField "String", "STEAMGRID_API_KEY", '"0324c52513634547a7b32d6d323635d0"'
     }
 
     buildTypes {
