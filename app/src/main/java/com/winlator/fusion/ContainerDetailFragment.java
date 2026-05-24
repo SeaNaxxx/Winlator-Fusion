@@ -250,8 +250,8 @@ public class ContainerDetailFragment extends Fragment {
                     // Update env vars to variant-specific defaults if user hasn't modified them
                     EnvVarsView envVarsView = view.findViewById(R.id.EnvVarsView);
                     if (envVarsView != null) {
-                        String previousVariantDefaults = nowBionic ? Container.DEFAULT_ENV_VARS_GLIBIC : Container.DEFAULT_ENV_VARS_BIONIC;
-                        String targetVariantDefaults = nowBionic ? Container.DEFAULT_ENV_VARS_BIONIC : Container.DEFAULT_ENV_VARS_GLIBIC;
+                        String previousVariantDefaults = nowBionic ? Container.DEFAULT_ENV_VARS_GLIBC : Container.DEFAULT_ENV_VARS_BIONIC;
+                        String targetVariantDefaults = nowBionic ? Container.DEFAULT_ENV_VARS_BIONIC : Container.DEFAULT_ENV_VARS_GLIBC;
                         String currentEnvVars = envVarsView.getEnvVars();
                         if (currentEnvVars.equals(previousVariantDefaults)) {
                             envVarsView.setEnvVars(new EnvVars(targetVariantDefaults));
@@ -540,7 +540,7 @@ public class ContainerDetailFragment extends Fragment {
                     data.put("emulator", emulator);
                     data.put("rendererType", RendererOptionsDialog.getTagByte(btRendererOptions, R.id.rendererType, Container.RENDERER_GL));
                     data.put("rendererNative", RendererOptionsDialog.getTagBoolean(btRendererOptions, R.id.rendererNative, false));
-                    data.put("rendererPresentMode", RendererOptionsDialog.getTagString(btRendererOptions, R.id.rendererPresentMode, "fifo"));
+                    data.put("rendererPresentMode", RendererOptionsDialog.getTagPresentMode(btRendererOptions, R.id.rendererPresentMode, "fifo"));
                     data.put("rendererFilterMode", RendererOptionsDialog.getTagInt(btRendererOptions, R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR));
                     data.put("rendererRefreshRate", RendererOptionsDialog.getTagInt(btRendererOptions, R.id.rendererRefreshRate, 0));
                     if (containerVariant.equals(Container.BIONIC)) {
@@ -765,7 +765,7 @@ public class ContainerDetailFragment extends Fragment {
             if (selected != null && !selected.isEmpty()) variant = selected;
         }
         String defaultEnvVars = isEditMode() ? container.getEnvVars() :
-            (variant.equals(Container.BIONIC) ? Container.DEFAULT_ENV_VARS_BIONIC : Container.DEFAULT_ENV_VARS_GLIBIC);
+            (variant.equals(Container.BIONIC) ? Container.DEFAULT_ENV_VARS_BIONIC : Container.DEFAULT_ENV_VARS_GLIBC);
         envVarsView.setEnvVars(new EnvVars(defaultEnvVars));
         view.findViewById(R.id.BTAddEnvVar).setOnClickListener((v) -> (new AddEnvVarDialog(context, envVarsView)).show());
         return envVarsView;
@@ -918,6 +918,8 @@ public class ContainerDetailFragment extends Fragment {
             byte value = XKeycode.values()[index].id;
             controllerMapping[i] = value;
         }
-        return new String(controllerMapping);
+        char[] chars = new char[controllerMapping.length];
+        for (int i = 0; i < controllerMapping.length; i++) chars[i] = (char)(controllerMapping[i] & 0xFF);
+        return new String(chars);
     }
 }

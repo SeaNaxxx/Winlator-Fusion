@@ -396,6 +396,12 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         }
         if (NotificationService.wakeLock != null && !NotificationService.wakeLock.isHeld()) {
             NotificationService.wakeLock.acquire();
+        } else if (NotificationService.isRunning() && NotificationService.wakeLock == null) {
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                if (NotificationService.wakeLock != null && !NotificationService.wakeLock.isHeld()) {
+                    NotificationService.wakeLock.acquire();
+                }
+            }, 500);
         }
     }
 
@@ -744,10 +750,10 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 default: vkPresentMode = Container.PRESENT_MODE_FIFO; break;
             }
             vkRenderer.setVkPresentMode(vkPresentMode);
-            vkRenderer.setFilterMode((byte)container.getRendererFilterMode());
+            vkRenderer.setFilterMode(container.getRendererFilterMode());
             vkRenderer.setNativeMode(container.isRendererNative());
             if (container.getRendererRefreshRateLimit() > 0) {
-                vkRenderer.setRefreshRateLimit((byte)container.getRendererRefreshRateLimit());
+                vkRenderer.setRefreshRateLimit(container.getRendererRefreshRateLimit());
             }
             xServer.setRenderer(vkRenderer);
         } else {
