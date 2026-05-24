@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindowModificationListener, Pointer.OnPointerMotionListener {
+public class GLRenderer implements Renderer, GLSurfaceView.Renderer, WindowManager.OnWindowModificationListener, Pointer.OnPointerMotionListener {
     public final XServerView xServerView;
     private final XServer xServer;
     protected final VertexAttribute quadVertices = new VertexAttribute("position", 2);
@@ -402,6 +402,11 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
     public void setMagnifierZoom(float magnifierZoom) {
         this.magnifierZoom = magnifierZoom;
         xServerView.requestRender();
+    }
+
+    @Override
+    public XServerView getXServerView() {
+        return xServerView;
     }
 
     public int[] getPixelsARGB(int x, int y, int width, int height, boolean flipY) {

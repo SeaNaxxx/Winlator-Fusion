@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.winlator.fusion.core.ArrayUtils;
 import com.winlator.fusion.core.StreamUtils;
-import com.winlator.fusion.xenvironment.RootFS;
+import com.winlator.fusion.xenvironment.FusionFS;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -12,8 +12,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 public abstract class Box64Utils {
-    public static String extractBinVersion(Context context) {
-        File binFile = new File(RootFS.find(context).getRootDir(), "/usr/local/bin/box64");
+    public static String extractBinVersion(Context context, String variant) {
+        FusionFS fusionFS = FusionFS.find(context);
+        File binFile = new File(fusionFS.getBox64PathForVariant(variant));
         try (BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(binFile), StreamUtils.BUFFER_SIZE)) {
             int bytesRead;
             byte[] buffer = new byte[4096];
@@ -29,5 +30,9 @@ public abstract class Box64Utils {
         }
         catch (IOException e) {}
         return "";
+    }
+
+    public static String extractBinVersion(Context context) {
+        return extractBinVersion(context, com.winlator.fusion.container.Container.GLIBC);
     }
 }

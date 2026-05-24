@@ -1,0 +1,445 @@
+package com.winlator.fusion.xserver.extensions;
+
+import static com.winlator.fusion.xserver.XClientRequestHandler.RESPONSE_CODE_SUCCESS;
+
+import com.winlator.fusion.core.Bitmask;
+import com.winlator.fusion.xserver.Window;
+import com.winlator.fusion.xserver.XClient;
+import com.winlator.fusion.xserver.XLock;
+import com.winlator.fusion.xserver.XServer;
+import com.winlator.fusion.xconnector.XInputStream;
+import com.winlator.fusion.xconnector.XOutputStream;
+import com.winlator.fusion.xconnector.XStreamLock;
+import com.winlator.fusion.xserver.errors.BadValue;
+import com.winlator.fusion.xserver.errors.BadWindow;
+import com.winlator.fusion.xserver.errors.XRequestError;
+import com.winlator.fusion.xserver.events.XIRawButtonPressNotify;
+import com.winlator.fusion.xserver.events.XIRawButtonReleaseNotify;
+import com.winlator.fusion.xserver.events.XIRawMotionNotify;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+public class XInput2Extension extends Extension {
+    private byte firstEventId = 0;
+    private byte firstErrorId = 0;
+
+    private static final int XI_MAJOR = 2;
+    private static final int XI_MINOR = 2;
+    private static final int XI_ALL_DEVICES = 0;
+    private static final int XI_ALL_MASTER_DEVICES = 1;
+    private static final int MASTER_POINTER_ID = 2;
+    private static final int MASTER_KEYBOARD_ID = 3;
+    private static final int XI_BUTTON_CLASS = 1;
+    private static final int XI_VALUATOR_CLASS = 2;
+    private static final int XI_RawButtonPress_MASK = 1 << 15;
+    private static final int XI_RawButtonRelease_MASK = 1 << 16;
+    private static final int XI_RawMotion_MASK = 1 << 17;
+    private static final int RawMotion_XY_MASK = (1 << 0) | (1 << 1);
+    private static final int POINTER_BUTTON_COUNT = 7;
+
+    private final List<Selection> selections = new CopyOnWriteArrayList<>();
+
+    private static abstract class ClientOpcodes {
+        private static final byte GET_EXTENSION_VERSION = 1;
+        private static final byte GET_CLIENT_POINTER = 45;
+        private static final byte SELECT_EVENTS = 46;
+        private static final byte QUERY_VERSION = 47;
+        private static final byte QUERY_DEVICE = 48;
+    }
+
+    private static class Selection {
+        Window window;
+        XClient client;
+        int id;
+        Bitmask mask;
+        int deviceId;
+    }
+
+    public XInput2Extension(XServer xServer, byte majorOpcode) {
+        super(xServer, majorOpcode);
+    }
+
+    @Override
+    public String getName() {
+        return "XInputExtension";
+    }
+
+    @Override
+    public int getNumEvents() {
+        return 24;
+    }
+
+    @Override
+    public int getNumErrors() {
+        return 5;
+    }
+
+    @Override
+    public void setFirstEventId(byte id) {
+        this.firstEventId = id;
+    }
+
+    @Override
+    public void setFirstErrorId(byte id) {
+        this.firstErrorId = id;
+    }
+
+    @Override
+    public byte getFirstEventId() {
+        return firstEventId;
+    }
+
+    @Override
+    public byte getFirstErrorId() {
+        return firstErrorId;
+    }
+
+    private boolean isMasterDevice(int deviceId) {
+        return deviceId == MASTER_POINTER_ID || deviceId == MASTER_KEYBOARD_ID;
+    }
+
+    private boolean matchesSelection(Selection sel, int deviceId) {
+        return sel.deviceId == XI_ALL_DEVICES
+                || (sel.deviceId == XI_ALL_MASTER_DEVICES && isMasterDevice(deviceId))
+                || sel.deviceId == deviceId;
+    }
+
+    private static void getExtensionVersion(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException {
+        inputStream.skip(client.getRemainingRequestLength());
+
+        try (XStreamLock lock = outputStream.lock()) {
+            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
+            outputStream.writeByte((byte) 0);
+            outputStream.writeShort(client.getSequenceNumber());
+            outputStream.writeInt(0);
+
+            outputStream.writeShort((short) 2);
+            outputStream.writeShort((short) 0);
+            outputStream.writeByte((byte) 1);
+            outputStream.writePad(19);
+        }
+    }
+
+    private static void getClientPointer(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException {
+        inputStream.skip(client.getRemainingRequestLength());
+
+        try (XStreamLock lock = outputStream.lock()) {
+            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
+            outputStream.writeByte((byte) 0);
+            outputStream.writeShort(client.getSequenceNumber());
+            outputStream.writeInt(0);
+
+            outputStream.writeByte((byte) 1);
+            outputStream.writeByte((byte) 0);
+            outputStream.writeShort((short) 2);
+
+            outputStream.writePad(20);
+        }
+    }
+
+    private static void queryVersion(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException {
+        short clientMajor = (short) (inputStream.readShort() & 0xFFFF);
+        short clientMinor = (short) (inputStream.readShort() & 0xFFFF);
+
+        inputStream.skip(client.getRemainingRequestLength());
+
+        short negotiatedMajor;
+        short negotiatedMinor;
+
+        if (clientMajor < XI_MAJOR || (clientMajor == XI_MAJOR && clientMinor < XI_MINOR)) {
+            negotiatedMajor = clientMajor;
+            negotiatedMinor = clientMinor;
+        } else {
+            negotiatedMajor = XI_MAJOR;
+            negotiatedMinor = XI_MINOR;
+        }
+
+        try (XStreamLock lock = outputStream.lock()) {
+            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
+            outputStream.writeByte((byte) 0);
+            outputStream.writeShort(client.getSequenceNumber());
+            outputStream.writeInt(0);
+
+            outputStream.writeShort(negotiatedMajor);
+            outputStream.writeShort(negotiatedMinor);
+
+            outputStream.writePad(20);
+        }
+    }
+
+    private void writeButtonClass(XOutputStream outputStream, int sourceId, int numButtons) throws IOException {
+        int stateBytes = Math.max(4, ((numButtons + 31) / 32) * 4);
+        int labelsBytes = numButtons * 4;
+        int totalBytes = 8 + stateBytes + labelsBytes;
+        int length = totalBytes / 4;
+
+        outputStream.writeShort((short) XI_BUTTON_CLASS);
+        outputStream.writeShort((short) length);
+        outputStream.writeShort((short) sourceId);
+        outputStream.writeShort((short) numButtons);
+
+        outputStream.writeInt(0);
+        if (stateBytes > 4) {
+            outputStream.writePad(stateBytes - 4);
+        }
+
+        for (int i = 0; i < numButtons; i++) {
+            outputStream.writeInt(0);
+        }
+    }
+
+    private void writeValuatorClass(XOutputStream outputStream, int axisNumber) throws IOException {
+        outputStream.writeShort((short) XI_VALUATOR_CLASS);
+        outputStream.writeShort((short) 11);
+        outputStream.writeShort((short) MASTER_POINTER_ID);
+        outputStream.writeShort((short) axisNumber);
+
+        outputStream.writeInt(0);
+
+        outputStream.writeFP3232(0);
+        outputStream.writeFP3232(0);
+        outputStream.writeFP3232(0);
+
+        outputStream.writeInt(0);
+
+        outputStream.writeByte((byte) 0);
+        outputStream.writePad(3);
+    }
+
+    private void queryDevice(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
+        int deviceId = inputStream.readInt();
+        inputStream.skip(client.getRemainingRequestLength());
+
+        if (deviceId == XI_ALL_DEVICES || deviceId == XI_ALL_MASTER_DEVICES) {
+            writeMultiDeviceQueryResponse(client, outputStream, deviceId);
+        } else if (deviceId == MASTER_POINTER_ID) {
+            writeSingleDeviceQueryResponse(client, outputStream, MASTER_POINTER_ID, "Virtual Core Pointer", true);
+        } else if (deviceId == MASTER_KEYBOARD_ID) {
+            writeSingleDeviceQueryResponse(client, outputStream, MASTER_KEYBOARD_ID, "Virtual Core Keyboard", false);
+        } else {
+            throw new BadValue(deviceId);
+        }
+    }
+
+    private void writeSingleDeviceQueryResponse(XClient client, XOutputStream outputStream, int deviceId, String name, boolean isPointer) throws IOException {
+        byte[] nameBytes = name.getBytes();
+        int nameLen = nameBytes.length;
+        int namePad = (nameLen + 3) & ~3;
+        int numButtons = isPointer ? POINTER_BUTTON_COUNT : 0;
+        int buttonStateBytes = Math.max(4, ((numButtons + 31) / 32) * 4);
+        int buttonClassBytes = isPointer ? 8 + buttonStateBytes + (numButtons * 4) : 0;
+        int numValuators = isPointer ? 2 : 0;
+        int numClasses = (isPointer ? 1 : 0) + numValuators;
+
+        int deviceInfoSize = 12 + namePad + buttonClassBytes + (44 * numValuators);
+        int length = deviceInfoSize / 4;
+
+        try (XStreamLock lock = outputStream.lock()) {
+            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
+            outputStream.writeByte((byte) 0);
+            outputStream.writeShort(client.getSequenceNumber());
+            outputStream.writeInt(length);
+            outputStream.writeShort((short) 1);
+            outputStream.writePad(22);
+
+            outputStream.writeShort((short) deviceId);
+            outputStream.writeShort((short) 1);
+            outputStream.writeShort((short) (isPointer ? 0 : 1));
+            outputStream.writeShort((short) numClasses);
+            outputStream.writeShort((short) nameLen);
+            outputStream.writeByte((byte) 1);
+            outputStream.writeByte((byte) 0);
+
+            outputStream.write(nameBytes);
+            outputStream.writePad(namePad - nameLen);
+
+            if (isPointer) writeButtonClass(outputStream, deviceId, numButtons);
+            for (int i = 0; i < numValuators; i++) writeValuatorClass(outputStream, i);
+        }
+    }
+
+    private void writeMultiDeviceQueryResponse(XClient client, XOutputStream outputStream, int requestedDeviceId) throws IOException {
+        String pointerName = "Virtual Core Pointer";
+        String keyboardName = "Virtual Core Keyboard";
+
+        byte[] pointerNameBytes = pointerName.getBytes();
+        int pointerNameLen = pointerNameBytes.length;
+        int pointerNamePad = (pointerNameLen + 3) & ~3;
+
+        byte[] keyboardNameBytes = keyboardName.getBytes();
+        int keyboardNameLen = keyboardNameBytes.length;
+        int keyboardNamePad = (keyboardNameLen + 3) & ~3;
+
+        int numPointerButtons = POINTER_BUTTON_COUNT;
+        int pointerButtonStateBytes = Math.max(4, ((numPointerButtons + 31) / 32) * 4);
+        int pointerButtonClassBytes = 8 + pointerButtonStateBytes + (numPointerButtons * 4);
+        int pointerNumValuators = 2;
+        int pointerNumClasses = 1 + pointerNumValuators;
+        int pointerInfoSize = 12 + pointerNamePad + pointerButtonClassBytes + (44 * pointerNumValuators);
+
+        int keyboardNumClasses = 0;
+        int keyboardInfoSize = 12 + keyboardNamePad;
+
+        int numDevices = 2;
+        int totalLength = (pointerInfoSize + keyboardInfoSize) / 4;
+
+        try (XStreamLock lock = outputStream.lock()) {
+            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
+            outputStream.writeByte((byte) 0);
+            outputStream.writeShort(client.getSequenceNumber());
+            outputStream.writeInt(totalLength);
+            outputStream.writeShort((short) numDevices);
+            outputStream.writePad(22);
+
+            outputStream.writeShort((short) MASTER_POINTER_ID);
+            outputStream.writeShort((short) 1);
+            outputStream.writeShort((short) 0);
+            outputStream.writeShort((short) pointerNumClasses);
+            outputStream.writeShort((short) pointerNameLen);
+            outputStream.writeByte((byte) 1);
+            outputStream.writeByte((byte) 0);
+            outputStream.write(pointerNameBytes);
+            outputStream.writePad(pointerNamePad - pointerNameLen);
+            writeButtonClass(outputStream, MASTER_POINTER_ID, numPointerButtons);
+            writeValuatorClass(outputStream, 0);
+            writeValuatorClass(outputStream, 1);
+
+            outputStream.writeShort((short) MASTER_KEYBOARD_ID);
+            outputStream.writeShort((short) 1);
+            outputStream.writeShort((short) 1);
+            outputStream.writeShort((short) keyboardNumClasses);
+            outputStream.writeShort((short) keyboardNameLen);
+            outputStream.writeByte((byte) 1);
+            outputStream.writeByte((byte) 0);
+            outputStream.write(keyboardNameBytes);
+            outputStream.writePad(keyboardNamePad - keyboardNameLen);
+        }
+    }
+
+    private void selectEvents(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
+        int windowId = inputStream.readInt();
+        int numMasks = inputStream.readShort() & 0xFFFF;
+
+        if (numMasks == 0) {
+            inputStream.skip(client.getRemainingRequestLength());
+            throw new BadValue(numMasks);
+        }
+
+        inputStream.readShort();
+
+        Window window = client.xServer.windowManager.getWindow(windowId);
+
+        if (window == null) {
+            inputStream.skip(client.getRemainingRequestLength());
+            throw new BadWindow(windowId);
+        }
+
+        for (int i = 0; i < numMasks; i++) {
+            int deviceId = inputStream.readShort() & 0xFFFF;
+            int maskLen = inputStream.readShort() & 0xFFFF;
+
+            Bitmask mask = new Bitmask(0);
+
+            for (int word = 0; word < maskLen; word++) {
+                int value = inputStream.readInt();
+                if (word == 0) {
+                    mask = new Bitmask(value);
+                }
+            }
+
+            Selection sel = new Selection();
+            sel.client = client;
+            sel.window = window;
+            sel.deviceId = deviceId;
+            sel.mask = mask;
+            sel.id = windowId;
+
+            selections.removeIf(old ->
+                    old.client == client &&
+                            old.id == windowId &&
+                            old.deviceId == deviceId);
+
+            if (!mask.isEmpty()) {
+                selections.add(sel);
+            }
+        }
+
+        inputStream.skip(client.getRemainingRequestLength());
+    }
+
+    @Override
+    public void handleRequest(XClient client, XInputStream inputStream, XOutputStream outputStream)
+            throws IOException, XRequestError {
+        int opcode = client.getRequestData();
+
+        switch (opcode) {
+            case ClientOpcodes.GET_EXTENSION_VERSION:
+                getExtensionVersion(client, inputStream, outputStream);
+                break;
+            case ClientOpcodes.GET_CLIENT_POINTER:
+                getClientPointer(client, inputStream, outputStream);
+                break;
+            case ClientOpcodes.SELECT_EVENTS:
+                try (XLock lock = client.xServer.lock(XServer.Lockable.WINDOW_MANAGER)) {
+                    selectEvents(client, inputStream, outputStream);
+                }
+                break;
+            case ClientOpcodes.QUERY_VERSION:
+                queryVersion(client, inputStream, outputStream);
+                break;
+            case ClientOpcodes.QUERY_DEVICE:
+                queryDevice(client, inputStream, outputStream);
+                break;
+            default:
+                inputStream.skip(client.getRemainingRequestLength());
+                break;
+        }
+    }
+
+    public void onClientDisconnected(XClient client) {
+        selections.removeIf(sel -> sel.client == client);
+    }
+
+    public void emitRawMotion(int deviceId, double deltaX, double deltaY) {
+        for (Selection sel : selections) {
+            if (!matchesSelection(sel, deviceId)) continue;
+            if (!sel.mask.isSet(XI_RawMotion_MASK)) continue;
+
+            try {
+                sendXIRawMotionToClient(sel.client, deviceId, deltaX, deltaY);
+            } catch (IOException ignored) {
+            }
+        }
+    }
+
+    public void emitRawButton(int deviceId, int buttonNumber, boolean pressed) {
+        int maskBit = pressed ? XI_RawButtonPress_MASK : XI_RawButtonRelease_MASK;
+
+        for (Selection sel : selections) {
+            if (!matchesSelection(sel, deviceId)) continue;
+            if (!sel.mask.isSet(maskBit)) continue;
+
+            try {
+                sendXIRawButtonToClient(sel.client, deviceId, buttonNumber, pressed);
+            } catch (IOException ignored) {
+            }
+        }
+    }
+
+    private void sendXIRawMotionToClient(XClient client, int deviceId, double deltaX, double deltaY) throws IOException {
+        client.sendEvent(new XIRawMotionNotify(deviceId, getMajorOpcode(),
+                new double[]{deltaX, deltaY},
+                RawMotion_XY_MASK
+        ));
+    }
+
+    private void sendXIRawButtonToClient(XClient client, int deviceId, int buttonNumber, boolean pressed) throws IOException {
+        if (pressed) {
+            client.sendEvent(new XIRawButtonPressNotify(deviceId, getMajorOpcode(), buttonNumber));
+        } else {
+            client.sendEvent(new XIRawButtonReleaseNotify(deviceId, getMajorOpcode(), buttonNumber));
+        }
+    }
+}

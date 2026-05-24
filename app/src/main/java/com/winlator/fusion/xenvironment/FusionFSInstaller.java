@@ -19,7 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class FusionFSInstaller {
-    public static final byte LATEST_VERSION = 4;
+    public static final byte LATEST_VERSION = 5;
 
     private static boolean assetExists(Context context, String assetName) {
         try {
@@ -92,42 +92,68 @@ public abstract class FusionFSInstaller {
                 success = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, activity, FusionFS.ASSET_FUSIONFS, rootDir, (file, size) -> {
                     if (size > 0) {
                         long totalSize = totalSizeRef.addAndGet(size);
-                        final int progress = Math.min((int)(((float)totalSize / totalContentLength) * 100), 99);
-                        activity.runOnUiThread(() -> dialog.setProgress(progress));
+                        final int progress = Math.min((int)(((float)totalSize / totalContentLength) * 70), 70);
+                        if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
+                            if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(progress);
+                        });
                     }
                     return file;
                 });
             } catch (Exception e) { success = false; }
 
             if (success) {
-                renameExtractedDirs(rootDir);
-                applyPatches(activity, rootDir);
-                copySharedRuntimeLibraries(fusionFS);
-                activity.runOnUiThread(() -> dialog.setProgress(100));
-                createWineSymlink(fusionFS);
-                createCompatibilitySymlinks(activity, fusionFS);
-                installWineFromAssets(activity, fusionFS);
-                installContainerPatternsFromAssets(activity, fusionFS);
-                installDriversFromAssets(activity);
-                fusionFS.createVersionFile(LATEST_VERSION);
-                resetContainerVersions(activity);
-            } else {
-                AppUtils.showToast(activity, R.string.unable_to_install_system_files);
+                try {
+                    renameExtractedDirs(rootDir);
+                    applyPatches(activity, rootDir);
+                    copySharedRuntimeLibraries(fusionFS);
+                    if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
+                        if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(75);
+                    });
+                    createWineSymlink(fusionFS);
+                    createCompatibilitySymlinks(activity, fusionFS);
+                    installWineFromAssets(activity, fusionFS, dialog);
+                    installContainerPatternsFromAssets(activity, fusionFS);
+                    if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
+                        if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(95);
+                    });
+                    installDriversFromAssets(activity);
+                    fusionFS.createVersionFile(LATEST_VERSION);
+                    try {
+                        resetContainerVersions(activity);
+                    } catch (Exception e) {
+                        android.util.Log.w("FusionFSInstaller", "Failed to reset container versions", e);
+                    }
+                    if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
+                        if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(100);
+                    });
+                } catch (Exception e) {
+                    success = false;
+                }
             }
-            dialog.closeOnUiThread();
+
+            if (!success) {
+                if (!activity.isFinishing() && !activity.isDestroyed()) {
+                    activity.runOnUiThread(() -> AppUtils.showToast(activity, R.string.unable_to_install_system_files));
+                }
+            }
+            if (!activity.isFinishing() && !activity.isDestroyed()) dialog.closeOnUiThread();
         });
     }
 
-    public static void installWineFromAssets(final MainActivity activity, FusionFS fusionFS) {
+    public static void installWineFromAssets(final MainActivity activity, FusionFS fusionFS, DownloadProgressDialog dialog) {
         String[] versions = activity.getResources().getStringArray(R.array.wine_entries);
-        File bionicDir = fusionFS.getBionicDir();
+        int totalVersions = versions.length;
 
-        for (String version : versions) {
+        for (int i = 0; i < versions.length; i++) {
+            String version = versions[i];
             if (isWineVersionInstalled(fusionFS, version)) continue;
 
             boolean isProton = version.startsWith("proton-");
             boolean isArm64EC = version.endsWith("-arm64ec");
             boolean installed = false;
+
+            int baseProgress = 75;
+            int versionProgress = baseProgress + (int)(((float)(i + 1) / totalVersions) * 20);
 
             if (assetExists(activity, version + ".txz")) {
                 File outFile = getWineInstallDir(fusionFS, version, isProton, isArm64EC);
@@ -146,7 +172,18 @@ public abstract class FusionFSInstaller {
                     FileUtils.delete(outFile);
                 }
             }
+
+            if (dialog != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                int progress = Math.min(versionProgress, 94);
+                activity.runOnUiThread(() -> {
+                    if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(progress);
+                });
+            }
         }
+    }
+
+    public static void installWineFromAssets(final MainActivity activity, FusionFS fusionFS) {
+        installWineFromAssets(activity, fusionFS, null);
     }
 
     private static File getWineInstallDir(FusionFS fusionFS, String version, boolean isProton, boolean isArm64EC) {
@@ -259,8 +296,11 @@ public abstract class FusionFSInstaller {
         new File(bionicDir, "/tmp").mkdirs();
 
         new File(glibcDir, "/usr/lib").mkdirs();
+        new File(glibcDir, "/usr/lib/x86_64-linux-gnu").mkdirs();
         new File(glibcDir, "/usr/local/bin").mkdirs();
         new File(glibcDir, "/usr/bin").mkdirs();
+        new File(glibcDir, "/usr/etc").mkdirs();
+        new File(glibcDir, "/usr/share/fonts").mkdirs();
         new File(glibcDir, "/tmp").mkdirs();
         new File(glibcDir, "/home").mkdirs();
         new File(glibcDir, "/opt").mkdirs();
@@ -343,7 +383,9 @@ public abstract class FusionFSInstaller {
         File wineDir = fusionFS.getWineDir();
         if (wineDir.isDirectory() && !glibcOptWine.exists()) {
             glibcOptWine.getParentFile().mkdirs();
-            FileUtils.symlink("../../wine", glibcOptWine.getPath());
+            File wineGlibcDir = fusionFS.getWineGlibcDir();
+            String target = wineGlibcDir.isDirectory() ? "../../wine.glibc" : "../../wine";
+            FileUtils.symlink(target, glibcOptWine.getPath());
         }
     }
 
@@ -368,7 +410,7 @@ public abstract class FusionFSInstaller {
                 for (File file : files) {
                     if (file.isDirectory()) {
                         String name = file.getName();
-                        if (name.equals("home") || name.equals("opt") || name.equals("installed-wine") || name.equals("bionic") || name.equals("glibc") || name.equals("wine")) continue;
+                        if (name.equals("home") || name.equals("opt") || name.equals("installed-wine") || name.equals("bionic") || name.equals("glibc") || name.equals("wine") || name.equals("wine.glibc") || name.equals("wine.bionic") || name.equals("usr.glibc") || name.equals("usr.bionic") || name.equals("etc.glibc") || name.equals("etc.bionic")) continue;
                     }
                     FileUtils.delete(file);
                 }

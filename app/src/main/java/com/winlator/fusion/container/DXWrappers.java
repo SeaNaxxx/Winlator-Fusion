@@ -20,6 +20,7 @@ public abstract class DXWrappers {
 
     public static String parseIdentifier(String dxwrapper) {
         if (dxwrapper == null || dxwrapper.isEmpty()) return Container.DEFAULT_DXWRAPPER;
+        if ("dxvk+vkd3d".equals(dxwrapper)) return DXVK;
         switch (dxwrapper) {
             case WINED3D:
             case DXVK:
@@ -33,6 +34,9 @@ public abstract class DXWrappers {
 
     public static KeyValueSet[] parseConfigs(String dxwrapper, String dxwrapperConfig) {
         if (dxwrapperConfig == null || dxwrapperConfig.isEmpty()) return new KeyValueSet[]{new KeyValueSet(), new KeyValueSet()};
+        if ("dxvk+vkd3d".equals(dxwrapper) && !dxwrapperConfig.contains("|")) {
+            return Container.migrateLudashiDXWrapperConfigToKeyValueSet(dxwrapperConfig);
+        }
         int separator = dxwrapperConfig.indexOf("|");
         if (separator != -1) {
             String first = dxwrapperConfig.substring(0, separator);

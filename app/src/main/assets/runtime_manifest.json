@@ -1,10 +1,12 @@
 {
-  "version": 3,
+  "schema_version": 3,
+  "runtime_abi": 2,
+  "container_api": 5,
   "runtimes": {
     "glibc": {
       "display_name": "GLIBC",
       "filesystem_root": "fusionfs/glibc",
-      "version_file": ".winlator/.rfs_version",
+      "version_file": ".winlator/.ffs_version",
       "container_variant": "glibc",
       "box64": {
         "version": "0.4.0",
@@ -39,12 +41,13 @@
         "lib": "/usr/lib",
         "bin": "/usr/local/bin",
         "wineprefix": "/home/xuser/.wine"
-      }
+      },
+      "audio_profile": "minimal"
     },
     "bionic": {
       "display_name": "BIONIC",
       "filesystem_root": "fusionfs/bionic",
-      "version_file": ".winlator/.img_version",
+      "version_file": ".winlator/.ffs_version",
       "container_variant": "bionic",
       "box64": {
         "version": "0.4.1",
@@ -93,27 +96,44 @@
         "fexcore": {
           "asset": "fexcore/fexcore-{version}.tzst",
           "version": "2601",
-          "dll": "libwow64fex.dll"
+          "dlls": ["libarm64ecfex.dll", "libwow64fex.dll"],
+          "primary_dll": "libwow64fex.dll"
         },
         "wowbox64": {
           "asset": "wowbox64/wowbox64-{version}.tzst",
           "version": "0.4.1",
-          "dll": "wowbox64.dll"
+          "dlls": ["wowbox64.dll"],
+          "primary_dll": "wowbox64.dll"
         }
-      }
+      },
+      "audio_profile": "desktop"
+    }
+  },
+  "audio_profiles": {
+    "minimal": {
+      "asset": "pulseaudio.tzst",
+      "description": "Core PulseAudio modules: AAudio sink, native protocol only"
+    },
+    "desktop": {
+      "asset": "pulseaudio-full.tzst",
+      "description": "Full PulseAudio modules: ALSA, RTP, tunnel, virtual sinks, remap, echo cancel, desktop-like"
     }
   },
   "assets": {
     "fusionfs": {
       "primary": "fusionfs.tzst",
-      "patches": "fusionfs_patches.tzst"
+      "patches": "fusionfs_patches.tzst",
+      "release_tag": "fusionfs-v5"
     },
-    "wine": [
-      "wine-10.10-x86_64",
-      "wine-10.10-arm64ec",
-      "proton-9.0-x86_64",
-      "proton-9.0-arm64ec"
-    ],
+    "wine": {
+      "format": "txz",
+      "entries": [
+        "wine-10.10-x86_64",
+        "wine-10.10-arm64ec",
+        "proton-9.0-x86_64",
+        "proton-9.0-arm64ec"
+      ]
+    },
     "container_patterns": [
       "wine-10.10-x86_64_container_pattern.tzst",
       "wine-10.10-arm64ec_container_pattern.tzst",
@@ -121,17 +141,19 @@
       "proton-9.0-arm64ec_container_pattern.tzst",
       "container_pattern_common.tzst"
     ],
-    "audio": "pulseaudio.tzst",
+    "audio": {
+      "minimal": "pulseaudio.tzst",
+      "desktop": "pulseaudio-full.tzst"
+    },
     "input": "input_dlls.tzst",
     "debug": "layers.tzst"
   },
-  "compatibility_rules": [
-    "Vortek is GLIBC-only",
-    "Adrenotools is BIONIC-only",
-    "FEXCore is BIONIC-only",
-    "Wrapper is BIONIC-only",
-    "ARM64EC DXVK variants only available for bionic containers",
-    "Gladio renderer available for both GLIBC and BIONIC",
-    "container_pattern_common.tzst is shared across all container types"
-  ]
+  "constraints": {
+    "vortek": { "requires_runtime": "glibc" },
+    "adrenotools": { "requires_runtime": "bionic" },
+    "fexcore": { "requires_runtime": "bionic", "requires_feature": "arm64ec" },
+    "wrapper": { "requires_runtime": "bionic" },
+    "zink": { "excluded_runtime": "bionic" },
+    "arm64ec_dxvk": { "requires_runtime": "bionic" }
+  }
 }

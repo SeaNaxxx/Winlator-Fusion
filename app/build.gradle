@@ -79,6 +79,7 @@ tasks.register("downloadFusionFS") {
         [name: "container_pattern_common.tzst", minSize: MIN_COMMON_SIZE],
         [name: "input_dlls.tzst", minSize: MIN_SMALL_SIZE],
         [name: "pulseaudio.tzst", minSize: MIN_SMALL_SIZE],
+        [name: "pulseaudio-full.tzst", minSize: MIN_SMALL_SIZE],
         [name: "layers.tzst", minSize: MIN_SMALL_SIZE]
     ]
 

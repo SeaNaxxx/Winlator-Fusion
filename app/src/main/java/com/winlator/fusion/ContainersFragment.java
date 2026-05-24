@@ -18,6 +18,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -30,8 +31,10 @@ import com.winlator.fusion.container.Container;
 import com.winlator.fusion.container.ContainerManager;
 import com.winlator.fusion.contentdialog.ContentDialog;
 import com.winlator.fusion.contentdialog.StorageInfoDialog;
+import com.winlator.fusion.core.AppUtils;
 import com.winlator.fusion.core.PreloaderDialog;
 import com.winlator.fusion.core.WineInfo;
+import com.winlator.fusion.xenvironment.FusionFS;
 import com.winlator.fusion.xenvironment.ImageFs;
 import com.winlator.fusion.xenvironment.RootFS;
 
@@ -56,7 +59,8 @@ public class ContainersFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         manager = new ContainerManager(getContext());
         loadContainersList();
-        ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(R.string.containers);
+        ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
+        if (actionBar != null) actionBar.setTitle(R.string.containers);
     }
 
     @Nullable
@@ -88,14 +92,22 @@ public class ContainersFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
         if (menuItem.getItemId() == R.id.menu_item_add) {
-            boolean rootfsAvailable = RootFS.find(getContext()).isValid();
-            boolean imagefsAvailable = ImageFs.find(getContext()).isValid();
-            if (!rootfsAvailable && !imagefsAvailable) return false;
-            FragmentManager fragmentManager = getParentFragmentManager();
-            fragmentManager.beginTransaction()
-                .addToBackStack(null)
-                .replace(R.id.FLFragmentContainer, new ContainerDetailFragment())
-                .commit();
+            FusionFS fusionFS = FusionFS.find(getContext());
+            boolean fsAvailable = fusionFS.isValid();
+            if (!fsAvailable) {
+                AppUtils.showToast(getContext(), R.string.unable_to_install_wine);
+                return false;
+            }
+            try {
+                FragmentManager fragmentManager = getParentFragmentManager();
+                fragmentManager.beginTransaction()
+                    .addToBackStack(null)
+                    .replace(R.id.FLFragmentContainer, new ContainerDetailFragment())
+                    .commit();
+            } catch (IllegalStateException e) {
+                android.util.Log.w("ContainersFragment", "Cannot add container: fragment not attached", e);
+                return false;
+            }
             return true;
         }
         else return super.onOptionsItemSelected(menuItem);
@@ -146,8 +158,10 @@ public class ContainersFragment extends Fragment {
                 subtitle.append("Glibc");
             }
             if (wineVersion != null && !wineVersion.isEmpty()) {
-                String wineDisplay = WineInfo.fromIdentifier(holder.itemView.getContext(), wineVersion).toString();
-                subtitle.append(" · ").append(wineDisplay);
+                WineInfo wineInfo = WineInfo.fromIdentifier(holder.itemView.getContext(), wineVersion);
+                if (wineInfo != null) {
+                    subtitle.append(" · ").append(wineInfo.toString());
+                }
             }
             if (holder.subtitle != null) {
                 holder.subtitle.setText(subtitle.toString());
