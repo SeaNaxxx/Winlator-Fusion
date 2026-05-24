@@ -152,6 +152,9 @@ public class SettingsFragment extends Fragment {
         final CheckBox cbCapturePointerOnExternalMouse = view.findViewById(R.id.CBCapturePointerOnExternalMouse);
         cbCapturePointerOnExternalMouse.setChecked(preferences.getBoolean("capture_pointer_on_external_mouse", true));
 
+        final CheckBox cbHighRefreshRateMode = view.findViewById(R.id.CBHighRefreshRateMode);
+        cbHighRefreshRateMode.setChecked(preferences.getBoolean("high_refresh_rate_mode", false));
+
         final CheckBox cbOpenAndroidBrowserFromWine = view.findViewById(R.id.CBOpenAndroidBrowserFromWine);
         cbOpenAndroidBrowserFromWine.setChecked(preferences.getBoolean("open_android_browser_from_wine", true));
 
@@ -275,6 +278,7 @@ public class SettingsFragment extends Fragment {
             editor.putString("fexcore_preset", FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset));
             editor.putBoolean("move_cursor_to_touchpoint", cbMoveCursorToTouchpoint.isChecked());
             editor.putBoolean("capture_pointer_on_external_mouse", cbCapturePointerOnExternalMouse.isChecked());
+            editor.putBoolean("high_refresh_rate_mode", cbHighRefreshRateMode.isChecked());
             editor.putFloat("cursor_speed", sbCursorSpeed.getValue() / 100.0f);
             editor.putFloat("cursor_scale", sbCursorSize.getValue() / 100.0f);
             editor.putInt("cursor_color", cpvCursorColor.getColor());
