@@ -132,13 +132,14 @@
                 android:entries="@array/container_variant_entries" />
 
             <LinearLayout
-                android:id="@+id/LLBionicOptions"
+                android:id="@+id/LLEmulatorOptions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:visibility="gone">
+                android:visibility="visible">
 
                 <TextView
+                    android:id="@+id/TVEmulatorLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/emulator" />
@@ -150,13 +151,14 @@
                     android:entries="@array/emulator_entries" />
 
                 <TextView
+                    android:id="@+id/TVBox64VersionLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/box64_version_bionic" />
+                    android:text="@string/box64_version" />
 
                 <Spinner
                     style="@style/ComboBox"
-                    android:id="@+id/SBox64VersionBionic"
+                    android:id="@+id/SBox64Version"
                     android:layout_width="match_parent"
                     android:entries="@array/box64_bionic_version_entries" />
 

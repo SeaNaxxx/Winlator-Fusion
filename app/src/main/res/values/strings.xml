@@ -370,6 +370,7 @@
     <string name="fexcore_version">FEXCore Version</string>
     <string name="fexcore_preset">FEXCore Preset</string>
     <string name="box64_version_bionic">Box64 Version (Bionic)</string>
+    <string name="box64_version">Box64 Version</string>
     <string name="import_preset">Import Preset</string>
     <string name="export_preset">Export Preset</string>
     <string name="preset_exported">Preset exported successfully</string>

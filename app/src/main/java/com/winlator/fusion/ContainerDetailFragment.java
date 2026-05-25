@@ -47,6 +47,7 @@ import com.winlator.fusion.contentdialog.RendererOptionsDialog;
 import com.winlator.fusion.contentdialog.VortekConfigDialog;
 import com.winlator.fusion.core.AppUtils;
 import com.winlator.fusion.core.Callback;
+import com.winlator.fusion.core.DefaultVersion;
 import com.winlator.fusion.container.DXWrapperPicker;
 import com.winlator.fusion.core.EnvVars;
 import com.winlator.fusion.core.FileUtils;
@@ -158,7 +159,7 @@ public class ContainerDetailFragment extends Fragment {
 
         // Container variant selector
         final Spinner sContainerVariant = view.findViewById(R.id.SContainerVariant);
-        final View llBionicOptions = view.findViewById(R.id.LLBionicOptions);
+        final View llEmulatorOptions = view.findViewById(R.id.LLEmulatorOptions);
         final Spinner sEmulator = view.findViewById(R.id.SEmulator);
 
         // Define picker refs before variant listener so they are accessible
@@ -204,7 +205,7 @@ public class ContainerDetailFragment extends Fragment {
                     AppUtils.setSpinnerSelectionFromIdentifier(sContainerVariant, variant);
                 }
             }
-            llBionicOptions.setVisibility(variant.equals(Container.BIONIC) ? View.VISIBLE : View.GONE);
+            llEmulatorOptions.setVisibility(View.VISIBLE);
 
             final boolean[] variantInitialized = {false};
             sContainerVariant.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -224,7 +225,19 @@ public class ContainerDetailFragment extends Fragment {
                         return;
                     }
 
-                    llBionicOptions.setVisibility(nowBionic ? View.VISIBLE : View.GONE);
+                    llEmulatorOptions.setVisibility(View.VISIBLE);
+
+                    Spinner sBox64Version = view.findViewById(R.id.SBox64Version);
+                    if (sBox64Version != null) {
+                        String[] versionEntries = nowBionic ? getResources().getStringArray(R.array.box64_bionic_version_entries) : getResources().getStringArray(R.array.box64_glibc_version_entries);
+                        ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, versionEntries);
+                        sBox64Version.setAdapter(adapter);
+                        String currentVersion = isEditMode() ? container.getBox64Version() : (nowBionic ? DefaultVersion.BOX64_BIONIC : DefaultVersion.BOX64);
+                        AppUtils.setSpinnerSelectionFromValue(sBox64Version, currentVersion);
+                    }
+
+                    TextView tvEmulatorLabel = view.findViewById(R.id.TVEmulatorLabel);
+                    if (tvEmulatorLabel != null) tvEmulatorLabel.setVisibility(nowBionic ? View.VISIBLE : View.GONE);
 
                     // Rebuild pickers when variant changes so driver/wrapper options match the variant
                     String currentGraphicsDriver = graphicsDriverPickerRef[0].getGraphicsDriver();
@@ -281,7 +294,7 @@ public class ContainerDetailFragment extends Fragment {
         // FEXCore configuration
         final Spinner sFEXCoreVersion = view.findViewById(R.id.SFEXCoreVersion);
         final Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
-        final Spinner sBox64VersionBionic = view.findViewById(R.id.SBox64VersionBionic);
+        final Spinner sBox64Version = view.findViewById(R.id.SBox64Version);
         final View llFEXCoreOptions = view.findViewById(R.id.LLFEXCoreOptions);
 
         FEXCorePresetManager.loadSpinner(sFEXCorePreset, isEditMode() ? container.getFEXCorePreset() : FEXCorePreset.DEFAULT);
@@ -290,9 +303,20 @@ public class ContainerDetailFragment extends Fragment {
         if (isEditMode()) {
             AppUtils.setSpinnerSelectionFromValue(sEmulator, container.getEmulator());
             AppUtils.setSpinnerSelectionFromValue(sFEXCoreVersion, container.getFEXCoreVersion());
-            AppUtils.setSpinnerSelectionFromValue(sBox64VersionBionic, container.getBox64Version());
+            String[] versionEntries = container.isBionic() ? getResources().getStringArray(R.array.box64_bionic_version_entries) : getResources().getStringArray(R.array.box64_glibc_version_entries);
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, versionEntries);
+            sBox64Version.setAdapter(adapter);
+            AppUtils.setSpinnerSelectionFromValue(sBox64Version, container.getBox64Version());
             isArm64ECContainer = container.isArm64EC();
+        } else {
+            String[] versionEntries = isBionic ? getResources().getStringArray(R.array.box64_bionic_version_entries) : getResources().getStringArray(R.array.box64_glibc_version_entries);
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, versionEntries);
+            sBox64Version.setAdapter(adapter);
+            AppUtils.setSpinnerSelectionFromValue(sBox64Version, isBionic ? DefaultVersion.BOX64_BIONIC : DefaultVersion.BOX64);
         }
+
+        TextView tvEmulatorLabel = view.findViewById(R.id.TVEmulatorLabel);
+        if (tvEmulatorLabel != null) tvEmulatorLabel.setVisibility(isBionic ? View.VISIBLE : View.GONE);
 
         final boolean[] isArm64EC = {isArm64ECContainer};
         Runnable updateEmulatorUI = () -> {
@@ -515,13 +539,11 @@ public class ContainerDetailFragment extends Fragment {
                     container.setContainerVariant(containerVariant);
                     container.setEmulator(emulator);
                     RendererOptionsDialog.applyToContainer(btRendererOptions, container);
-                    if (containerVariant.equals(Container.BIONIC)) {
-                        if (sFEXCoreVersion.getSelectedItem() != null)
-                            container.setFEXCoreVersion(sFEXCoreVersion.getSelectedItem().toString());
-                        container.setFEXCorePreset(FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset));
-                        if (sBox64VersionBionic.getSelectedItem() != null)
-                            container.setBox64Version(sBox64VersionBionic.getSelectedItem().toString());
-                    }
+                    if (sFEXCoreVersion.getSelectedItem() != null)
+                        container.setFEXCoreVersion(sFEXCoreVersion.getSelectedItem().toString());
+                    container.setFEXCorePreset(FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset));
+                    if (sBox64Version.getSelectedItem() != null)
+                        container.setBox64Version(sBox64Version.getSelectedItem().toString());
                     container.saveData();
 
                     saveWineRegistryKeys(view);
@@ -567,13 +589,11 @@ public class ContainerDetailFragment extends Fragment {
                     data.put("rendererPresentMode", RendererOptionsDialog.getTagPresentMode(btRendererOptions, R.id.rendererPresentMode, "fifo"));
                     data.put("rendererFilterMode", RendererOptionsDialog.getTagInt(btRendererOptions, R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR));
                     data.put("rendererRefreshRate", RendererOptionsDialog.getTagInt(btRendererOptions, R.id.rendererRefreshRate, 0));
-                    if (containerVariant.equals(Container.BIONIC)) {
-                        if (sFEXCoreVersion.getSelectedItem() != null)
-                            data.put("fexcoreVersion", sFEXCoreVersion.getSelectedItem().toString());
-                        data.put("fexcorePreset", FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset));
-                        if (sBox64VersionBionic.getSelectedItem() != null)
-                            data.put("box64Version", sBox64VersionBionic.getSelectedItem().toString());
-                    }
+                    if (sFEXCoreVersion.getSelectedItem() != null)
+                        data.put("fexcoreVersion", sFEXCoreVersion.getSelectedItem().toString());
+                    data.put("fexcorePreset", FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset));
+                    if (sBox64Version.getSelectedItem() != null)
+                        data.put("box64Version", sBox64Version.getSelectedItem().toString());
 
                     if (wineInfosRef[0].size() > 1) {
                         data.put("wineVersion", wineInfosRef[0].get(sWineVersion.getSelectedItemPosition()).identifier());
