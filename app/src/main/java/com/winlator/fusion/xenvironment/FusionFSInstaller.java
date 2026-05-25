@@ -62,6 +62,8 @@ public abstract class FusionFSInstaller {
         FusionFS fusionFS = FusionFS.find(activity);
         if (!fusionFS.isValid() || fusionFS.getVersion() < LATEST_VERSION) {
             install(activity);
+        } else {
+            ensureMinimalFusionFSStructure(activity);
         }
     }
 
