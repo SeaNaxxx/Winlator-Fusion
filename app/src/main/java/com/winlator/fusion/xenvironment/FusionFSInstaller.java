@@ -400,11 +400,9 @@ public abstract class FusionFSInstaller {
     }
 
     private static void applyPatches(Context context, File rootDir) {
-        if (!assetExists(context, FusionFS.ASSET_FUSIONFS_PATCHES)) return;
         try {
-            File glibcDir = new File(rootDir, "glibc");
-            if (glibcDir.isDirectory()) {
-                TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FusionFS.ASSET_FUSIONFS_PATCHES, glibcDir);
+            if (assetExists(context, "container_pattern_common.tzst")) {
+                TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, "container_pattern_common.tzst", rootDir);
             }
         } catch (Exception e) {}
     }
