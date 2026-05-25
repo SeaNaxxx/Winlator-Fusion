@@ -231,8 +231,15 @@ public class Container {
     public String getDrives() { return drives; }
     public void setDrives(String drives) { this.drives = drives; }
 
-    public boolean isShowFPS() { return showFPS; }
-    public void setShowFPS(boolean showFPS) { this.showFPS = showFPS; }
+    public boolean isShowFPS() { return hudMode != (byte)FrameRating.Mode.DISABLED.ordinal(); }
+    public void setShowFPS(boolean showFPS) {
+        this.showFPS = showFPS;
+        if (showFPS && hudMode == (byte)FrameRating.Mode.DISABLED.ordinal()) {
+            hudMode = (byte)FrameRating.Mode.SIMPLE.ordinal();
+        } else if (!showFPS && hudMode == (byte)FrameRating.Mode.SIMPLE.ordinal()) {
+            hudMode = (byte)FrameRating.Mode.DISABLED.ordinal();
+        }
+    }
 
     public byte getHUDMode() { return hudMode; }
     public void setHUDMode(byte hudMode) { this.hudMode = hudMode; }
