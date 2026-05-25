@@ -53,6 +53,25 @@ public abstract class WineUtils {
             }
             FileUtils.symlink(path, dosdevicesPath+"/"+drive.letter.toLowerCase(Locale.ENGLISH)+":");
         }
+
+        registerDriveTypes(container, addDriveCDRom);
+    }
+
+    private static void registerDriveTypes(Container container, boolean addDriveCDRom) {
+        File rootDir = container.getRootDir();
+        File systemRegFile = new File(rootDir, ".wine/system.reg");
+        if (!systemRegFile.isFile()) return;
+
+        try (WineRegistryEditor registryEditor = new WineRegistryEditor(systemRegFile)) {
+            registryEditor.setStringValue("Software\\Wine\\Drives", "c:", "hd");
+            registryEditor.setStringValue("Software\\Wine\\Drives", "z:", "hd");
+            if (addDriveCDRom) {
+                registryEditor.setStringValue("Software\\Wine\\Drives", "x:", "cdrom");
+            }
+            for (Drive drive : container.drivesIterator()) {
+                registryEditor.setStringValue("Software\\Wine\\Drives", drive.letter.toLowerCase(Locale.ENGLISH)+":", "hd");
+            }
+        }
     }
 
     public static void setSystemFont(WineRegistryEditor userRegistry, String faceName) {
@@ -82,6 +101,8 @@ public abstract class WineUtils {
         File userRegFile = new File(rootDir, RootFS.WINEPREFIX+"/user.reg");
 
         try (WineRegistryEditor registryEditor = new WineRegistryEditor(systemRegFile)) {
+            registryEditor.setStringValue("Software\\Wine\\Drives", "c:", "hd");
+            registryEditor.setStringValue("Software\\Wine\\Drives", "z:", "hd");
             registryEditor.setStringValue("Software\\Wine\\Drives", "x:", "cdrom");
             registryEditor.setStringValue("Software\\Classes\\.reg", null, "REGfile");
             registryEditor.setStringValue("Software\\Classes\\.reg", "Content Type", "application/reg");

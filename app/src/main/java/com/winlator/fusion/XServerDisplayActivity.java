@@ -1355,13 +1355,9 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         File rootDir = rootFS.getRootDir();
         FileUtils.delete(new File(rootDir, "/opt/apps"));
 
-        boolean isBionic = container.isBionic();
-        if (isBionic) {
-            TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "container_pattern_common.tzst", rootDir);
-        } else {
-            TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, FusionFS.ASSET_FUSIONFS_PATCHES, rootDir);
-        }
+        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "container_pattern_common.tzst", rootDir);
 
+        boolean isBionic = container.isBionic();
         String pulseaudioAsset = isBionic ? "pulseaudio-full.tzst" : "pulseaudio.tzst";
         String pulseaudioDir = isBionic ? "pulseaudio/bionic" : "pulseaudio/glibc";
         TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, pulseaudioAsset, new File(getFilesDir(), pulseaudioDir));
