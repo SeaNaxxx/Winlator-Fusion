@@ -258,11 +258,7 @@ public class ContainerDetailFragment extends Fragment {
                         }
                     }
 
-                    // Hide Box64 preset row for Bionic (it uses its own Box64 in LLBionicOptions)
                     Spinner sBox64Preset = view.findViewById(R.id.SBox64Preset);
-                    if (sBox64Preset != null) {
-                        sBox64Preset.setVisibility(nowBionic ? View.GONE : View.VISIBLE);
-                    }
 
                     // Re-filter wine versions for the new variant
                     wineInfosRef[0] = WineInstaller.getInstalledWineInfos(context, selected);
@@ -282,21 +278,46 @@ public class ContainerDetailFragment extends Fragment {
             });
         }
 
-        if (sEmulator != null && isEditMode()) {
-            AppUtils.setSpinnerSelectionFromValue(sEmulator, container.getEmulator());
-        }
-
         // FEXCore configuration
         final Spinner sFEXCoreVersion = view.findViewById(R.id.SFEXCoreVersion);
         final Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
         final Spinner sBox64VersionBionic = view.findViewById(R.id.SBox64VersionBionic);
+        final View llFEXCoreOptions = view.findViewById(R.id.LLFEXCoreOptions);
 
-        // Use FEXCorePresetManager for the preset spinner so custom presets are included
         FEXCorePresetManager.loadSpinner(sFEXCorePreset, isEditMode() ? container.getFEXCorePreset() : FEXCorePreset.DEFAULT);
 
+        boolean isArm64ECContainer = false;
         if (isEditMode()) {
+            AppUtils.setSpinnerSelectionFromValue(sEmulator, container.getEmulator());
             AppUtils.setSpinnerSelectionFromValue(sFEXCoreVersion, container.getFEXCoreVersion());
             AppUtils.setSpinnerSelectionFromValue(sBox64VersionBionic, container.getBox64Version());
+            isArm64ECContainer = container.isArm64EC();
+        }
+
+        final boolean[] isArm64EC = {isArm64ECContainer};
+        Runnable updateEmulatorUI = () -> {
+            boolean showFEXCore = isArm64EC[0];
+            String selectedEmulator = sEmulator != null && sEmulator.getSelectedItem() != null ? sEmulator.getSelectedItem().toString() : "Box64";
+            if (showFEXCore && selectedEmulator.equals("Box64")) {
+                showFEXCore = false;
+            }
+            if (llFEXCoreOptions != null) llFEXCoreOptions.setVisibility(showFEXCore ? View.VISIBLE : View.GONE);
+            if (sEmulator != null) {
+                sEmulator.setEnabled(isArm64EC[0]);
+                if (!isArm64EC[0]) AppUtils.setSpinnerSelectionFromValue(sEmulator, "Box64");
+            }
+        };
+        updateEmulatorUI.run();
+
+        if (sEmulator != null) {
+            sEmulator.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View v, int position, long id) {
+                    updateEmulatorUI.run();
+                }
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {}
+            });
         }
 
         loadScreenSizeSpinner(view, isEditMode() ? container.getScreenSize() : Container.DEFAULT_SCREEN_SIZE);
@@ -352,8 +373,6 @@ public class ContainerDetailFragment extends Fragment {
 
         final Spinner sBox64Preset = view.findViewById(R.id.SBox64Preset);
         Box64PresetManager.loadSpinner(sBox64Preset, isEditMode() ? container.getBox64Preset() : preferences.getString("box64_preset", Box64Preset.DEFAULT));
-        // Hide Box64 preset for Bionic containers (they use their own Box64 in LLBionicOptions)
-        if (isBionic && sBox64Preset != null) sBox64Preset.setVisibility(View.GONE);
 
         final CheckBox cbEnableXInput = view.findViewById(R.id.CBEnableXInput);
         final CheckBox cbEnableDInput = view.findViewById(R.id.CBEnableDInput);
@@ -894,6 +913,29 @@ public class ContainerDetailFragment extends Fragment {
             WineInfo wineInfo = WineInfo.fromIdentifier(context, container.getWineVersion());
             if (wineInfo != null) AppUtils.setSpinnerSelectionFromValue(sWineVersion, wineInfo.toString());
         }
+
+        final View llFEXCoreOptions = view.findViewById(R.id.LLFEXCoreOptions);
+        final Spinner sEmulator = view.findViewById(R.id.SEmulator);
+        sWineVersion.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View v, int position, long id) {
+                if (position >= 0 && position < wineInfos.size()) {
+                    WineInfo selectedWine = wineInfos.get(position);
+                    boolean arm64ec = selectedWine.isArm64EC();
+                    if (llFEXCoreOptions != null) {
+                        String selectedEmu = sEmulator != null && sEmulator.getSelectedItem() != null ? sEmulator.getSelectedItem().toString() : "Box64";
+                        boolean showFEXCore = arm64ec && !selectedEmu.equals("Box64");
+                        llFEXCoreOptions.setVisibility(showFEXCore ? View.VISIBLE : View.GONE);
+                    }
+                    if (sEmulator != null) {
+                        sEmulator.setEnabled(arm64ec);
+                        if (!arm64ec) AppUtils.setSpinnerSelectionFromValue(sEmulator, "Box64");
+                    }
+                }
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
     }
 
     private void updateRendererSummary(TextView tvRendererSummary, View anchor) {
