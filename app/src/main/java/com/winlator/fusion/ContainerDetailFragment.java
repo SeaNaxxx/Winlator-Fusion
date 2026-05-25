@@ -441,6 +441,12 @@ public class ContainerDetailFragment extends Fragment {
                 String wincomponents = getWinComponents(view);
                 String drives = getDrives(view);
                 byte hudMode = (byte)sHUDMode.getSelectedItemPosition();
+                boolean showFPS = cbShowFPS != null && cbShowFPS.isChecked();
+                if (showFPS && hudMode == (byte)FrameRating.Mode.DISABLED.ordinal()) {
+                    hudMode = (byte)FrameRating.Mode.SIMPLE.ordinal();
+                } else if (!showFPS && hudMode != (byte)FrameRating.Mode.DISABLED.ordinal()) {
+                    hudMode = (byte)FrameRating.Mode.DISABLED.ordinal();
+                }
                 String cpuList = cpuListView.getCheckedCPUListAsString();
                 String cpuListWoW64 = cpuListViewWoW64.getCheckedCPUListAsString();
                 byte startupSelection = (byte)sStartupSelection.getSelectedItemPosition();
