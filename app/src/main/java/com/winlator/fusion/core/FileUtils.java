@@ -290,7 +290,7 @@ public abstract class FileUtils {
     public static boolean contentEquals(File origin, File target) {
         if (origin.isDirectory() && target.isDirectory()) {
             File[] originFiles = origin.listFiles();
-            File[] targetFiles = origin.listFiles();
+            File[] targetFiles = target.listFiles();
 
             if (originFiles != null && targetFiles != null) {
                 if (originFiles.length != targetFiles.length) return false;

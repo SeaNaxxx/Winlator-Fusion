@@ -67,6 +67,8 @@ public class GrabManager implements WindowManager.OnWindowModificationListener {
 
     public void activatePointerGrab(Window window) {
         EventListener eventListener = window.getButtonPressListener();
-        activatePointerGrab(window, eventListener, eventListener.isInterestedIn(Event.OWNER_GRAB_BUTTON), true);
+        if (eventListener != null) {
+            activatePointerGrab(window, eventListener, eventListener.isInterestedIn(Event.OWNER_GRAB_BUTTON), true);
+        }
     }
 }

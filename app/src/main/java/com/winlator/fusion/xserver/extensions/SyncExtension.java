@@ -83,28 +83,27 @@ public class SyncExtension extends Extension {
     }
 
     private void awaitFence(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        synchronized (fences) {
-            int length = client.getRemainingRequestLength();
-            int[] ids = new int[length / 4];
-            int i = 0;
+        int length = client.getRemainingRequestLength();
+        int[] ids = new int[length / 4];
+        int i = 0;
 
-            while (length != 0) {
-                ids[i++] = inputStream.readInt();
-                length -= 4;
-            }
+        while (length != 0) {
+            ids[i++] = inputStream.readInt();
+            length -= 4;
+        }
 
-            boolean anyTriggered = false;
-            do {
+        boolean anyTriggered = false;
+        do {
+            synchronized (fences) {
                 for (int id : ids) {
                     if (fences.indexOfKey(id) < 0) throw new BadFence(id);
                     anyTriggered = fences.get(id);
                     if (anyTriggered) break;
                 }
-
-                Thread.yield();
             }
-            while (!anyTriggered);
+            if (!anyTriggered) Thread.yield();
         }
+        while (!anyTriggered);
     }
 
     @Override

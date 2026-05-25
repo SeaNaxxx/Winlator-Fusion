@@ -27,12 +27,12 @@ import java.util.List;
 
 public class GuestProgramLauncherComponent extends EnvironmentComponent {
     private String guestExecutable;
-    private static int pid = -1;
+    private int pid = -1;
     private EnvVars envVars;
     private String box64Preset = Box64Preset.CONSERVATIVE;
     private Callback<Integer> terminationCallback;
     private Container container;
-    private static final Object lock = new Object();
+    private final Object lock = new Object();
 
     public void setContainer(Container container) {
         this.container = container;

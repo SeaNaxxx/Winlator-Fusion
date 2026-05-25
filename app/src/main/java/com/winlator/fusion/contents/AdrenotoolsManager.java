@@ -143,16 +143,18 @@ public class AdrenotoolsManager {
         tmpDir.mkdirs();
 
         String name = "";
-        try {
-            InputStream is = mContext.getContentResolver().openInputStream(driverUri);
-            ZipInputStream zis = new ZipInputStream(is);
+        try (InputStream is = mContext.getContentResolver().openInputStream(driverUri);
+             ZipInputStream zis = new ZipInputStream(is)) {
+            String tmpDirCanonical = tmpDir.getCanonicalPath();
             ZipEntry entry = zis.getNextEntry();
             while (entry != null) {
                 File dstFile = new File(tmpDir, entry.getName());
+                if (!dstFile.getCanonicalPath().startsWith(tmpDirCanonical + File.separator)) {
+                    throw new IOException("ZIP entry outside target dir: " + entry.getName());
+                }
                 Files.copy(zis, dstFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 entry = zis.getNextEntry();
             }
-            zis.close();
             if (new File(tmpDir, "meta.json").exists()) {
                 name = getDriverName(tmpDir.getName());
                 File dst = new File(adrenotoolsContentDir, name);
