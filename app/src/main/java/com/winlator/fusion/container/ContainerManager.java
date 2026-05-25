@@ -137,15 +137,26 @@ public class ContainerManager {
 
             String containerVariant = data.optString("containerVariant", Container.DEFAULT_VARIANT);
             File homeDir = getHomeDirForVariant(containerVariant);
-            File containerDir = new File(homeDir, RootFS.USER+"-"+id);
+
+            if (homeDir == null || (!homeDir.isDirectory() && !homeDir.mkdirs())) {
+                Log.e(TAG, "Cannot create container: home directory not available: " + homeDir);
+                return null;
+            }
 
             if (Container.BIONIC.equals(containerVariant)) {
                 FusionFSInstaller.ensureMinimalFusionFSStructure(context);
                 homeDir = getHomeDirForVariant(containerVariant);
-                containerDir = new File(homeDir, RootFS.USER+"-"+id);
+                if (homeDir == null || !homeDir.isDirectory()) {
+                    Log.e(TAG, "Cannot create bionic container: bionic home directory not available after ensureMinimalFusionFSStructure");
+                    return null;
+                }
             }
 
-            if (!containerDir.mkdirs()) return null;
+            File containerDir = new File(homeDir, RootFS.USER+"-"+id);
+            if (!containerDir.mkdirs()) {
+                Log.e(TAG, "Cannot create container directory: " + containerDir);
+                return null;
+            }
 
             if (Container.BIONIC.equals(containerVariant) && !data.has("wineVersion")) {
                 data.put("wineVersion", WineInfo.BIONIC_WINE_IDENTIFIER);
