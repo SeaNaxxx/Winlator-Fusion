@@ -348,7 +348,8 @@ public abstract class FusionFSInstaller {
     private static void populateEtcBionicIfNeeded(File rootDir) {
         File etcBionic = new File(rootDir, "etc.bionic");
         File usrBionicEtc = new File(rootDir, "usr.bionic/etc");
-        if (etcBionic.isDirectory() && etcBionic.list() != null && etcBionic.list().length == 0) {
+        String[] etcBionicContents = etcBionic.list();
+        if (etcBionic.isDirectory() && etcBionicContents != null && etcBionicContents.length == 0) {
             if (usrBionicEtc.isDirectory()) {
                 try {
                     com.winlator.fusion.core.FileUtils.copy(usrBionicEtc, etcBionic);
