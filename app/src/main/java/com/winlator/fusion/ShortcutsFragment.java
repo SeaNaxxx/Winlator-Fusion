@@ -32,6 +32,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.winlator.fusion.BuildConfig;
 import com.winlator.fusion.container.Container;
 import com.winlator.fusion.container.ContainerManager;
 import com.winlator.fusion.container.Shortcut;
@@ -211,13 +212,7 @@ public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
                 conn.setRequestProperty("Authorization", "Bearer " + apiKey);
                 conn.connect();
                 String response;
-                try (InputStream is = conn.getInputStream()) {
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    byte[] buf = new byte[4096];
-                    int n;
-                    while ((n = is.read(buf)) != -1) baos.write(buf, 0, n);
-                    response = baos.toString("UTF-8");
-                }
+                try (InputStream is = conn.getInputStream()) { response = new String(readAllBytesCompat(is)); }
                 conn.disconnect();
                 org.json.JSONObject json = new org.json.JSONObject(response);
                 org.json.JSONArray data = json.optJSONArray("data");
@@ -228,13 +223,7 @@ public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
                 gridConn.setRequestProperty("Authorization", "Bearer " + apiKey);
                 gridConn.connect();
                 String gridResponse;
-                try (InputStream is = gridConn.getInputStream()) {
-                    ByteArrayOutputStream baos2 = new ByteArrayOutputStream();
-                    byte[] buf2 = new byte[4096];
-                    int n2;
-                    while ((n2 = is.read(buf2)) != -1) baos2.write(buf2, 0, n2);
-                    gridResponse = baos2.toString("UTF-8");
-                }
+                try (InputStream is = gridConn.getInputStream()) { gridResponse = new String(readAllBytesCompat(is)); }
                 gridConn.disconnect();
                 org.json.JSONObject gridJson = new org.json.JSONObject(gridResponse);
                 org.json.JSONArray gridData = gridJson.optJSONArray("data");
@@ -329,6 +318,20 @@ public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
             }
         }
         return inSampleSize;
+    }
+
+    private static byte[] readAllBytesCompat(InputStream is) throws IOException {
+        java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+        byte[] buffer = new byte[4096];
+        int count;
+        while ((count = is.read(buffer)) != -1) bos.write(buffer, 0, count);
+        return bos.toByteArray();
+    }
+
+    @Override
+    public void onDestroyView() {
+        fetchExecutor.shutdownNow();
+        super.onDestroyView();
     }
 
     private class ShortcutsAdapter extends RecyclerView.Adapter<ShortcutsAdapter.ViewHolder> {

@@ -903,7 +903,7 @@ public class ContainerDetailFragment extends Fragment {
         for (int i = 0; i < values.length; i++) {
             if (values[i].id == keycode) { index = i; break; }
         }
-        spinner.setSelection(index >= 0 ? index : defaultValue);
+        spinner.setSelection(isEditMode() && index != -1 ? index : defaultValue);
     }
 
     private String getControllerMapping(View view) {
