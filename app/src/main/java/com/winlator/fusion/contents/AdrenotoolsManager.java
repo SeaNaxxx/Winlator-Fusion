@@ -143,8 +143,13 @@ public class AdrenotoolsManager {
         tmpDir.mkdirs();
 
         String name = "";
-        try (InputStream is = mContext.getContentResolver().openInputStream(driverUri);
-             ZipInputStream zis = new ZipInputStream(is)) {
+        try (InputStream is = mContext.getContentResolver().openInputStream(driverUri)) {
+            if (is == null) {
+                Log.d(TAG, "Failed to install driver: could not open input stream for URI");
+                FileUtils.delete(tmpDir);
+                return name;
+            }
+            ZipInputStream zis = new ZipInputStream(is);
             String tmpDirCanonical = tmpDir.getCanonicalPath();
             ZipEntry entry = zis.getNextEntry();
             while (entry != null) {

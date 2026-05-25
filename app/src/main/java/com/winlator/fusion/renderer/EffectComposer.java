@@ -3,6 +3,7 @@ package com.winlator.fusion.renderer;
 import android.opengl.GLES20;
 
 import com.winlator.fusion.renderer.effects.Effect;
+import com.winlator.fusion.renderer.effects.NTSCCombinedEffect;
 import com.winlator.fusion.renderer.material.ScreenMaterial;
 
 import java.util.ArrayList;
@@ -46,6 +47,11 @@ public class EffectComposer {
 
     private void renderEffect(Effect effect) {
         ScreenMaterial material = effect.getMaterial();
+        if (effect instanceof NTSCCombinedEffect) {
+            NTSCCombinedEffect ntsc = (NTSCCombinedEffect)effect;
+            ntsc.setFrameParams(ntsc.getFrameCount(), renderer.surfaceWidth, renderer.surfaceHeight);
+            ntsc.incrementFrameCount();
+        }
         material.use();
         renderer.quadVertices.bind(material.programId);
 

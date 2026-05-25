@@ -44,7 +44,7 @@ public class CPUListView extends LinearLayout {
             String tag = "CPU"+i;
             CheckBox checkBox = itemView.findViewById(R.id.CheckBox);
             checkBox.setTag(tag);
-            checkBox.setChecked(checkedCPUList == null || checkedCPUList.contains(String.valueOf(i)));
+            checkBox.setChecked(checkedCPUList == null || checkedCPUList.isEmpty() || checkedCPUList.contains(String.valueOf(i)));
 
             ((TextView)itemView.findViewById(R.id.TextView)).setText(tag);
             addView(itemView);
