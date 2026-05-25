@@ -405,6 +405,11 @@ public abstract class FusionFSInstaller {
                 TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, "container_pattern_common.tzst", rootDir);
             }
         } catch (Exception e) {}
+        try {
+            if (assetExists(context, FusionFS.ASSET_FUSIONFS_PATCHES)) {
+                TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FusionFS.ASSET_FUSIONFS_PATCHES, rootDir);
+            }
+        } catch (Exception e) {}
     }
 
     private static void copySharedRuntimeLibraries(FusionFS fusionFS) {
