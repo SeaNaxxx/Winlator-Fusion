@@ -438,7 +438,7 @@ public abstract class WineUtils {
         registryEditor.setStringValues("Software\\Microsoft\\Windows\\CurrentVersion\\Fonts", corefonts);
         registryEditor.setStringValues("Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts", corefonts);
 
-        final String wineFontsPrefix = "Z:\\opt\\wine\\share\\wine\\fonts\\";
+        String wineFontsPrefix = "Z:\\opt\\wine\\share\\wine\\fonts\\";
         final String[][] wineFonts = {
             {"Marlett (TrueType)", wineFontsPrefix + "marlett.ttf"},
             {"Symbol (TrueType)", wineFontsPrefix + "symbol.ttf"},
