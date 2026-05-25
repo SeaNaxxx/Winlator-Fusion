@@ -152,6 +152,9 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
         envVars.put("ANDROID_SYSVSHM_SERVER", getRootDir() + UnixSocketConfig.SYSVSHM_SERVER_PATH);
 
         envVars.put("VK_LAYER_PATH", runtimeFS.getVulkanLayerPath(getRootDir()));
+        envVars.put("FONTCONFIG_PATH", getRootDir() + "/usr/etc/fonts");
+        envVars.put("ALSA_CONFIG_PATH", getRootDir() + "/usr/share/alsa/alsa.conf" + ":" + getRootDir() + "/usr/etc/alsa/conf.d/android_aserver.conf");
+        envVars.put("ALSA_PLUGIN_DIR", getRootDir() + "/usr/lib/alsa-lib");
 
         return envVars;
     }

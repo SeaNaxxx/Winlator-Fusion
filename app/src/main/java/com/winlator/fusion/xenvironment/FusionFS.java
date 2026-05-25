@@ -127,6 +127,11 @@ public class FusionFS {
         return dir.isDirectory() && new File(dir, "/bin").isDirectory();
     }
 
+    public boolean isBionicWineInstalled(String wineIdentifier) {
+        File wineBin = new File(getWinePathForVersion(wineIdentifier), "bin/wine");
+        return wineBin.exists() && wineBin.canExecute();
+    }
+
     public String getWinePath() {
         return getWineDir().getPath();
     }
