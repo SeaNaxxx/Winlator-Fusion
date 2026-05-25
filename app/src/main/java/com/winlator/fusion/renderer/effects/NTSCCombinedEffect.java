@@ -1,6 +1,7 @@
 package com.winlator.fusion.renderer.effects;
 
 import com.winlator.fusion.renderer.material.ScreenMaterial;
+import com.winlator.fusion.renderer.material.ShaderMaterial;
 
 public class NTSCCombinedEffect extends Effect {
     public NTSCCombinedEffect() {
@@ -13,8 +14,25 @@ public class NTSCCombinedEffect extends Effect {
     }
 
     private class NTSCCombinedEffectMaterial extends ScreenMaterial {
+        private int frameCount = 0;
+        private int texWidth = 1;
+        private int texHeight = 1;
+
         public NTSCCombinedEffectMaterial() {
             super();
+        }
+
+        public void setFrameParams(int frameCount, int texWidth, int texHeight) {
+            this.frameCount = frameCount;
+            this.texWidth = texWidth;
+            this.texHeight = texHeight;
+        }
+
+        @Override
+        public void use() {
+            super.use();
+            setUniformInt(new ShaderMaterial.Uniform("FrameCount"), frameCount);
+            setUniformVec2(new ShaderMaterial.Uniform("TextureSize"), (float)texWidth, (float)texHeight);
         }
 
         @Override

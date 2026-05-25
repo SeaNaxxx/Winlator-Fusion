@@ -586,7 +586,11 @@ public class ContainerDetailFragment extends Fragment {
                     });
                 }
             }
-            catch (JSONException e) {}
+            catch (JSONException e) {
+                android.util.Log.e("ContainerDetail", "Failed to create container data", e);
+                if (preloaderDialog != null) preloaderDialog.close();
+                AppUtils.showToast(getContext(), R.string.unable_to_install_wine);
+            }
         });
         return view;
     }

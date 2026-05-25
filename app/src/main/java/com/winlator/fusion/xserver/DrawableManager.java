@@ -32,6 +32,7 @@ public class DrawableManager extends XResourceManager implements XResourceManage
 
     public void removeDrawable(int id) {
         Drawable drawable = drawables.get(id);
+        if (drawable == null) return;
 
         final Texture texture = drawable.getTexture();
         if (texture != null) xServer.getRenderer().getXServerView().queueEvent(texture::destroy);

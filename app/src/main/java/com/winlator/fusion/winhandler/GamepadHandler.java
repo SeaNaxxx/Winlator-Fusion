@@ -165,7 +165,7 @@ public class GamepadHandler {
                     if (gamepadSlots[i] != null && !forceDisable[i]) {
                         String name = gamepadSlots[i].getName();
                         byte[] bytes = name.getBytes();
-                        byte nameLength = (byte)Math.min((byte)bytes.length, 31);
+                        byte nameLength = (byte)Math.min(bytes.length, 31);
                         winHandler.sendData.put(nameLength);
                         winHandler.sendData.put(bytes, 0, nameLength);
                     }

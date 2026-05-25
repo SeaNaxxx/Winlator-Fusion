@@ -52,7 +52,7 @@ public class XOutputStream {
     }
 
     public void write(byte[] data, int offset, int length) {
-        for (int i = offset; i < length; i++) writeByte(nativePtr, data[i]);
+        for (int i = offset; i < offset + length; i++) writeByte(nativePtr, data[i]);
     }
 
     public void writeAt(int position, byte[] data) {

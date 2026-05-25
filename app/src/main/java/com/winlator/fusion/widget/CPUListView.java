@@ -12,11 +12,12 @@ import androidx.annotation.Nullable;
 
 import com.winlator.fusion.R;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class CPUListView extends LinearLayout {
-    private List<String> checkedCPUList;
+    private List<String> checkedCPUList = new ArrayList<>();
     private final byte numProcessors;
 
     public CPUListView(Context context) {
@@ -51,7 +52,7 @@ public class CPUListView extends LinearLayout {
     }
 
     public void setCheckedCPUList(String checkedCPUList) {
-        this.checkedCPUList = Arrays.asList(checkedCPUList.split(","));
+        this.checkedCPUList = new ArrayList<>(Arrays.asList(checkedCPUList.split(",")));
         refreshContent();
     }
 
