@@ -182,7 +182,7 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
 
     @Override
     public boolean supportsVortek() {
-        return false;
+        return true;
     }
 
     @Override
