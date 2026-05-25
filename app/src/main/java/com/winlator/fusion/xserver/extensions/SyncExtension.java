@@ -83,6 +83,7 @@ public class SyncExtension extends Extension {
             int id = inputStream.readInt();
             if (fences.indexOfKey(id) < 0) throw new BadFence(id);
             fences.delete(id);
+            fences.notifyAll();
         }
     }
 
