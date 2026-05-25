@@ -11,6 +11,10 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
     <application
         android:icon="@mipmap/ic_launcher"
@@ -68,6 +72,14 @@
             </intent-filter>
         </receiver>
 
+        <service
+            android:name="com.winlator.fusion.services.NotificationService"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keep the Wine process alive while the user is running a Windows application" />
+        </service>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.winlator.fusion.FileProvider"
@@ -77,6 +89,17 @@
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"/>
+        </provider>
+
+        <provider
+            android:name="com.winlator.fusion.core.WinlatorFilesProvider"
+            android:authorities="com.winlator.fusion.WinlatorFilesProvider"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER"/>
+            </intent-filter>
         </provider>
     </application>
 </manifest>

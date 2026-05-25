@@ -22,6 +22,7 @@ public abstract class DefaultVersion {
     public static final String SAREK_DXVK = "1.11.1";
     public static final String FEXCORE = "2601";
     public static final String BOX64_BIONIC = "0.4.1";
+    public static final String WOWBOX64 = "0.4.1";
     public static final String WRAPPER = "System";
     public static final String WRAPPER_ADRENO = "turnip" + TURNIP;
 
@@ -53,6 +54,7 @@ public abstract class DefaultVersion {
             case "SOUNDFONT": return SOUNDFONT;
             case "FEXCORE": return FEXCORE;
             case "BOX64_BIONIC": return BOX64_BIONIC;
+            case "WOWBOX64": return WOWBOX64;
             case "WRAPPER": return WRAPPER;
             case "WRAPPER_ADRENO": return WRAPPER_ADRENO;
             default: return "0.0";

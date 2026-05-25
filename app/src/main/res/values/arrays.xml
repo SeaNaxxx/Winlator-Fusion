@@ -302,4 +302,15 @@
         <item>CAS</item>
         <item>DLS</item>
     </string-array>
+
+    <string-array name="xr_controllers">
+        <item>@string/none</item>
+        <item>@string/controller_1</item>
+        <item>@string/controller_2</item>
+    </string-array>
+
+    <string-array name="desktop_theme_entries">
+        <item>@string/light</item>
+        <item>@string/dark</item>
+    </string-array>
 </resources>

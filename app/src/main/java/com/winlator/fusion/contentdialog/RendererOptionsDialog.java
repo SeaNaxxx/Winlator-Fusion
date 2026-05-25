@@ -23,13 +23,13 @@ public class RendererOptionsDialog extends ContentDialog {
 
         byte rendererType = getTagByte(anchor, R.id.rendererType, Container.RENDERER_GL);
         boolean nativeMode = getTagBoolean(anchor, R.id.rendererNative, false);
-        byte presentMode = getTagByte(anchor, R.id.rendererPresentMode, Container.PRESENT_MODE_FIFO);
-        byte filterMode = getTagByte(anchor, R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR);
-        byte refreshRate = getTagByte(anchor, R.id.rendererRefreshRate, (byte) 0);
+        String presentMode = getTagPresentMode(anchor, R.id.rendererPresentMode, "fifo");
+        int filterMode = getTagInt(anchor, R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR);
+        int refreshRate = getTagInt(anchor, R.id.rendererRefreshRate, 0);
 
         sRendererType.setSelection(rendererType);
         cbNativeMode.setChecked(nativeMode);
-        sPresentMode.setSelection(presentMode);
+        sPresentMode.setSelection(presentModeToIndex(presentMode));
         sFilterMode.setSelection(filterMode);
 
         int refreshIndex = refreshRateToIndex(refreshRate);
@@ -38,8 +38,8 @@ public class RendererOptionsDialog extends ContentDialog {
         setOnConfirmCallback(() -> {
             anchor.setTag(R.id.rendererType, (byte) sRendererType.getSelectedItemPosition());
             anchor.setTag(R.id.rendererNative, cbNativeMode.isChecked());
-            anchor.setTag(R.id.rendererPresentMode, (byte) sPresentMode.getSelectedItemPosition());
-            anchor.setTag(R.id.rendererFilterMode, (byte) sFilterMode.getSelectedItemPosition());
+            anchor.setTag(R.id.rendererPresentMode, indexToPresentMode(sPresentMode.getSelectedItemPosition()));
+            anchor.setTag(R.id.rendererFilterMode, sFilterMode.getSelectedItemPosition());
             anchor.setTag(R.id.rendererRefreshRate, indexToRefreshRate(sRefreshRate.getSelectedItemPosition()));
             if (afterConfirmCallback != null) afterConfirmCallback.run();
         });
@@ -49,7 +49,25 @@ public class RendererOptionsDialog extends ContentDialog {
         this.afterConfirmCallback = callback;
     }
 
-    private static int refreshRateToIndex(byte refreshRate) {
+    private static int presentModeToIndex(String presentMode) {
+        if (presentMode == null) return 0;
+        switch (presentMode) {
+            case "fifo": return 0;
+            case "mailbox": return 1;
+            case "immediate": return 2;
+            default: return 0;
+        }
+    }
+
+    private static String indexToPresentMode(int index) {
+        switch (index) {
+            case 1: return "mailbox";
+            case 2: return "immediate";
+            default: return "fifo";
+        }
+    }
+
+    private static int refreshRateToIndex(int refreshRate) {
         switch (refreshRate) {
             case 30: return 1;
             case 60: return 2;
@@ -59,7 +77,7 @@ public class RendererOptionsDialog extends ContentDialog {
         }
     }
 
-    private static byte indexToRefreshRate(int index) {
+    private static int indexToRefreshRate(int index) {
         switch (index) {
             case 1: return 30;
             case 2: return 60;
@@ -72,9 +90,9 @@ public class RendererOptionsDialog extends ContentDialog {
     public static void applyToContainer(View anchor, Container container) {
         container.setRendererType(getTagByte(anchor, R.id.rendererType, Container.RENDERER_GL));
         container.setRendererNative(getTagBoolean(anchor, R.id.rendererNative, false));
-        container.setRendererPresentMode(getTagByte(anchor, R.id.rendererPresentMode, Container.PRESENT_MODE_FIFO));
-        container.setRendererFilterMode(getTagByte(anchor, R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR));
-        container.setRendererRefreshRate(getTagByte(anchor, R.id.rendererRefreshRate, (byte) 0));
+        container.setRendererPresentMode(getTagPresentMode(anchor, R.id.rendererPresentMode, "fifo"));
+        container.setRendererFilterMode(getTagInt(anchor, R.id.rendererFilterMode, Container.FILTER_MODE_LINEAR));
+        container.setRendererRefreshRateLimit(getTagInt(anchor, R.id.rendererRefreshRate, 0));
     }
 
     public static void loadFromContainer(View anchor, Container container) {
@@ -82,7 +100,7 @@ public class RendererOptionsDialog extends ContentDialog {
         anchor.setTag(R.id.rendererNative, container.isRendererNative());
         anchor.setTag(R.id.rendererPresentMode, container.getRendererPresentMode());
         anchor.setTag(R.id.rendererFilterMode, container.getRendererFilterMode());
-        anchor.setTag(R.id.rendererRefreshRate, container.getRendererRefreshRate());
+        anchor.setTag(R.id.rendererRefreshRate, container.getRendererRefreshRateLimit());
     }
 
     public static byte getTagByte(View anchor, int key, byte defaultValue) {
@@ -92,9 +110,24 @@ public class RendererOptionsDialog extends ContentDialog {
         return defaultValue;
     }
 
+    public static int getTagInt(View anchor, int key, int defaultValue) {
+        Object val = anchor.getTag(key);
+        if (val instanceof Integer) return (Integer) val;
+        if (val instanceof Byte) return ((Byte) val).intValue();
+        return defaultValue;
+    }
+
     public static boolean getTagBoolean(View anchor, int key, boolean defaultValue) {
         Object val = anchor.getTag(key);
         if (val instanceof Boolean) return (Boolean) val;
+        return defaultValue;
+    }
+
+    public static String getTagPresentMode(View anchor, int key, String defaultValue) {
+        Object val = anchor.getTag(key);
+        if (val instanceof String) return (String) val;
+        if (val instanceof Byte) return indexToPresentMode(((Byte) val).intValue());
+        if (val instanceof Integer) return indexToPresentMode((Integer) val);
         return defaultValue;
     }
 }
