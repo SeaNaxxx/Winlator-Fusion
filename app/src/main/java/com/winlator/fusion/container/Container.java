@@ -104,6 +104,8 @@ public class Container {
     private boolean rendererSwapRB = false;
     private boolean fullscreenStretched;
     private String midiSoundFont = "";
+    private String systemFont = "";
+    private String winVersion = "";
     private int inputType = WinHandler.DEFAULT_INPUT_TYPE;
     private String lc_all = "";
     private int primaryController = 1;
@@ -346,6 +348,12 @@ public class Container {
     public String getMIDISoundFont() { return midiSoundFont; }
     public void setMIDISoundFont(String fileName) { this.midiSoundFont = fileName; }
 
+    public String getSystemFont() { return systemFont; }
+    public void setSystemFont(String systemFont) { this.systemFont = systemFont != null ? systemFont : ""; }
+
+    public String getWinVersion() { return winVersion; }
+    public void setWinVersion(String winVersion) { this.winVersion = winVersion != null ? winVersion : ""; }
+
     public int getInputType() { return inputType; }
     public void setInputType(int inputType) { this.inputType = inputType; }
 
@@ -433,6 +441,8 @@ public class Container {
 
             if (fullscreenStretched) data.put("fullscreenStretched", fullscreenStretched);
             if (!midiSoundFont.isEmpty()) data.put("midiSoundFont", midiSoundFont);
+            if (!systemFont.isEmpty()) data.put("systemFont", systemFont);
+            if (!winVersion.isEmpty()) data.put("winVersion", winVersion);
             if (!lc_all.isEmpty()) data.put("lc_all", lc_all);
 
             if (!WineInfo.isMainWineVersion(wineVersion)) data.put("wineVersion", wineVersion);
@@ -522,6 +532,8 @@ public class Container {
                 case "fullscreenStretched": fullscreenStretched = data.getBoolean(key); break;
                 case "inputType": inputType = data.getInt(key); break;
                 case "midiSoundFont": midiSoundFont = data.getString(key); break;
+                case "systemFont": systemFont = data.getString(key); break;
+                case "winVersion": winVersion = data.getString(key); break;
                 case "lc_all": lc_all = data.getString(key); break;
                 case "primaryController": primaryController = data.getInt(key); break;
                 case "controllerMapping": controllerMapping = data.getString(key); break;

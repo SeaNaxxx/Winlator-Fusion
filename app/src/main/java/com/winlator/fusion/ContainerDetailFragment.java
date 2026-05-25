@@ -601,8 +601,11 @@ public class ContainerDetailFragment extends Fragment {
         if (!userRegFile.isFile()) return;
         try (WineRegistryEditor registryEditor = new WineRegistryEditor(userRegFile)) {
             Spinner sSystemFont = view.findViewById(R.id.SSystemFont);
-            if (sSystemFont != null && sSystemFont.getSelectedItem() != null)
-                WineUtils.setSystemFont(registryEditor, sSystemFont.getSelectedItem().toString());
+            if (sSystemFont != null && sSystemFont.getSelectedItem() != null) {
+                String faceName = sSystemFont.getSelectedItem().toString();
+                WineUtils.setSystemFont(registryEditor, faceName);
+                container.setSystemFont(faceName);
+            }
 
             SeekBar sbLogPixels = view.findViewById(R.id.SBLogPixels);
             registryEditor.setDwordValue("Control Panel\\Desktop", "LogPixels", (int)sbLogPixels.getValue());
@@ -620,8 +623,13 @@ public class ContainerDetailFragment extends Fragment {
         int oldPosition = (byte)sWinVersion.getTag();
         if (oldPosition != -1) {
             int newPosition = sWinVersion.getSelectedItemPosition();
-            if (oldPosition != newPosition) WineUtils.setWinVersion(container, newPosition);
+            if (oldPosition != newPosition) {
+                WineUtils.setWinVersion(container, newPosition);
+                container.setWinVersion(WinVersions.getWinVersions()[newPosition].version);
+            }
         }
+
+        container.saveData();
     }
 
     private void createWineConfigurationTab(View view) {
