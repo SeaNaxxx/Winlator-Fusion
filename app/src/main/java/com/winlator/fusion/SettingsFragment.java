@@ -30,6 +30,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.navigation.NavigationView;
+import com.winlator.fusion.contents.ContentsManager;
 import com.winlator.fusion.box64.Box64EditPresetDialog;
 import com.winlator.fusion.box64.Box64Preset;
 import com.winlator.fusion.box64.Box64PresetManager;
@@ -78,6 +79,10 @@ public class SettingsFragment extends Fragment {
     public static final String DEFAULT_WINE_DEBUG_CHANNELS = "warn,err,fixme";
     public static final byte APP_THEME_LIGHT = 0;
     public static final byte APP_THEME_DARK = 1;
+    public static final String DEFAULT_SHORTCUT_EXPORT_PATH = DEFAULT_WINLATOR_PATH + "/Shortcuts";
+    private static final int REQUEST_CODE_WINLATOR_PATH = 1002;
+    private static final int REQUEST_CODE_SHORTCUT_EXPORT_PATH = 1003;
+    private Callback<Uri> selectDirectoryCallback;
     private Callback<Uri> selectWineFileCallback;
     private Callback<Uri> selectPresetFileCallback;
     private PreloaderDialog preloaderDialog;
@@ -110,6 +115,15 @@ public class SettingsFragment extends Fragment {
             }
             selectWineFileCallback = null;
             selectPresetFileCallback = null;
+        }
+        if (requestCode == REQUEST_CODE_WINLATOR_PATH || requestCode == REQUEST_CODE_SHORTCUT_EXPORT_PATH) {
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                Uri uri = data.getData();
+                if (uri != null && selectDirectoryCallback != null) {
+                    selectDirectoryCallback.call(uri);
+                    selectDirectoryCallback = null;
+                }
+            }
         }
     }
 
@@ -146,11 +160,130 @@ public class SettingsFragment extends Fragment {
         final int oldAppThemeId = preferences.getInt("app_theme", APP_THEME_DARK) == APP_THEME_DARK ? R.id.RBDark : R.id.RBLight;
         rgAppTheme.check(oldAppThemeId);
 
+        final CheckBox cbDarkMode = view.findViewById(R.id.CBDarkMode);
+        if (cbDarkMode != null) cbDarkMode.setChecked(preferences.getBoolean("dark_mode", true));
+
+        final CheckBox cbEnableBigPictureMode = view.findViewById(R.id.CBEnableBigPictureMode);
+        if (cbEnableBigPictureMode != null) cbEnableBigPictureMode.setChecked(preferences.getBoolean("enable_big_picture_mode", false));
+
+        final CheckBox cbEnableCustomApiKey = view.findViewById(R.id.CBEnableCustomApiKey);
+        final EditText etCustomApiKey = view.findViewById(R.id.ETCustomApiKey);
+        if (cbEnableCustomApiKey != null && etCustomApiKey != null) {
+            boolean isCustomApiKeyEnabled = preferences.getBoolean("enable_custom_api_key", false);
+            String customApiKey = preferences.getString("custom_api_key", "");
+            cbEnableCustomApiKey.setChecked(isCustomApiKeyEnabled);
+            etCustomApiKey.setText(customApiKey);
+            etCustomApiKey.setVisibility(isCustomApiKeyEnabled ? View.VISIBLE : View.GONE);
+            cbEnableCustomApiKey.setOnCheckedChangeListener((buttonView, isChecked) -> etCustomApiKey.setVisibility(isChecked ? View.VISIBLE : View.GONE));
+        }
+        final View btHelpApiKey = view.findViewById(R.id.BTHelpApiKey);
+        if (btHelpApiKey != null) btHelpApiKey.setOnClickListener((v) -> {
+            String url = "https://www.steamgriddb.com/profile/preferences/api";
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(intent);
+        });
+
+        final CheckBox cbCursorLock = view.findViewById(R.id.CBCursorLock);
+        if (cbCursorLock != null) cbCursorLock.setChecked(preferences.getBoolean("cursor_lock", true));
+
+        final CheckBox cbXinputToggle = view.findViewById(R.id.CBXinputToggle);
+        if (cbXinputToggle != null) cbXinputToggle.setChecked(preferences.getBoolean("xinput_toggle", false));
+
+        final CheckBox cbUseDRI3 = view.findViewById(R.id.CBUseDRI3);
+        if (cbUseDRI3 != null) cbUseDRI3.setChecked(preferences.getBoolean("use_dri3", true));
+
+        final CheckBox cbUseXR = view.findViewById(R.id.CBUseXR);
+        if (cbUseXR != null) {
+            cbUseXR.setChecked(preferences.getBoolean("use_xr", true));
+        }
+
+        final CheckBox cbEnableBox64Logs = view.findViewById(R.id.CBEnableBox64Logs);
+        if (cbEnableBox64Logs != null) cbEnableBox64Logs.setChecked(preferences.getBoolean("enable_box64_logs", false));
+
+        final CheckBox cbEnableFileProvider = view.findViewById(R.id.CBEnableFileProvider);
+        final View btHelpFileProvider = view.findViewById(R.id.BTHelpFileProvider);
+        if (cbEnableFileProvider != null) {
+            cbEnableFileProvider.setChecked(preferences.getBoolean("enable_file_provider", true));
+            cbEnableFileProvider.setOnClickListener((v) -> AppUtils.showToast(context, R.string.take_effect_next_startup));
+        }
+        if (btHelpFileProvider != null) btHelpFileProvider.setOnClickListener((v) -> AppUtils.showHelpBox(context, v, R.string.help_file_provider));
+
+        final CheckBox cbOpenInBrowser = view.findViewById(R.id.CBOpenWithAndroidBrowser);
+        if (cbOpenInBrowser != null) cbOpenInBrowser.setChecked(preferences.getBoolean("open_with_android_browser", false));
+
+        final CheckBox cbShareClipboard = view.findViewById(R.id.CBShareAndroidClipboard);
+        if (cbShareClipboard != null) cbShareClipboard.setChecked(preferences.getBoolean("share_android_clipboard", false));
+
+        final EditText etDownloadableContentsURL = view.findViewById(R.id.ETDownloadableContentsURL);
+        if (etDownloadableContentsURL != null) etDownloadableContentsURL.setText(preferences.getString("downloadable_contents_url", ContentsManager.REMOTE_PROFILES));
+
+        final TextView tvWinlatorPath = view.findViewById(R.id.TVWinlatorPath);
+        if (tvWinlatorPath != null) {
+            String savedUriString = preferences.getString("winlator_path_uri", null);
+            if (savedUriString == null) tvWinlatorPath.setText(DEFAULT_WINLATOR_PATH);
+            else {
+                Uri savedUri = Uri.parse(savedUriString);
+                String displayPath = FileUtils.getFilePathFromUri(savedUri);
+                tvWinlatorPath.setText(displayPath != null ? displayPath : savedUriString);
+            }
+        }
+        final View btnChooseWinlatorPath = view.findViewById(R.id.BTChooseWinlatorPath);
+        if (btnChooseWinlatorPath != null) btnChooseWinlatorPath.setOnClickListener(v -> {
+            selectDirectoryCallback = (uri) -> {
+                SharedPreferences.Editor ed = preferences.edit();
+                ed.putString("winlator_path_uri", uri.toString());
+                ed.apply();
+                try {
+                    requireContext().getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                } catch (SecurityException e) {
+                    android.util.Log.w("SettingsFragment", "Failed to persist URI permission", e);
+                }
+                if (tvWinlatorPath != null) {
+                    String p = FileUtils.getFilePathFromUri(uri);
+                    tvWinlatorPath.setText(p != null ? p : uri.toString());
+                }
+            };
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+            startActivityForResult(intent, REQUEST_CODE_WINLATOR_PATH);
+        });
+
+        final TextView tvShortcutExportPath = view.findViewById(R.id.TVShortcutExportPath);
+        if (tvShortcutExportPath != null) {
+            String savedUriString2 = preferences.getString("shortcuts_export_path_uri", null);
+            if (savedUriString2 != null) {
+                Uri savedUri2 = Uri.parse(savedUriString2);
+                String displayPath2 = FileUtils.getFilePathFromUri(savedUri2);
+                tvShortcutExportPath.setText(displayPath2 != null ? displayPath2 : savedUriString2);
+            } else tvShortcutExportPath.setText(DEFAULT_SHORTCUT_EXPORT_PATH);
+        }
+        final View btChooseShortcutExportPath = view.findViewById(R.id.BTChooseShortcutExportPath);
+        if (btChooseShortcutExportPath != null) btChooseShortcutExportPath.setOnClickListener(v -> {
+            selectDirectoryCallback = (uri) -> {
+                SharedPreferences.Editor ed = preferences.edit();
+                ed.putString("shortcuts_export_path_uri", uri.toString());
+                ed.apply();
+                try {
+                    requireContext().getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                } catch (SecurityException e) {
+                    android.util.Log.w("SettingsFragment", "Failed to persist URI permission", e);
+                }
+                if (tvShortcutExportPath != null) {
+                    String p = FileUtils.getFilePathFromUri(uri);
+                    tvShortcutExportPath.setText(p != null ? p : uri.toString());
+                }
+            };
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+            startActivityForResult(intent, REQUEST_CODE_SHORTCUT_EXPORT_PATH);
+        });
+
         final CheckBox cbMoveCursorToTouchpoint = view.findViewById(R.id.CBMoveCursorToTouchpoint);
         cbMoveCursorToTouchpoint.setChecked(preferences.getBoolean("move_cursor_to_touchpoint", false));
 
         final CheckBox cbCapturePointerOnExternalMouse = view.findViewById(R.id.CBCapturePointerOnExternalMouse);
         cbCapturePointerOnExternalMouse.setChecked(preferences.getBoolean("capture_pointer_on_external_mouse", true));
+
+        final CheckBox cbHighRefreshRateMode = view.findViewById(R.id.CBHighRefreshRateMode);
+        cbHighRefreshRateMode.setChecked(preferences.getBoolean("high_refresh_rate_mode", false));
 
         final CheckBox cbOpenAndroidBrowserFromWine = view.findViewById(R.id.CBOpenAndroidBrowserFromWine);
         cbOpenAndroidBrowserFromWine.setChecked(preferences.getBoolean("open_android_browser_from_wine", true));
@@ -275,6 +408,7 @@ public class SettingsFragment extends Fragment {
             editor.putString("fexcore_preset", FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset));
             editor.putBoolean("move_cursor_to_touchpoint", cbMoveCursorToTouchpoint.isChecked());
             editor.putBoolean("capture_pointer_on_external_mouse", cbCapturePointerOnExternalMouse.isChecked());
+            editor.putBoolean("high_refresh_rate_mode", cbHighRefreshRateMode.isChecked());
             editor.putFloat("cursor_speed", sbCursorSpeed.getValue() / 100.0f);
             editor.putFloat("cursor_scale", sbCursorSize.getValue() / 100.0f);
             editor.putInt("cursor_color", cpvCursorColor.getColor());
@@ -285,6 +419,24 @@ public class SettingsFragment extends Fragment {
             editor.putBoolean("open_android_browser_from_wine", cbOpenAndroidBrowserFromWine.isChecked());
             editor.putBoolean("use_android_clipboard_on_wine", cbUseAndroidClipboardOnWine.isChecked());
             putGamepadPlayerConfigs(view, editor);
+
+            if (cbDarkMode != null) editor.putBoolean("dark_mode", cbDarkMode.isChecked());
+            if (cbEnableBigPictureMode != null) editor.putBoolean("enable_big_picture_mode", cbEnableBigPictureMode.isChecked());
+            if (cbEnableCustomApiKey != null) {
+                editor.putBoolean("enable_custom_api_key", cbEnableCustomApiKey.isChecked());
+                if (cbEnableCustomApiKey.isChecked() && etCustomApiKey != null) {
+                    editor.putString("custom_api_key", etCustomApiKey.getText().toString().trim());
+                } else editor.remove("custom_api_key");
+            }
+            if (cbCursorLock != null) editor.putBoolean("cursor_lock", cbCursorLock.isChecked());
+            if (cbXinputToggle != null) editor.putBoolean("xinput_toggle", cbXinputToggle.isChecked());
+            if (cbUseDRI3 != null) editor.putBoolean("use_dri3", cbUseDRI3.isChecked());
+            if (cbUseXR != null) editor.putBoolean("use_xr", cbUseXR.isChecked());
+            if (cbEnableBox64Logs != null) editor.putBoolean("enable_box64_logs", cbEnableBox64Logs.isChecked());
+            if (cbEnableFileProvider != null) editor.putBoolean("enable_file_provider", cbEnableFileProvider.isChecked());
+            if (cbOpenInBrowser != null) editor.putBoolean("open_with_android_browser", cbOpenInBrowser.isChecked());
+            if (cbShareClipboard != null) editor.putBoolean("share_android_clipboard", cbShareClipboard.isChecked());
+            if (etDownloadableContentsURL != null) editor.putString("downloadable_contents_url", etDownloadableContentsURL.getText().toString());
 
             int newAppThemeId = rgAppTheme.getCheckedRadioButtonId();
             editor.putInt("app_theme", newAppThemeId == R.id.RBLight ? APP_THEME_LIGHT : APP_THEME_DARK);

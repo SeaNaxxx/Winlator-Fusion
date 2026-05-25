@@ -248,7 +248,6 @@
     <string name="current">Corrente</string>
     <string name="capacity">Capacidade</string>
     <string name="sound">Som</string>
-    <string name="midi_soundfont">MIDI SoundFont</string>
     <string name="instrument">Instrumento</string>
     <string name="channel">Canal</string>
     <string name="note">Nota</string>
