@@ -24,6 +24,7 @@ public class KeyValueSet implements Iterable<String[]> {
 
         while (start < end) {
             int index = data.indexOf("=", start);
+            if (index == -1 || index > end) break;
             String currKey = data.substring(start, index);
             if (currKey.equals(key)) return new int[]{start, end};
             start = end+1;
@@ -118,8 +119,9 @@ public class KeyValueSet implements Iterable<String[]> {
             @Override
             public String[] next() {
                 int index = data.indexOf("=", start[0]);
+                if (index == -1 || index > end[0]) index = end[0];
                 item[0] = data.substring(start[0], index);
-                item[1] = data.substring(index+1, end[0]);
+                item[1] = index < end[0] ? data.substring(index+1, end[0]) : "";
                 start[0] = end[0]+1;
                 end[0] = data.indexOf(",", start[0]);
                 if (end[0] == -1) end[0] = data.length();

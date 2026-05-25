@@ -28,8 +28,11 @@ public class PatchElf {
     }
 
     public void unloadElf() {
-        if (elfInstancePtr != 0)
+        if (elfInstancePtr != 0) {
             destroyElfObject(elfInstancePtr);
+            elfInstancePtr = 0;
+            elfFile = null;
+        }
     }
 
     public boolean saveElf(@NonNull File file) {

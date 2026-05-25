@@ -40,14 +40,14 @@ import java.util.List;
 
 public class BionicProgramLauncherComponent extends EnvironmentComponent {
     private String guestExecutable;
-    private static int pid = -1;
+    private int pid = -1;
     private EnvVars envVars;
     private WineInfo wineInfo;
     private String box64Preset = Box64Preset.CONSERVATIVE;
     private Callback<Integer> terminationCallback;
     private Container container;
     private ContentsManager contentsManager;
-    private static final Object lock = new Object();
+    private final Object lock = new Object();
 
     public void setWineInfo(WineInfo wineInfo) {
         this.wineInfo = wineInfo;

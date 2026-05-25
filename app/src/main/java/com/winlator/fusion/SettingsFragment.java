@@ -277,37 +277,41 @@ public class SettingsFragment extends Fragment {
         });
 
         final CheckBox cbMoveCursorToTouchpoint = view.findViewById(R.id.CBMoveCursorToTouchpoint);
-        cbMoveCursorToTouchpoint.setChecked(preferences.getBoolean("move_cursor_to_touchpoint", false));
+        if (cbMoveCursorToTouchpoint != null) cbMoveCursorToTouchpoint.setChecked(preferences.getBoolean("move_cursor_to_touchpoint", false));
 
         final CheckBox cbCapturePointerOnExternalMouse = view.findViewById(R.id.CBCapturePointerOnExternalMouse);
-        cbCapturePointerOnExternalMouse.setChecked(preferences.getBoolean("capture_pointer_on_external_mouse", true));
+        if (cbCapturePointerOnExternalMouse != null) cbCapturePointerOnExternalMouse.setChecked(preferences.getBoolean("capture_pointer_on_external_mouse", true));
 
         final CheckBox cbHighRefreshRateMode = view.findViewById(R.id.CBHighRefreshRateMode);
-        cbHighRefreshRateMode.setChecked(preferences.getBoolean("high_refresh_rate_mode", false));
+        if (cbHighRefreshRateMode != null) cbHighRefreshRateMode.setChecked(preferences.getBoolean("high_refresh_rate_mode", false));
 
         final CheckBox cbOpenAndroidBrowserFromWine = view.findViewById(R.id.CBOpenAndroidBrowserFromWine);
-        cbOpenAndroidBrowserFromWine.setChecked(preferences.getBoolean("open_android_browser_from_wine", true));
+        if (cbOpenAndroidBrowserFromWine != null) cbOpenAndroidBrowserFromWine.setChecked(preferences.getBoolean("open_android_browser_from_wine", true));
 
         final CheckBox cbUseAndroidClipboardOnWine = view.findViewById(R.id.CBUseAndroidClipboardOnWine);
-        cbUseAndroidClipboardOnWine.setChecked(preferences.getBoolean("use_android_clipboard_on_wine", false));
+        if (cbUseAndroidClipboardOnWine != null) cbUseAndroidClipboardOnWine.setChecked(preferences.getBoolean("use_android_clipboard_on_wine", false));
 
         final CheckBox cbEnableWineDebug = view.findViewById(R.id.CBEnableWineDebug);
-        cbEnableWineDebug.setChecked(preferences.getBoolean("enable_wine_debug", false));
+        if (cbEnableWineDebug != null) cbEnableWineDebug.setChecked(preferences.getBoolean("enable_wine_debug", false));
 
         final ArrayList<String> wineDebugChannels = new ArrayList<>(Arrays.asList(preferences.getString("wine_debug_channels", DEFAULT_WINE_DEBUG_CHANNELS).split(",")));
         loadWineDebugChannels(view, wineDebugChannels);
 
         final Spinner sBox64Logs = view.findViewById(R.id.SBox64Logs);
-        sBox64Logs.setSelection(preferences.getInt("box64_logs", 0));
+        if (sBox64Logs != null) sBox64Logs.setSelection(preferences.getInt("box64_logs", 0));
 
         final CheckBox cbSaveLogsToFile = view.findViewById(R.id.CBSaveLogsToFile);
-        cbSaveLogsToFile.setChecked(preferences.getBoolean("save_logs_to_file", false));
+        if (cbSaveLogsToFile != null) cbSaveLogsToFile.setChecked(preferences.getBoolean("save_logs_to_file", false));
 
         final EditText etLogFile = view.findViewById(R.id.ETLogFile);
         final String defaultLogPath = LogView.getLogFile().getPath();
-        etLogFile.setText(preferences.getString("log_file", defaultLogPath));
-        etLogFile.setVisibility(cbSaveLogsToFile.isChecked() ? View.VISIBLE : View.GONE);
-        cbSaveLogsToFile.setOnCheckedChangeListener((buttonView, isChecked) -> etLogFile.setVisibility(isChecked ? View.VISIBLE : View.GONE));
+        if (etLogFile != null) {
+            etLogFile.setText(preferences.getString("log_file", defaultLogPath));
+            if (cbSaveLogsToFile != null) {
+                etLogFile.setVisibility(cbSaveLogsToFile.isChecked() ? View.VISIBLE : View.GONE);
+                cbSaveLogsToFile.setOnCheckedChangeListener((buttonView, isChecked) -> etLogFile.setVisibility(isChecked ? View.VISIBLE : View.GONE));
+            }
+        }
 
         final SeekBar sbCursorSpeed = view.findViewById(R.id.SBCursorSpeed);
         sbCursorSpeed.setValue(preferences.getFloat("cursor_speed", 1.0f) * 100);
