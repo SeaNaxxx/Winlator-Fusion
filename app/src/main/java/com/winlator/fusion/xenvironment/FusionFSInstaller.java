@@ -340,6 +340,62 @@ public abstract class FusionFSInstaller {
         if (imagefsDir.isDirectory() && !bionicDir.isDirectory()) {
             imagefsDir.renameTo(bionicDir);
         }
+
+        populateEtcBionicIfNeeded(rootDir);
+        ensureBionicSymlinks(rootDir);
+    }
+
+    private static void populateEtcBionicIfNeeded(File rootDir) {
+        File etcBionic = new File(rootDir, "etc.bionic");
+        File usrBionicEtc = new File(rootDir, "usr.bionic/etc");
+        if (etcBionic.isDirectory() && etcBionic.list() != null && etcBionic.list().length == 0) {
+            if (usrBionicEtc.isDirectory()) {
+                try {
+                    com.winlator.fusion.core.FileUtils.copy(usrBionicEtc, etcBionic);
+                } catch (Exception e) {}
+            }
+        }
+    }
+
+    private static void ensureBionicSymlinks(File rootDir) {
+        File bionicDir = new File(rootDir, "bionic");
+        if (!bionicDir.isDirectory()) return;
+
+        String[][] symlinks = {
+            {"usr", "../usr.bionic"},
+            {"etc", "../etc.bionic"},
+            {"bin", "usr/bin"},
+            {"lib", "usr/lib"},
+            {"share", "usr/share"},
+            {"tmp", "usr/tmp"},
+            {"var", "usr/var"}
+        };
+
+        for (String[] entry : symlinks) {
+            File link = new File(bionicDir, entry[0]);
+            if (!link.exists()) {
+                FileUtils.symlink(entry[1], link.getAbsolutePath());
+            }
+        }
+
+        ensureGlibcSymlinks(rootDir);
+    }
+
+    private static void ensureGlibcSymlinks(File rootDir) {
+        File glibcDir = new File(rootDir, "glibc");
+        if (!glibcDir.isDirectory()) return;
+
+        String[][] symlinks = {
+            {"usr", "../usr.glibc"},
+            {"etc", "../etc.glibc"}
+        };
+
+        for (String[] entry : symlinks) {
+            File link = new File(glibcDir, entry[0]);
+            if (!link.exists()) {
+                FileUtils.symlink(entry[1], link.getAbsolutePath());
+            }
+        }
     }
 
     private static void applyPatches(Context context, File rootDir) {
@@ -388,6 +444,13 @@ public abstract class FusionFSInstaller {
             File wineGlibcDir = fusionFS.getWineGlibcDir();
             String target = wineGlibcDir.isDirectory() ? "../../wine.glibc" : "../../wine";
             FileUtils.symlink(target, glibcOptWine.getPath());
+        }
+
+        File bionicOptWine = new File(fusionFS.getBionicDir(), "/opt/wine");
+        File wineBionicDir = fusionFS.getWineBionicDir();
+        if (wineBionicDir.isDirectory() && !bionicOptWine.exists()) {
+            bionicOptWine.getParentFile().mkdirs();
+            FileUtils.symlink("../../wine.bionic", bionicOptWine.getPath());
         }
     }
 
