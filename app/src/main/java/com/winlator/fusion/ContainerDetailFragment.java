@@ -528,7 +528,6 @@ public class ContainerDetailFragment extends Fragment {
                     data.put("midiSoundFont", sMIDISoundFont != null && sMIDISoundFont.getSelectedItemPosition() > 0 ? sMIDISoundFont.getSelectedItem().toString() : "");
                     if (etLC_ALL != null) data.put("lc_all", etLC_ALL.getText().toString());
                     data.put("fullscreenStretched", cbFullscreenStretched != null && cbFullscreenStretched.isChecked());
-                    data.put("showFPS", cbShowFPS != null && cbShowFPS.isChecked());
                     data.put("exclusiveXInput", cbExclusiveXInput != null && cbExclusiveXInput.isChecked());
                     int finalInputType = 0;
                     if (cbEnableXInput != null && cbEnableXInput.isChecked()) finalInputType |= WinHandler.FLAG_INPUT_TYPE_XINPUT;

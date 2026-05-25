@@ -236,7 +236,7 @@ public class Container {
         this.showFPS = showFPS;
         if (showFPS && hudMode == (byte)FrameRating.Mode.DISABLED.ordinal()) {
             hudMode = (byte)FrameRating.Mode.SIMPLE.ordinal();
-        } else if (!showFPS && hudMode == (byte)FrameRating.Mode.SIMPLE.ordinal()) {
+        } else if (!showFPS && hudMode != (byte)FrameRating.Mode.DISABLED.ordinal()) {
             hudMode = (byte)FrameRating.Mode.DISABLED.ordinal();
         }
     }
@@ -408,7 +408,6 @@ public class Container {
             data.put("audioDriver", audioDriver);
             data.put("wincomponents", wincomponents);
             data.put("drives", drives);
-            data.put("showFPS", showFPS);
             data.put("hudMode", hudMode);
             data.put("startupSelection", startupSelection);
             data.put("box64Preset", box64Preset);
