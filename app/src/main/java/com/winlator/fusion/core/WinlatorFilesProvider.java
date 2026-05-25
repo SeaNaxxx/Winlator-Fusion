@@ -112,7 +112,9 @@ public class WinlatorFilesProvider extends DocumentsProvider {
     @Override
     public Cursor queryRoots(String[] projection) {
         final MatrixCursor result = new MatrixCursor(projection != null ? projection : DEFAULT_ROOT_PROJECTION);
+
         if (!enabled) return result;
+
         final String applicationName = getContext().getString(R.string.app_name);
 
         final MatrixCursor.RowBuilder row = result.newRow();
@@ -216,7 +218,7 @@ public class WinlatorFilesProvider extends DocumentsProvider {
             final File file = pending.removeFirst();
             boolean isInsideHome;
             try {
-                isInsideHome = file.getCanonicalPath().startsWith(BASE_DIR.getAbsolutePath());
+                isInsideHome = file.getCanonicalPath().startsWith(BASE_DIR.getAbsolutePath() + File.separator) || file.getCanonicalPath().equals(BASE_DIR.getAbsolutePath());
             } catch (IOException e) {
                 isInsideHome = true;
             }
@@ -238,7 +240,7 @@ public class WinlatorFilesProvider extends DocumentsProvider {
     @Override
     public boolean isChildDocument(String parentDocumentId, String documentId) {
         String parentPath = parentDocumentId.endsWith("/") ? parentDocumentId : parentDocumentId + "/";
-        return documentId.startsWith(parentPath);
+        return documentId.startsWith(parentPath) || documentId.equals(parentDocumentId);
     }
 
     private static String getDocIdForFile(File file) {
@@ -249,7 +251,9 @@ public class WinlatorFilesProvider extends DocumentsProvider {
         final File f = new File(docId);
         if (!f.exists()) throw new FileNotFoundException(f.getAbsolutePath() + " not found");
         try {
-            if (!f.getCanonicalPath().startsWith(BASE_DIR.getCanonicalPath())) {
+            String canonicalPath = f.getCanonicalPath();
+            String basePath = BASE_DIR.getCanonicalPath();
+            if (!canonicalPath.equals(basePath) && !canonicalPath.startsWith(basePath + File.separator)) {
                 throw new FileNotFoundException("Access denied");
             }
         } catch (IOException e) {

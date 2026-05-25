@@ -270,7 +270,7 @@ public class Shortcut {
         return v != null && !v.isEmpty() ? v : container.getRendererPresentMode();
     }
 
-    public void setRendererPresentMode(String v) { putExtra("rendererPresentMode", v != null ? v : ""); }
+    public void setRendererPresentMode(String v) { putExtra("rendererPresentMode", v != null && !v.isEmpty() ? v : ""); }
 
     public String getRendererDriverId() {
         String v = getExtra("rendererDriverId", null);
