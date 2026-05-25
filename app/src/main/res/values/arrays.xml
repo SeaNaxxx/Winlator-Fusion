@@ -208,6 +208,10 @@
         <item>@string/custom</item>
     </string-array>
 
+    <string-array name="box64_glibc_version_entries">
+        <item>0.4.0</item>
+    </string-array>
+
     <string-array name="box64_bionic_version_entries">
         <item>0.4.1</item>
     </string-array>
