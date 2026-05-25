@@ -1362,6 +1362,13 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         String pulseaudioDir = isBionic ? "pulseaudio/bionic" : "pulseaudio/glibc";
         TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, pulseaudioAsset, new File(getFilesDir(), pulseaudioDir));
         WineUtils.applySystemTweaks(this, wineInfo, rootDir);
+
+        if (container.getSystemFont().isEmpty()) {
+            container.setSystemFont("Tahoma");
+        }
+        if (container.getWinVersion().isEmpty()) {
+            container.setWinVersion(com.winlator.fusion.win32.WinVersions.DEFAULT_VERSION);
+        }
         container.putExtra("graphicsDriver", null);
         container.putExtra("dxwrapper", null);
         container.putExtra("desktopTheme", null);
