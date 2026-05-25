@@ -162,6 +162,7 @@ public class BionicRuntimeStrategy implements RuntimeStrategy {
         envVars.put("WINE_NEW_NDIS", "1");
 
         envVars.put("ANDROID_SYSVSHM_SERVER", rootDir + UnixSocketConfig.SYSVSHM_SERVER_PATH);
+        envVars.put("WINE_ROOTFS", rootDir.getPath());
 
         try {
             String primaryDNS = "8.8.4.4";

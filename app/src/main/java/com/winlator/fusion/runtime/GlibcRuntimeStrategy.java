@@ -150,6 +150,7 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
         envVars.put("LD_LIBRARY_PATH", getLdLibraryPath());
         envVars.put("BOX64_LD_LIBRARY_PATH", getBox64LdLibraryPath());
         envVars.put("ANDROID_SYSVSHM_SERVER", getRootDir() + UnixSocketConfig.SYSVSHM_SERVER_PATH);
+        envVars.put("WINE_ROOTFS", getRootDir().getPath());
 
         envVars.put("VK_LAYER_PATH", runtimeFS.getVulkanLayerPath(getRootDir()));
         envVars.put("FONTCONFIG_PATH", getRootDir() + "/usr/etc/fonts");
