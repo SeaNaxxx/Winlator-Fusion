@@ -149,22 +149,6 @@
                     android:layout_width="match_parent"
                     android:entries="@array/emulator_entries" />
 
-                <Spinner
-                    style="@style/ComboBox"
-                    android:id="@+id/SFEXCoreVersion"
-                    android:layout_width="match_parent"
-                    android:entries="@array/fexcore_version_entries" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/fexcore_preset" />
-
-                <Spinner
-                    style="@style/ComboBox"
-                    android:id="@+id/SFEXCorePreset"
-                    android:layout_width="match_parent" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -175,6 +159,35 @@
                     android:id="@+id/SBox64VersionBionic"
                     android:layout_width="match_parent"
                     android:entries="@array/box64_bionic_version_entries" />
+
+                <LinearLayout
+                    android:id="@+id/LLFEXCoreOptions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fexcore_version" />
+
+                    <Spinner
+                        style="@style/ComboBox"
+                        android:id="@+id/SFEXCoreVersion"
+                        android:layout_width="match_parent"
+                        android:entries="@array/fexcore_version_entries" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fexcore_preset" />
+
+                    <Spinner
+                        style="@style/ComboBox"
+                        android:id="@+id/SFEXCorePreset"
+                        android:layout_width="match_parent" />
+                </LinearLayout>
             </LinearLayout>
 
             <TextView
