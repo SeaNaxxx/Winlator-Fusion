@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,6 +35,7 @@ import com.winlator.fusion.container.ContainerManager;
 import com.winlator.fusion.container.DXWrappers;
 import com.winlator.fusion.container.GraphicsDrivers;
 import com.winlator.fusion.container.Shortcut;
+import com.winlator.fusion.services.NotificationService;
 import com.winlator.fusion.contentdialog.ActiveWindowsDialog;
 import com.winlator.fusion.contents.AdrenotoolsManager;
 import com.winlator.fusion.contents.ContentsManager;
@@ -164,6 +167,13 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
         final PreloaderDialog preloaderDialog = new PreloaderDialog(this);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        if (preferences.getBoolean("high_refresh_rate_mode", false)) {
+            android.view.WindowManager.LayoutParams params = getWindow().getAttributes();
+            params.preferredRefreshRate = pickHighestRefreshRate();
+            getWindow().setAttributes(params);
+        }
+
         boolean useAndroidClipboardOnWine = preferences.getBoolean("use_android_clipboard_on_wine", false);
         clipboardManager = useAndroidClipboardOnWine ? (ClipboardManager)getSystemService(CLIPBOARD_SERVICE) : null;
 
@@ -259,6 +269,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 audioDriverConfig = new KeyValueSet(shortcut.getExtra("audioDriverConfig", container.getAudioDriverConfig()));
                 screenInfo = new ScreenInfo(shortcut.getExtra("screenSize", container.getScreenSize()));
 
+                String shortcutFexcoreVersion = shortcut.getExtra("fexcoreVersion", "");
+                if (!shortcutFexcoreVersion.isEmpty()) container.setFEXCoreVersion(shortcutFexcoreVersion);
+                String shortcutBox64Version = shortcut.getExtra("box64Version", "");
+                if (!shortcutBox64Version.isEmpty()) container.setBox64Version(shortcutBox64Version);
+
                 String dinputMapperType = shortcut.getExtra("dinputMapperType");
                 if (!dinputMapperType.isEmpty()) winHandler.gamepadHandler.setDInputMapperType(Byte.parseByte(dinputMapperType));
 
@@ -324,6 +339,10 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             }
         });
 
+        if (!NotificationService.isRunning()) {
+            startForegroundService(new Intent(this, NotificationService.class));
+        }
+
         setupUI();
 
         Executors.newSingleThreadExecutor().execute(() -> {
@@ -376,11 +395,17 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             xServerView.onResume();
             environment.onResume();
         }
+        if (NotificationService.wakeLock != null && NotificationService.wakeLock.isHeld()) {
+            NotificationService.wakeLock.release();
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        if (NotificationService.wakeLock != null && !NotificationService.wakeLock.isHeld()) {
+            NotificationService.wakeLock.acquire();
+        }
         if (environment != null && !isInPictureInPictureMode()) {
             environment.onPause();
             xServerView.onPause();
@@ -394,12 +419,15 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             long existingPlaytime = Long.parseLong(shortcut.getExtra("playtime", "0"));
             shortcut.putExtra("playtime", String.valueOf(existingPlaytime + playtimeMillis));
             shortcut.saveData();
-            sessionStartTime = 0; // Prevent double-counting
+            sessionStartTime = 0;
         }
         if (wineRequestHandler != null) wineRequestHandler.stop();
         if (midiHandler != null) midiHandler.stop();
         winHandler.stop();
         if (environment != null) environment.stopEnvironmentComponents();
+        if (NotificationService.isRunning()) {
+            stopService(new Intent(this, NotificationService.class));
+        }
         super.onDestroy();
     }
 
@@ -709,11 +737,18 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         if (useVulkan) {
             VulkanRenderer vkRenderer = xServerView.getVulkanRenderer();
             vkRenderer.setCursorVisible(false);
-            vkRenderer.setVkPresentMode(container.getRendererPresentMode());
+            String presentMode = container.getRendererPresentMode();
+            byte vkPresentMode;
+            switch (presentMode) {
+                case "mailbox": vkPresentMode = Container.PRESENT_MODE_MAILBOX; break;
+                case "immediate": vkPresentMode = Container.PRESENT_MODE_IMMEDIATE; break;
+                default: vkPresentMode = Container.PRESENT_MODE_FIFO; break;
+            }
+            vkRenderer.setVkPresentMode(vkPresentMode);
             vkRenderer.setFilterMode(container.getRendererFilterMode());
             vkRenderer.setNativeMode(container.isRendererNative());
-            if (container.getRendererRefreshRate() > 0) {
-                vkRenderer.setRefreshRateLimit(container.getRendererRefreshRate());
+            if (container.getRendererRefreshRateLimit() > 0) {
+                vkRenderer.setRefreshRateLimit(container.getRendererRefreshRateLimit());
             }
             xServer.setRenderer(vkRenderer);
         } else {
@@ -867,6 +902,17 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         }
 
         inputControlsView.invalidate();
+    }
+
+    private float pickHighestRefreshRate() {
+        Display display = getWindowManager().getDefaultDisplay();
+        Display.Mode[] modes = display.getSupportedModes();
+        float maxRefresh = 0f;
+        for (Display.Mode mode : modes) {
+            if (mode.getRefreshRate() > maxRefresh)
+                maxRefresh = mode.getRefreshRate();
+        }
+        return maxRefresh;
     }
 
     private void extractGraphicsDriverFiles() {

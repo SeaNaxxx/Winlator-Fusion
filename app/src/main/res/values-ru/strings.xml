@@ -248,7 +248,6 @@
     <string name="current">ток</string>
     <string name="capacity">Емкость</string>
     <string name="sound">Звук</string>
-    <string name="midi_soundfont">MIDI SoundFont</string>
     <string name="instrument">Инструмент</string>
     <string name="channel">Канал</string>
     <string name="note">нота</string>
