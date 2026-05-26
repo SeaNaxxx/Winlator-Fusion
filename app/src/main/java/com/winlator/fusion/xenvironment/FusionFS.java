@@ -156,12 +156,24 @@ public class FusionFS {
         return new File(bionicDir, HOME_PATH);
     }
 
+    public File getHomeDirForVariant(String variant) {
+        return new File(getDirForVariant(variant), HOME_PATH);
+    }
+
     public File getCacheDir() {
         return new File(bionicDir, CACHE_PATH);
     }
 
+    public File getCacheDirForVariant(String variant) {
+        return new File(getDirForVariant(variant), CACHE_PATH);
+    }
+
     public File getConfigPathDir() {
         return new File(bionicDir, CONFIG_PATH);
+    }
+
+    public File getConfigPathDirForVariant(String variant) {
+        return new File(getDirForVariant(variant), CONFIG_PATH);
     }
 
     public File getBionicLibDir() {
