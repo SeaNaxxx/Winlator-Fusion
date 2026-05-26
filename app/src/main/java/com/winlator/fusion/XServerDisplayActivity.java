@@ -1358,8 +1358,16 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, FusionFS.ASSET_CONTAINER_PATTERN_COMMON, rootDir);
 
         boolean isBionic = container.isBionic();
-        String pulseaudioAsset = isBionic ? "pulseaudio-full.tzst" : "pulseaudio.tzst";
-        String pulseaudioDir = isBionic ? "pulseaudio/bionic" : "pulseaudio/glibc";
+        String pulseaudioAsset;
+        String pulseaudioDir;
+        if (isBionic) {
+            pulseaudioDir = "pulseaudio/bionic";
+            pulseaudioAsset = FusionFS.ASSET_PULSEAUDIO_FULL;
+            try { getAssets().open(pulseaudioAsset).close(); } catch (Exception e) { pulseaudioAsset = FusionFS.ASSET_PULSEAUDIO; }
+        } else {
+            pulseaudioDir = "pulseaudio/glibc";
+            pulseaudioAsset = FusionFS.ASSET_PULSEAUDIO;
+        }
         TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, pulseaudioAsset, new File(getFilesDir(), pulseaudioDir));
         WineUtils.applySystemTweaks(this, wineInfo, rootDir);
 

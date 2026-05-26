@@ -20,8 +20,9 @@ public class FusionFS {
     public static final String WINEPREFIX = HOME_PATH + "/.wine";
 
     public static final String ASSET_FUSIONFS = "fusionfs.tzst";
-    public static final String ASSET_FUSIONFS_PATCHES = "fusionfs_patches.tzst";
     public static final String ASSET_CONTAINER_PATTERN_COMMON = "container_pattern_common.tzst";
+    public static final String ASSET_PULSEAUDIO = "pulseaudio.tzst";
+    public static final String ASSET_PULSEAUDIO_FULL = "pulseaudio-full.tzst";
 
     private final File rootDir;
     private final File bionicDir;
