@@ -953,7 +953,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
             if (changed) {
                 String version = graphicsDriverConfig[0].get("version", DefaultVersion.TURNIP);
-                File turnipDest = rootDir; // rootFS already switched to imagefs for Bionic containers
+                File turnipDest = rootDir; // rootFS already switched to bionic dir for Bionic containers
                 GeneralComponents.extractFile(GeneralComponents.Type.TURNIP, this, version, DefaultVersion.TURNIP, turnipDest, null);
             }
         }
