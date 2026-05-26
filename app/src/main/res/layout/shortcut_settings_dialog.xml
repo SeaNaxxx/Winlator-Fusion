@@ -281,6 +281,31 @@
             </FrameLayout>
 
             <FrameLayout
+                android:id="@+id/LLFEXCorePreset"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:visibility="gone">
+
+                <LinearLayout style="@style/FieldSet">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fexcore_preset" />
+
+                    <Spinner
+                        style="@style/ComboBox"
+                        android:id="@+id/SFEXCorePreset"
+                        android:layout_width="match_parent" />
+                </LinearLayout>
+
+                <TextView
+                    style="@style/FieldSetLabel"
+                    android:background="?attr/colorSecondarySurface"
+                    android:text="@string/fexcore" />
+            </FrameLayout>
+
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp">
