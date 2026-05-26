@@ -122,8 +122,7 @@
   "assets": {
     "fusionfs": {
       "primary": "fusionfs.tzst",
-      "patches": "fusionfs_patches.tzst",
-      "release_tag": "fusionfs-v5"
+      "release_tag": "fusionfs-v7"
     },
     "wine": {
       "format": "txz",

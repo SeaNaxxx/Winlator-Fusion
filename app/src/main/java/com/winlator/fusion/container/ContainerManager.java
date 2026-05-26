@@ -371,16 +371,8 @@ public class ContainerManager {
                 }
 
                 if (result) {
-                    final String containerDirPath = containerDir.getPath();
                     if (assetExists(context, FusionFS.ASSET_CONTAINER_PATTERN_COMMON)) {
-                        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FusionFS.ASSET_CONTAINER_PATTERN_COMMON, containerDir, (file, size) -> {
-                            String path = file.getPath();
-                            String prefix = containerDirPath + "/home/xuser/";
-                            if (path.startsWith(prefix)) {
-                                return new File(containerDirPath, path.substring(prefix.length()));
-                            }
-                            return file;
-                        });
+                        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FusionFS.ASSET_CONTAINER_PATTERN_COMMON, containerDir);
                     }
 
                     try {
@@ -425,13 +417,18 @@ public class ContainerManager {
                     }
                 }
 
-                if (result && WineInfo.isMainWineVersion(wineVersion)) {
-                    try {
-                        JSONObject commonDlls = new JSONObject(FileUtils.readString(context, "common_dlls.json"));
-                        copyCommonDlls("x86_64-windows", "system32", commonDlls, containerDir);
-                        copyCommonDlls("i386-windows", "syswow64", commonDlls, containerDir);
-                    } catch (JSONException e) {
-                        return false;
+                if (result) {
+                    if (assetExists(context, FusionFS.ASSET_CONTAINER_PATTERN_COMMON)) {
+                        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FusionFS.ASSET_CONTAINER_PATTERN_COMMON, containerDir);
+                    }
+                    if (WineInfo.isMainWineVersion(wineVersion)) {
+                        try {
+                            JSONObject commonDlls = new JSONObject(FileUtils.readString(context, "common_dlls.json"));
+                            copyCommonDlls("x86_64-windows", "system32", commonDlls, containerDir);
+                            copyCommonDlls("i386-windows", "syswow64", commonDlls, containerDir);
+                        } catch (JSONException e) {
+                            return false;
+                        }
                     }
                 }
                 return result;
