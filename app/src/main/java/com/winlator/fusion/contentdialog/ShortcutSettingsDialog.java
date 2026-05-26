@@ -13,6 +13,8 @@ import com.winlator.fusion.ContainerDetailFragment;
 import com.winlator.fusion.R;
 import com.winlator.fusion.ShortcutsFragment;
 import com.winlator.fusion.box64.Box64PresetManager;
+import com.winlator.fusion.fexcore.FEXCorePreset;
+import com.winlator.fusion.fexcore.FEXCorePresetManager;
 import com.winlator.fusion.container.GraphicsDrivers;
 import com.winlator.fusion.container.Shortcut;
 import com.winlator.fusion.core.AppUtils;
@@ -81,6 +83,13 @@ public class ShortcutSettingsDialog extends ContentDialog {
         final Spinner sBox64Preset = findViewById(R.id.SBox64Preset);
         Box64PresetManager.loadSpinner(sBox64Preset, shortcut.getExtra("box64Preset", shortcut.container.getBox64Preset()));
 
+        final Spinner sFEXCorePreset = findViewById(R.id.SFEXCorePreset);
+        final View llFEXCorePreset = findViewById(R.id.LLFEXCorePreset);
+        if (shortcut.container.isArm64EC()) {
+            FEXCorePresetManager.loadSpinner(sFEXCorePreset, shortcut.getExtra("fexcorePreset", shortcut.container.getFEXCorePreset()));
+            if (llFEXCorePreset != null) llFEXCorePreset.setVisibility(View.VISIBLE);
+        }
+
         final Spinner sControlsProfile = findViewById(R.id.SControlsProfile);
         loadControlsProfileSpinner(sControlsProfile, shortcut.getExtra("controlsProfile", "0"));
 
@@ -140,6 +149,11 @@ public class ShortcutSettingsDialog extends ContentDialog {
 
                 String box64Preset = Box64PresetManager.getSpinnerSelectedId(sBox64Preset);
                 shortcut.putExtra("box64Preset", !box64Preset.equals(shortcut.container.getBox64Preset()) ? box64Preset : null);
+
+                if (sFEXCorePreset != null && shortcut.container.isArm64EC()) {
+                    String fexcorePreset = FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset);
+                    shortcut.putExtra("fexcorePreset", !fexcorePreset.equals(shortcut.container.getFEXCorePreset()) ? fexcorePreset : null);
+                }
 
                 ArrayList<ControlsProfile> profiles = inputControlsManager.getProfiles(true);
                 int controlsProfile = sControlsProfile.getSelectedItemPosition() > 0 ? profiles.get(sControlsProfile.getSelectedItemPosition()-1).id : 0;
