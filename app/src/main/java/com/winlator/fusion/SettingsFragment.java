@@ -144,7 +144,9 @@ public class SettingsFragment extends Fragment {
         final Spinner sSoundFont = view.findViewById(R.id.SSoundFont);
         String soundfont = preferences.getString("soundfont", null);
         GeneralComponents.initViews(GeneralComponents.Type.SOUNDFONT, view.findViewById(R.id.SoundFontToolbox), sSoundFont, soundfont, DefaultVersion.SOUNDFONT);
-        view.findViewById(R.id.BTSoundFontTest).setOnClickListener((v) -> (new SoundFontTestDialog(context, sSoundFont.getSelectedItem().toString())).show());
+        view.findViewById(R.id.BTSoundFontTest).setOnClickListener((v) -> {
+            if (sSoundFont.getSelectedItem() != null) (new SoundFontTestDialog(context, sSoundFont.getSelectedItem().toString())).show();
+        });
 
         final Spinner sMIDIInputDevice = view.findViewById(R.id.SMIDIInputDevice);
         String midiInputDevice = preferences.getString("midi_input_device", "auto");
@@ -407,7 +409,7 @@ public class SettingsFragment extends Fragment {
 
         view.findViewById(R.id.BTConfirm).setOnClickListener((v) -> {
             SharedPreferences.Editor editor = preferences.edit();
-            editor.putString("soundfont", sSoundFont.getSelectedItem().toString());
+            editor.putString("soundfont", sSoundFont.getSelectedItem() != null ? sSoundFont.getSelectedItem().toString() : "");
             editor.putString("box64_preset", Box64PresetManager.getSpinnerSelectedId(sBox64Preset));
             editor.putString("fexcore_preset", FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset));
             editor.putBoolean("move_cursor_to_touchpoint", cbMoveCursorToTouchpoint.isChecked());
