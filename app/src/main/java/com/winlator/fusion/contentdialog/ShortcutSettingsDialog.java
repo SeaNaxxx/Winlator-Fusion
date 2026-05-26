@@ -14,6 +14,7 @@ import com.winlator.fusion.R;
 import com.winlator.fusion.ShortcutsFragment;
 import com.winlator.fusion.box64.Box64PresetManager;
 import com.winlator.fusion.fexcore.FEXCorePresetManager;
+import com.winlator.fusion.container.Container;
 import com.winlator.fusion.container.GraphicsDrivers;
 import com.winlator.fusion.container.Shortcut;
 import com.winlator.fusion.core.AppUtils;
