@@ -194,6 +194,7 @@
         <i><b>Turnip</b></i> - Mesa Vulkan driver (for Adreno 6xx, 7xx only).<br /><br />
         <i><b>VirGL</b></i> - virtual OpenGL driver (for all GPUs). <i>Old</i> version is slower, but better compatibility.<br /><br />
         <i><b>Vortek</b></i> - Vulkan driver specially developed by <i>Bruno</i> for Winlator (for many Mali and Adreno).<br /><br />
+        <i><b>Gladio</b></i> - OpenGL driver specially developed by <i>Bruno</i> for Winlator.<br /><br />
         <i><b>Freedreno</b></i> - Mesa OpenGL driver (for Adreno only).<br /><br />
         <i><b>LLVMPipe</b></i> - software (CPU) Mesa Vulkan and OpenGL driver (universal, slow).<br /><br />
         <i>NOTE:</i> When selecting the Turnip or Vortek driver, Mesa <i><b>Zink</b></i> (OpenGL to Vulkan translation layer) is automatically installed.<br /><br />

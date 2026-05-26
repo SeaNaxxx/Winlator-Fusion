@@ -2,7 +2,7 @@ package com.winlator.renderer.material;
 
 public class WindowMaterial extends ShaderMaterial {
     public WindowMaterial() {
-        setUniformNames("xform", "viewSize", "texture");
+        setUniformNames("xform", "viewSize", "texture", "flipY");
     }
 
     @Override
@@ -12,9 +12,10 @@ public class WindowMaterial extends ShaderMaterial {
             "uniform vec2 viewSize;\n" +
             "attribute vec2 position;\n" +
             "varying vec2 vUV;\n" +
+            "uniform bool flipY;" +
 
             "void main() {\n" +
-                "vUV = position;\n" +
+                "vUV = vec2(position.x, flipY ? (1.0 - position.y) : position.y);\n" +
                 "vec2 transformedPos = applyXForm(position, xform);\n" +
                 "gl_Position = vec4(2.0 * transformedPos.x / viewSize.x - 1.0, 1.0 - 2.0 * transformedPos.y / viewSize.y, 0.0, 1.0);\n" +
             "}"

@@ -231,7 +231,7 @@ public class GlibcProgramLauncherComponent extends GuestProgramLauncherComponent
         }
 
         envVars.putAll(Box86_64PresetManager.getEnvVars("box64", environment.getContext(), box64Preset));
-        envVars.put("BOX64_X11GLX", "1");
+        //envVars.put("BOX64_X11GLX", "1");
     }
 
     public void suspendProcess() {

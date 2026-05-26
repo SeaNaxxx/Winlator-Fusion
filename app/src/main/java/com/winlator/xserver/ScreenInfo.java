@@ -9,6 +9,7 @@ public class ScreenInfo {
     public static final short MIN_HEIGHT = 200;
     public final short width;
     public final short height;
+    private boolean mesaDriverMode = true;
 
     public ScreenInfo(String value) {
         String[] parts = value.split("x");
@@ -36,5 +37,13 @@ public class ScreenInfo {
     @Override
     public String toString() {
         return width+"x"+height;
+    }
+
+    public boolean getMesaDriverMode() {
+        return mesaDriverMode;
+    }
+
+    public void setMesaDriverMode(boolean mesaDriverMode) {
+        this.mesaDriverMode = mesaDriverMode;
     }
 }

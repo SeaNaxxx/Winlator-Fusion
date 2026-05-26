@@ -16,15 +16,27 @@ public class Texture {
     private int minFilter = GLES20.GL_LINEAR;
     protected int format = GLES11Ext.GL_BGRA;
     protected boolean needsUpdate = true;
+    private boolean flipY = false;
     protected byte unpackAlignment = 4;
 
-    public void allocateTexture(short width, short height, ByteBuffer data) {
+    protected void generateTextureId() {
         int[] textureIds = new int[1];
         GLES20.glGenTextures(1, textureIds, 0);
         textureId = textureIds[0];
+    }
+
+    protected void setTextureParameters() {
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, wrapS);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, wrapT);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, magFilter);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, minFilter);
+    }
+
+    public void allocateTexture(short width, short height, ByteBuffer data) {
+        generateTextureId();
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glPixelStorei(GLES20.GL_UNPACK_ALIGNMENT, 4);
+        GLES20.glPixelStorei(GLES20.GL_UNPACK_ALIGNMENT, 1);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
 
         if (data != null) {
@@ -37,6 +49,14 @@ public class Texture {
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, minFilter);
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+    }
+
+    public boolean isFlipY() {
+        return flipY;
+    }
+
+    public void setFlipY(boolean flipY) {
+        this.flipY = flipY;
     }
 
     public int getWrapS() {
@@ -126,16 +146,4 @@ public class Texture {
         }
     }
 
-    protected void generateTextureId() {
-        int[] textureIds = new int[1];
-        GLES20.glGenTextures(1, textureIds, 0);
-        textureId = textureIds[0];
-    }
-
-    protected void setTextureParameters() {
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, wrapS);
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, wrapT);
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, magFilter);
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, minFilter);
-    }
 }

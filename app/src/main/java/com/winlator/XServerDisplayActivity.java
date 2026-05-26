@@ -1032,6 +1032,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/llvmpipe-" + DefaultVersion.LLVMPIPE + ".tzst", rootDir);
             }
         }
+        else if (graphicsDriver.startsWith("gladio")) {
+            envVars.put("GLADIO_NO_ERROR", "1");
+            screeninfo.setMesaDriverMode(false);
+
+            if (changed) {
+                TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/gladio-" + DefaultVersion.GLADIO + ".tzst", rootDir);
+            }
+        }
     }
 
     private void showTouchpadHelpDialog() {

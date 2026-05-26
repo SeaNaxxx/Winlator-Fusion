@@ -230,7 +230,7 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
         }
 
         envVars.putAll(Box86_64PresetManager.getEnvVars("box64", environment.getContext(), box64Preset));
-        envVars.put("BOX64_X11GLX", "1");
+        //envVars.put("BOX64_X11GLX", "1");
         envVars.put("BOX64_NORCFILES", "1");
     }
 

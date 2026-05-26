@@ -248,6 +248,9 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.getTextureId());
             GLES20.glUniform1i(material.getUniformLocation("texture"), 0);
             GLES20.glUniform1fv(material.getUniformLocation("xform"), tmpXForm1.length, tmpXForm1, 0);
+            if (material instanceof WindowMaterial)
+                GLES20.glUniform1i(windowMaterial.getUniformLocation("flipY"), texture.isFlipY() ? 1 : 0);
+
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, quadVertices.count());
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
         }

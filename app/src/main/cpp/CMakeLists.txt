@@ -4,6 +4,7 @@ Project(Winlator)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -Wno-unused-function -Wimplicit-function-declaration")
 
+add_subdirectory(gladiorenderer)
 add_subdirectory(vortekrenderer)
 add_subdirectory(libadrenotools)
 add_subdirectory(virglrenderer)
