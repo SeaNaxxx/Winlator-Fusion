@@ -110,7 +110,7 @@ public class SyncExtension extends Extension {
                         fences.wait(5000);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        break;
+                        throw new BadImplementation();
                     }
                 }
             } while (!anyTriggered);

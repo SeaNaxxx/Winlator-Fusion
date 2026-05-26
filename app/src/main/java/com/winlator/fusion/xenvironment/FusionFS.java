@@ -21,6 +21,7 @@ public class FusionFS {
 
     public static final String ASSET_FUSIONFS = "fusionfs.tzst";
     public static final String ASSET_FUSIONFS_PATCHES = "fusionfs_patches.tzst";
+    public static final String ASSET_CONTAINER_PATTERN_COMMON = "container_pattern_common.tzst";
 
     private final File rootDir;
     private final File bionicDir;
@@ -128,8 +129,17 @@ public class FusionFS {
     }
 
     public boolean isBionicWineInstalled(String wineIdentifier) {
-        File wineBin = new File(getWinePathForVersion(wineIdentifier), "bin/wine");
+        File wineBin = new File(getBionicWinePathForVersion(wineIdentifier), "bin/wine");
         return wineBin.exists() && wineBin.canExecute();
+    }
+
+    private String getBionicWinePathForVersion(String wineVersion) {
+        File installedWineDir = getInstalledWineDir();
+        File optDir = new File(bionicDir, "/opt/" + wineVersion);
+        if (optDir.isDirectory()) return optDir.getPath();
+        File versionDir = new File(installedWineDir, wineVersion);
+        if (versionDir.isDirectory()) return versionDir.getPath();
+        return wineBionicDir.getPath();
     }
 
     public String getWinePath() {

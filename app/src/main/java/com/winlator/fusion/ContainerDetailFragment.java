@@ -169,7 +169,7 @@ public class ContainerDetailFragment extends Fragment {
         graphicsDriverPickerRef[0] = new GraphicsDriverPicker(view.findViewById(R.id.LLGraphicsDriver), selectedGraphicsDriver, oldGraphicsDriverConfig, isBionic);
 
         String oldDXWrapperConfig = isEditMode() ? container.getDXWrapperConfig() : "";
-        String selectedDXWrapper = isEditMode() ? container.getDXWrapper() : container.getDefaultDXWrapperForType();
+        String selectedDXWrapper = isEditMode() ? container.getDXWrapper() : (isBionic ? Container.DEFAULT_DXWRAPPER_BIONIC : Container.DEFAULT_DXWRAPPER);
         final DXWrapperPicker[] dxwrapperPickerRef = new DXWrapperPicker[1];
         dxwrapperPickerRef[0] = new DXWrapperPicker(view.findViewById(R.id.LLDXWrapper), graphicsDriverPickerRef[0], selectedDXWrapper, oldDXWrapperConfig, isBionic);
 
@@ -942,6 +942,7 @@ public class ContainerDetailFragment extends Fragment {
                 if (position >= 0 && position < wineInfos.size()) {
                     WineInfo selectedWine = wineInfos.get(position);
                     boolean arm64ec = selectedWine.isArm64EC();
+                    isArm64EC[0] = arm64ec;
                     if (llFEXCoreOptions != null) {
                         String selectedEmu = sEmulator != null && sEmulator.getSelectedItem() != null ? sEmulator.getSelectedItem().toString() : "Box64";
                         boolean showFEXCore = arm64ec && !selectedEmu.equals("Box64");
