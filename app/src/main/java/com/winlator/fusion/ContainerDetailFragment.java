@@ -155,7 +155,7 @@ public class ContainerDetailFragment extends Fragment {
         }
         final ArrayList<WineInfo>[] wineInfosRef = new ArrayList[]{wineInfos};
         final Spinner sWineVersion = view.findViewById(R.id.SWineVersion);
-        if (wineInfosRef[0].size() > 1) loadWineVersionSpinner(view, sWineVersion, wineInfosRef[0]);
+        if (wineInfosRef[0].size() > 1) loadWineVersionSpinner(view, sWineVersion, wineInfosRef[0], isArm64EC);
 
         // Container variant selector
         final Spinner sContainerVariant = view.findViewById(R.id.SContainerVariant);
@@ -276,7 +276,7 @@ public class ContainerDetailFragment extends Fragment {
                     // Re-filter wine versions for the new variant
                     wineInfosRef[0] = WineInstaller.getInstalledWineInfos(context, selected);
                     if (wineInfosRef[0].size() > 1) {
-                        loadWineVersionSpinner(view, sWineVersion, wineInfosRef[0]);
+                        loadWineVersionSpinner(view, sWineVersion, wineInfosRef[0], isArm64EC);
                         view.findViewById(R.id.LLWineVersion).setVisibility(View.VISIBLE);
                     } else {
                         view.findViewById(R.id.LLWineVersion).setVisibility(View.GONE);
@@ -397,47 +397,6 @@ public class ContainerDetailFragment extends Fragment {
 
         final Spinner sBox64Preset = view.findViewById(R.id.SBox64Preset);
         Box64PresetManager.loadSpinner(sBox64Preset, isEditMode() ? container.getBox64Preset() : preferences.getString("box64_preset", Box64Preset.DEFAULT));
-
-        final CheckBox cbEnableXInput = view.findViewById(R.id.CBEnableXInput);
-        final CheckBox cbEnableDInput = view.findViewById(R.id.CBEnableDInput);
-        final CheckBox cbExclusiveXInput = view.findViewById(R.id.CBExclusiveXInput);
-        if (cbEnableXInput != null && cbEnableDInput != null && cbExclusiveXInput != null) {
-            int inputType = isEditMode() ? container.getInputType() : WinHandler.DEFAULT_INPUT_TYPE;
-            cbEnableXInput.setChecked((inputType & WinHandler.FLAG_INPUT_TYPE_XINPUT) == WinHandler.FLAG_INPUT_TYPE_XINPUT);
-            cbEnableDInput.setChecked((inputType & WinHandler.FLAG_INPUT_TYPE_DINPUT) == WinHandler.FLAG_INPUT_TYPE_DINPUT);
-            cbExclusiveXInput.setChecked(isEditMode() ? container.isExclusiveXInput() : true);
-
-            cbEnableDInput.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                if (cbExclusiveXInput.isChecked() && isChecked && cbEnableXInput.isChecked()) cbEnableXInput.setChecked(false);
-            });
-            cbEnableXInput.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                if (cbExclusiveXInput.isChecked() && isChecked && cbEnableDInput.isChecked()) cbEnableDInput.setChecked(false);
-            });
-            cbExclusiveXInput.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                if (!isChecked) {
-                    cbEnableXInput.setChecked(true);
-                    cbEnableDInput.setChecked(true);
-                    cbEnableXInput.setEnabled(false);
-                    cbEnableDInput.setEnabled(false);
-                } else {
-                    cbEnableXInput.setEnabled(true);
-                    cbEnableDInput.setEnabled(true);
-                    if (cbEnableXInput.isChecked() && cbEnableDInput.isChecked()) cbEnableDInput.setChecked(false);
-                }
-            });
-            if (!cbExclusiveXInput.isChecked()) {
-                cbEnableXInput.setChecked(true);
-                cbEnableDInput.setChecked(true);
-                cbEnableXInput.setEnabled(false);
-                cbEnableDInput.setEnabled(false);
-            }
-        }
-        final View btHelpXInput = view.findViewById(R.id.BTXInputHelp);
-        final View btHelpDInput = view.findViewById(R.id.BTDInputHelp);
-        final View btHelpExclusiveXInput = view.findViewById(R.id.BTExclusiveXInputHelp);
-        if (btHelpXInput != null) btHelpXInput.setOnClickListener((v) -> AppUtils.showHelpBox(context, v, R.string.help_xinput));
-        if (btHelpDInput != null) btHelpDInput.setOnClickListener((v) -> AppUtils.showHelpBox(context, v, R.string.help_dinput));
-        if (btHelpExclusiveXInput != null) btHelpExclusiveXInput.setOnClickListener((v) -> AppUtils.showHelpBox(context, v, R.string.help_exclusive_xinput));
 
         final CheckBox cbEnableXInput = view.findViewById(R.id.CBEnableXInput);
         final CheckBox cbEnableDInput = view.findViewById(R.id.CBEnableDInput);
@@ -965,7 +924,7 @@ public class ContainerDetailFragment extends Fragment {
         popupMenu.show();
     }
 
-    private void loadWineVersionSpinner(final View view, Spinner sWineVersion, final ArrayList<WineInfo> wineInfos) {
+    private void loadWineVersionSpinner(final View view, Spinner sWineVersion, final ArrayList<WineInfo> wineInfos, final boolean[] isArm64EC) {
         final Context context = getContext();
         sWineVersion.setEnabled(!isEditMode());
         view.findViewById(R.id.LLWineVersion).setVisibility(View.VISIBLE);

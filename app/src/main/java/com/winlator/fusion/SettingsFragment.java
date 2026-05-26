@@ -285,9 +285,6 @@ public class SettingsFragment extends Fragment {
         final CheckBox cbHighRefreshRateMode = view.findViewById(R.id.CBHighRefreshRateMode);
         if (cbHighRefreshRateMode != null) cbHighRefreshRateMode.setChecked(preferences.getBoolean("high_refresh_rate_mode", false));
 
-        final CheckBox cbHighRefreshRateMode = view.findViewById(R.id.CBHighRefreshRateMode);
-        cbHighRefreshRateMode.setChecked(preferences.getBoolean("high_refresh_rate_mode", false));
-
         final CheckBox cbOpenAndroidBrowserFromWine = view.findViewById(R.id.CBOpenAndroidBrowserFromWine);
         if (cbOpenAndroidBrowserFromWine != null) cbOpenAndroidBrowserFromWine.setChecked(preferences.getBoolean("open_android_browser_from_wine", true));
 
