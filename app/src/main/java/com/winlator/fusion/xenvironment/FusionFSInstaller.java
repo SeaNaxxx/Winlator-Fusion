@@ -19,7 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class FusionFSInstaller {
-    public static final byte LATEST_VERSION = 5;
+    public static final byte LATEST_VERSION = 8;
 
     private static boolean assetExists(Context context, String assetName) {
         try {
@@ -325,6 +325,9 @@ public abstract class FusionFSInstaller {
         new File(glibcDir, "/opt").mkdirs();
         new File(glibcDir, "/etc").mkdirs();
 
+        fusionFS.getWineGlibcDir().mkdirs();
+        fusionFS.getWineBionicDir().mkdirs();
+
         createWineSymlink(fusionFS);
         createCompatibilitySymlinks(context, fusionFS);
 
@@ -357,6 +360,9 @@ public abstract class FusionFSInstaller {
         if (imagefsDir.isDirectory() && !bionicDir.isDirectory()) {
             imagefsDir.renameTo(bionicDir);
         }
+
+        new File(rootDir, "wine.glibc").mkdirs();
+        new File(rootDir, "wine.bionic").mkdirs();
 
         populateEtcBionicIfNeeded(rootDir);
         ensureBionicSymlinks(rootDir);
