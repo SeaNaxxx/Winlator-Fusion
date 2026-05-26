@@ -50,9 +50,11 @@ public class EffectComposer {
         if (effect instanceof NTSCCombinedEffect) {
             NTSCCombinedEffect ntsc = (NTSCCombinedEffect)effect;
             ntsc.setFrameParams(ntsc.getFrameCount(), renderer.surfaceWidth, renderer.surfaceHeight);
-            ntsc.incrementFrameCount();
         }
         material.use();
+        if (effect instanceof NTSCCombinedEffect) {
+            ((NTSCCombinedEffect)effect).incrementFrameCount();
+        }
         renderer.quadVertices.bind(material.programId);
 
         material.setUniformVec2(material.uniforms.resolution, renderer.surfaceWidth, renderer.surfaceHeight);

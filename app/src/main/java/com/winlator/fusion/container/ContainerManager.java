@@ -372,8 +372,8 @@ public class ContainerManager {
 
                 if (result) {
                     final String containerDirPath = containerDir.getPath();
-                    if (assetExists(context, "container_pattern_common.tzst")) {
-                        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, "container_pattern_common.tzst", containerDir, (file, size) -> {
+                    if (assetExists(context, FusionFS.ASSET_CONTAINER_PATTERN_COMMON)) {
+                        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FusionFS.ASSET_CONTAINER_PATTERN_COMMON, containerDir, (file, size) -> {
                             String path = file.getPath();
                             String prefix = containerDirPath + "/home/xuser/";
                             if (path.startsWith(prefix)) {

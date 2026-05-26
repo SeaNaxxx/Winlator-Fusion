@@ -133,7 +133,7 @@ public class RuntimeFS {
     }
 
     public File getHomeDirForVariant(String variant) {
-        return new File(getDirForVariant(variant), "/home");
+        return new File(getDirForVariant(variant), HOME_PATH);
     }
 
     public String getHomePathForVariant(String variant) {
