@@ -126,7 +126,7 @@ public class ShortcutSettingsDialog extends ContentDialog {
                 String dxwrapperConfig = dxwrapperPicker.getDXWrapperConfig();
                 String graphicsDriverConfig = graphicsDriverPicker.getGraphicsDriverConfig();
                 String audioDriverConfig = vAudioDriverConfig.getTag().toString();
-                String audioDriver = StringUtils.parseIdentifier(sAudioDriver.getSelectedItem());
+                String audioDriver = sAudioDriver.getSelectedItem() != null ? StringUtils.parseIdentifier(sAudioDriver.getSelectedItem()) : Container.DEFAULT_AUDIO_DRIVER;
                 String screenSize = ContainerDetailFragment.getScreenSize(getContentView());
 
                 String execArgs = etExecArgs.getText().toString();

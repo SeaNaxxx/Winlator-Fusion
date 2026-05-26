@@ -643,7 +643,8 @@ public class Container {
                 boolean shouldPatch = true;
                 if (data.has("extraData")) {
                     JSONObject extraData = data.getJSONObject("extraData");
-                    int appVersion = Integer.parseInt(extraData.optString("appVersion", "0"));
+                    int appVersion = 0;
+                    try { appVersion = Integer.parseInt(extraData.optString("appVersion", "0")); } catch (NumberFormatException ignored) {}
                     shouldPatch = appVersion < 16;
                 }
                 if (shouldPatch) {

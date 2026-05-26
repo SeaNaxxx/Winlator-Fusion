@@ -101,7 +101,14 @@ public abstract class FusionFSInstaller {
                     }
                     return file;
                 });
-            } catch (Exception e) { success = false; }
+            } catch (OutOfMemoryError e) {
+                android.util.Log.e("FusionFSInstaller", "OOM during fusionfs extraction", e);
+                System.gc();
+                success = false;
+            } catch (Exception e) {
+                android.util.Log.e("FusionFSInstaller", "Extraction failed", e);
+                success = false;
+            }
 
             if (success) {
                 try {
@@ -129,11 +136,14 @@ public abstract class FusionFSInstaller {
                         if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(100);
                     });
                 } catch (Exception e) {
+                    android.util.Log.e("FusionFSInstaller", "Post-extraction setup failed", e);
                     success = false;
                 }
             }
 
             if (!success) {
+                android.util.Log.e("FusionFSInstaller", "System files installation failed, clearing partial data");
+                try { clearFusionDir(rootDir); } catch (Exception ignored) {}
                 if (!activity.isFinishing() && !activity.isDestroyed()) {
                     activity.runOnUiThread(() -> AppUtils.showToast(activity, R.string.unable_to_install_system_files));
                 }
