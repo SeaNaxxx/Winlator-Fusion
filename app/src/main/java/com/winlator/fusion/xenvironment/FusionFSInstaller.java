@@ -77,8 +77,11 @@ public abstract class FusionFSInstaller {
         dialog.setShowStatus(true);
 
         Executors.newSingleThreadExecutor().execute(() -> {
-            clearFusionDir(rootDir);
+            clearFusionDir(rootDir, true);
             rootDir.mkdirs();
+
+            System.gc();
+            try { Thread.sleep(100); } catch (InterruptedException ignored) {}
 
             long contentLength = 100000000L;
             try {
@@ -96,7 +99,7 @@ public abstract class FusionFSInstaller {
                         long totalSize = totalSizeRef.addAndGet(size);
                         final int progress = Math.min((int)(((float)totalSize / totalContentLength) * 70), 70);
                         if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
-                            if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(progress);
+                            try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(progress); } catch (Exception ignored) {}
                         });
                     }
                     return file;
@@ -105,7 +108,7 @@ public abstract class FusionFSInstaller {
                 android.util.Log.e("FusionFSInstaller", "OOM during fusionfs extraction", e);
                 System.gc();
                 success = false;
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 android.util.Log.e("FusionFSInstaller", "Extraction failed", e);
                 success = false;
             }
@@ -116,14 +119,14 @@ public abstract class FusionFSInstaller {
                     applyPatches(activity, rootDir);
                     copySharedRuntimeLibraries(fusionFS);
                     if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
-                        if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(75);
+                        try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(75); } catch (Exception ignored) {}
                     });
                     createWineSymlink(fusionFS);
                     createCompatibilitySymlinks(activity, fusionFS);
                     installWineFromAssets(activity, fusionFS, dialog);
                     installContainerPatternsFromAssets(activity, fusionFS);
                     if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
-                        if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(95);
+                        try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(95); } catch (Exception ignored) {}
                     });
                     installDriversFromAssets(activity);
                     fusionFS.createVersionFile(LATEST_VERSION);
@@ -133,7 +136,7 @@ public abstract class FusionFSInstaller {
                         android.util.Log.w("FusionFSInstaller", "Failed to reset container versions", e);
                     }
                     if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
-                        if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(100);
+                        try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(100); } catch (Exception ignored) {}
                     });
                 } catch (Exception e) {
                     android.util.Log.e("FusionFSInstaller", "Post-extraction setup failed", e);
@@ -143,12 +146,16 @@ public abstract class FusionFSInstaller {
 
             if (!success) {
                 android.util.Log.e("FusionFSInstaller", "System files installation failed, clearing partial data");
-                try { clearFusionDir(rootDir); } catch (Exception ignored) {}
+                try { clearFusionDir(rootDir, true); } catch (Exception ignored) {}
                 if (!activity.isFinishing() && !activity.isDestroyed()) {
-                    activity.runOnUiThread(() -> AppUtils.showToast(activity, R.string.unable_to_install_system_files));
+                    activity.runOnUiThread(() -> {
+                        try { AppUtils.showToast(activity, R.string.unable_to_install_system_files); } catch (Exception ignored) {}
+                    });
                 }
             }
-            if (!activity.isFinishing() && !activity.isDestroyed()) dialog.closeOnUiThread();
+            if (!activity.isFinishing() && !activity.isDestroyed()) {
+                try { dialog.closeOnUiThread(); } catch (Exception ignored) {}
+            }
         });
     }
 
@@ -480,13 +487,17 @@ public abstract class FusionFSInstaller {
     }
 
     private static void clearFusionDir(File rootDir) {
+        clearFusionDir(rootDir, false);
+    }
+
+    private static void clearFusionDir(File rootDir, boolean fullClean) {
         if (rootDir.isDirectory()) {
             File[] files = rootDir.listFiles();
             if (files != null) {
                 for (File file : files) {
                     if (file.isDirectory()) {
                         String name = file.getName();
-                        if (name.equals("home") || name.equals("opt") || name.equals("installed-wine") || name.equals("bionic") || name.equals("glibc") || name.equals("wine") || name.equals("wine.glibc") || name.equals("wine.bionic") || name.equals("usr.glibc") || name.equals("usr.bionic") || name.equals("etc.glibc") || name.equals("etc.bionic")) continue;
+                        if (!fullClean && (name.equals("home") || name.equals("opt") || name.equals("installed-wine"))) continue;
                     }
                     FileUtils.delete(file);
                 }
