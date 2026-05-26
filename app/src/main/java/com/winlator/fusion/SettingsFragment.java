@@ -453,7 +453,8 @@ public class SettingsFragment extends Fragment {
 
             int midiInputDevicePosition = sMIDIInputDevice.getSelectedItemPosition();
             editor.putString("midi_input_device", midiInputDevicePosition == 0 ? "none" :
-                                                 (midiInputDevicePosition == 1 ? "auto" : sMIDIInputDevice.getSelectedItem().toString()));
+                                                 (midiInputDevicePosition == 1 ? "auto" : (sMIDIInputDevice.getSelectedItem() != null ? sMIDIInputDevice.getSelectedItem().toString() : "auto")));
+
 
             String logPath = etLogFile.getText().toString().trim();
             if (!logPath.equals(defaultLogPath) && !logPath.isEmpty()) {
@@ -649,7 +650,9 @@ public class SettingsFragment extends Fragment {
 
         view.findViewById(R.id.BTInstallWine).setOnClickListener((v) -> selectWineFileForInstall());
         view.findViewById(R.id.BTRemoveWine).setOnClickListener((v) -> {
-            WineInfo wineInfo = wineInfos.get(sWineVersion.getSelectedItemPosition());
+            int pos = sWineVersion.getSelectedItemPosition();
+            if (pos < 0 || pos >= wineInfos.size()) return;
+            WineInfo wineInfo = wineInfos.get(pos);
             if (wineInfo != WineInfo.MAIN_WINE_INFO) {
                 ContentDialog.confirm(getContext(), R.string.do_you_want_to_remove_this_wine_version, () -> {
                     removeInstalledWine(wineInfo, () -> loadWineVersionSpinner(view, sWineVersion));

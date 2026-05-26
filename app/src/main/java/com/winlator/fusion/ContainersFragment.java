@@ -93,8 +93,7 @@ public class ContainersFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem menuItem) {
         if (menuItem.getItemId() == R.id.menu_item_add) {
             FusionFS fusionFS = FusionFS.find(getContext());
-            boolean fsAvailable = fusionFS.isValid();
-            if (!fsAvailable) {
+            if (!fusionFS.isFullyInstalled()) {
                 AppUtils.showToast(getContext(), R.string.unable_to_install_wine);
                 return false;
             }
