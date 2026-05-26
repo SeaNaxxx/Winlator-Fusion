@@ -155,6 +155,7 @@ public class ContainerDetailFragment extends Fragment {
         }
         final ArrayList<WineInfo>[] wineInfosRef = new ArrayList[]{wineInfos};
         final Spinner sWineVersion = view.findViewById(R.id.SWineVersion);
+        final boolean[] isArm64EC = {false};
         if (wineInfosRef[0].size() > 1) loadWineVersionSpinner(view, sWineVersion, wineInfosRef[0], isArm64EC);
 
         // Container variant selector
@@ -318,7 +319,7 @@ public class ContainerDetailFragment extends Fragment {
         TextView tvEmulatorLabel = view.findViewById(R.id.TVEmulatorLabel);
         if (tvEmulatorLabel != null) tvEmulatorLabel.setVisibility(isBionic ? View.VISIBLE : View.GONE);
 
-        final boolean[] isArm64EC = {isArm64ECContainer};
+        isArm64EC[0] = isArm64ECContainer;
         Runnable updateEmulatorUI = () -> {
             boolean showFEXCore = isArm64EC[0];
             String selectedEmulator = sEmulator != null && sEmulator.getSelectedItem() != null ? sEmulator.getSelectedItem().toString() : "Box64";
