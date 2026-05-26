@@ -152,10 +152,18 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
         envVars.put("ANDROID_SYSVSHM_SERVER", getRootDir() + UnixSocketConfig.SYSVSHM_SERVER_PATH);
         envVars.put("WINE_ROOTFS", getRootDir().getPath());
 
+        envVars.put("GCONV_PATH", getRootDir() + "/usr/lib/gconv");
+        envVars.put("LOCPATH", getRootDir() + "/usr/lib/locale");
         envVars.put("VK_LAYER_PATH", runtimeFS.getVulkanLayerPath(getRootDir()));
         envVars.put("FONTCONFIG_PATH", getRootDir() + "/usr/etc/fonts");
         envVars.put("ALSA_CONFIG_PATH", getRootDir() + "/usr/share/alsa/alsa.conf" + ":" + getRootDir() + "/usr/etc/alsa/conf.d/android_aserver.conf");
         envVars.put("ALSA_PLUGIN_DIR", getRootDir() + "/usr/lib/alsa-lib");
+        envVars.put("GIO_MODULE_DIR", getRootDir() + "/usr/lib/gio/modules");
+        envVars.put("OPENSSL_ENGINES", getRootDir() + "/usr/lib/engines-3");
+        envVars.put("OPENSSL_MODULES", getRootDir() + "/usr/lib/ossl-modules");
+        envVars.put("OPENSSL_CONF", getRootDir() + "/usr/etc/tls/openssl.cnf");
+        envVars.put("SSL_CERT_FILE", getRootDir() + "/usr/etc/tls/cert.pem");
+        envVars.put("SSL_CERT_DIR", getRootDir() + "/usr/etc/tls/certs");
 
         return envVars;
     }
