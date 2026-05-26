@@ -169,7 +169,7 @@ public class ContainerDetailFragment extends Fragment {
         graphicsDriverPickerRef[0] = new GraphicsDriverPicker(view.findViewById(R.id.LLGraphicsDriver), selectedGraphicsDriver, oldGraphicsDriverConfig, isBionic);
 
         String oldDXWrapperConfig = isEditMode() ? container.getDXWrapperConfig() : "";
-        String selectedDXWrapper = isEditMode() ? container.getDXWrapper() : Container.DEFAULT_DXWRAPPER;
+        String selectedDXWrapper = isEditMode() ? container.getDXWrapper() : container.getDefaultDXWrapperForType();
         final DXWrapperPicker[] dxwrapperPickerRef = new DXWrapperPicker[1];
         dxwrapperPickerRef[0] = new DXWrapperPicker(view.findViewById(R.id.LLDXWrapper), graphicsDriverPickerRef[0], selectedDXWrapper, oldDXWrapperConfig, isBionic);
 
@@ -498,7 +498,7 @@ public class ContainerDetailFragment extends Fragment {
 
                 String containerVariant = sContainerVariant != null ? StringUtils.parseIdentifier(sContainerVariant.getSelectedItem()) : Container.DEFAULT_VARIANT;
                 if (containerVariant == null || containerVariant.isEmpty()) containerVariant = Container.DEFAULT_VARIANT;
-                String emulator = sEmulator != null && sEmulator.getSelectedItem() != null ? sEmulator.getSelectedItem().toString() : "FEXCore";
+                String emulator = sEmulator != null && sEmulator.getSelectedItem() != null ? sEmulator.getSelectedItem().toString() : container.getDefaultEmulatorForType();
 
                 if (isEditMode()) {
                     // Prevent changing container variant on existing containers — the filesystem
