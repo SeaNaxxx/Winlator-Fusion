@@ -142,6 +142,7 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
         EnvVars envVars = new EnvVars();
         LocaleHelper.setEnvVars(envVars);
 
+        File rootDir = getRootDir();
         envVars.put("HOME", getHomePath());
         envVars.put("USER", RootFS.USER);
         envVars.put("TMPDIR", getTmpDir().getPath());
@@ -149,21 +150,21 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
         envVars.put("PATH", runtimeFS.getPathForGlibc(getWinePath()));
         envVars.put("LD_LIBRARY_PATH", getLdLibraryPath());
         envVars.put("BOX64_LD_LIBRARY_PATH", getBox64LdLibraryPath());
-        envVars.put("ANDROID_SYSVSHM_SERVER", getRootDir() + UnixSocketConfig.SYSVSHM_SERVER_PATH);
-        envVars.put("WINE_ROOTFS", getRootDir().getPath());
+        envVars.put("ANDROID_SYSVSHM_SERVER", rootDir + UnixSocketConfig.SYSVSHM_SERVER_PATH);
+        envVars.put("WINE_ROOTFS", rootDir.getPath());
 
-        envVars.put("GCONV_PATH", getRootDir() + "/usr/lib/gconv");
-        envVars.put("LOCPATH", getRootDir() + "/usr/lib/locale");
-        envVars.put("VK_LAYER_PATH", runtimeFS.getVulkanLayerPath(getRootDir()));
-        envVars.put("FONTCONFIG_PATH", getRootDir() + "/usr/etc/fonts");
-        envVars.put("ALSA_CONFIG_PATH", getRootDir() + "/usr/share/alsa/alsa.conf" + ":" + getRootDir() + "/usr/etc/alsa/conf.d/android_aserver.conf");
-        envVars.put("ALSA_PLUGIN_DIR", getRootDir() + "/usr/lib/alsa-lib");
-        envVars.put("GIO_MODULE_DIR", getRootDir() + "/usr/lib/gio/modules");
-        envVars.put("OPENSSL_ENGINES", getRootDir() + "/usr/lib/engines-3");
-        envVars.put("OPENSSL_MODULES", getRootDir() + "/usr/lib/ossl-modules");
-        envVars.put("OPENSSL_CONF", getRootDir() + "/usr/etc/tls/openssl.cnf");
-        envVars.put("SSL_CERT_FILE", getRootDir() + "/usr/etc/tls/cert.pem");
-        envVars.put("SSL_CERT_DIR", getRootDir() + "/usr/etc/tls/certs");
+        envVars.put("GCONV_PATH", rootDir + "/usr/lib/gconv");
+        envVars.put("LOCPATH", rootDir + "/usr/lib/locale");
+        envVars.put("VK_LAYER_PATH", runtimeFS.getVulkanLayerPath(rootDir));
+        envVars.put("FONTCONFIG_PATH", rootDir + "/usr/etc/fonts");
+        envVars.put("ALSA_CONFIG_PATH", rootDir + "/usr/share/alsa/alsa.conf" + ":" + rootDir + "/usr/etc/alsa/conf.d/android_aserver.conf");
+        envVars.put("ALSA_PLUGIN_DIR", rootDir + "/usr/lib/alsa-lib");
+        envVars.put("GIO_MODULE_DIR", rootDir + "/usr/lib/gio/modules");
+        envVars.put("OPENSSL_ENGINES", rootDir + "/usr/lib/engines-3");
+        envVars.put("OPENSSL_MODULES", rootDir + "/usr/lib/ossl-modules");
+        envVars.put("OPENSSL_CONF", rootDir + "/usr/etc/tls/openssl.cnf");
+        envVars.put("SSL_CERT_FILE", rootDir + "/usr/etc/tls/cert.pem");
+        envVars.put("SSL_CERT_DIR", rootDir + "/usr/etc/tls/certs");
 
         return envVars;
     }

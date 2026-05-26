@@ -353,7 +353,9 @@ public abstract class FusionFSInstaller {
             if (usrBionicEtc.isDirectory()) {
                 try {
                     com.winlator.fusion.core.FileUtils.copy(usrBionicEtc, etcBionic);
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                    android.util.Log.e("FusionFSInstaller", "Failed to copy etc.bionic from " + usrBionicEtc + " to " + etcBionic, e);
+                }
             }
         }
     }
@@ -401,8 +403,8 @@ public abstract class FusionFSInstaller {
 
     private static void applyPatches(Context context, File rootDir) {
         try {
-            if (assetExists(context, "container_pattern_common.tzst")) {
-                TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, "container_pattern_common.tzst", rootDir);
+            if (assetExists(context, FusionFS.ASSET_CONTAINER_PATTERN_COMMON)) {
+                TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FusionFS.ASSET_CONTAINER_PATTERN_COMMON, rootDir);
             }
         } catch (Exception e) {}
         try {
