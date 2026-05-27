@@ -14,6 +14,7 @@
 
 
     <application
+        android:name="com.winlator.fusion.FusionApplication"
         android:icon="@mipmap/ic_launcher"
         android:appCategory="game"
         android:isGame="true"
