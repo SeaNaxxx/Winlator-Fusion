@@ -156,12 +156,19 @@ public class FusionFS {
         if (WineInfo.isMainWineVersion(wineVersion)) {
             return getWineDir().getPath();
         }
+        boolean isArm64EC = wineVersion != null && wineVersion.endsWith("-arm64ec");
+        boolean isProton = wineVersion != null && wineVersion.startsWith("proton-");
+        if (isProton || isArm64EC) {
+            File optDir = new File(bionicDir, "opt/" + wineVersion);
+            if (optDir.isDirectory()) return optDir.getPath();
+        }
         File installedWineDir = getInstalledWineDir();
         File versionDir = new File(installedWineDir, wineVersion);
         if (versionDir.isDirectory()) return versionDir.getPath();
-        File optDir = new File(bionicDir, "opt/" + wineVersion);
-        if (optDir.isDirectory()) return optDir.getPath();
-        return getWineDir().getPath();
+        if (!isProton && !isArm64EC) {
+            return getWineDir().getPath();
+        }
+        return new File(bionicDir, "opt/" + wineVersion).getPath();
     }
 
     public File getInstalledWineDir() {

@@ -269,8 +269,10 @@ public class BionicProgramLauncherComponent extends EnvironmentComponent {
         String winePath;
         if (strategy != null) {
             winePath = strategy.getWineBinaryPath(wineInfo != null ? wineInfo : WineInfo.fromIdentifier(context, wineVersion));
-        } else if (WineInfo.isBionicDefaultWineVersion(wineVersion) || WineInfo.isMainWineVersion(wineVersion)) {
-            winePath = imageFs.getWinePathForVersion(WineInfo.BIONIC_WINE_IDENTIFIER) + "/bin";
+        } else if (WineInfo.isBionicDefaultWineVersion(wineVersion)) {
+            winePath = imageFs.getWinePathForVersion(wineVersion) + "/bin";
+        } else if (WineInfo.isMainWineVersion(wineVersion)) {
+            winePath = imageFs.getWinePathForVersion(wineVersion) + "/bin";
         } else {
             winePath = imageFs.getWinePathForVersion(wineVersion) + "/bin";
         }

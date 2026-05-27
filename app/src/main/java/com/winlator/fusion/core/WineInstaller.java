@@ -264,7 +264,7 @@ public abstract class WineInstaller {
                     if (optFiles != null) {
                         for (File file : optFiles) {
                             String name = file.getName();
-                            if (name.startsWith("proton") && file.isDirectory()) {
+                            if (file.isDirectory() && (name.startsWith("proton") || name.endsWith("-arm64ec"))) {
                                 File binDir = new File(file, "bin");
                                 if (binDir.isDirectory()) {
                                     wineInfos.add(WineInfo.fromIdentifier(context, name));

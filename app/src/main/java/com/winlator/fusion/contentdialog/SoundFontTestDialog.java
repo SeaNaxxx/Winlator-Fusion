@@ -12,6 +12,8 @@ import com.winlator.fusion.widget.SimplePianoKeyboard;
 import com.winlator.fusion.winhandler.MIDIHandler;
 
 public class SoundFontTestDialog extends ContentDialog {
+    private MIDIHandler midiHandler = null;
+
     public SoundFontTestDialog(Context context, String soundfont) {
         super(context, R.layout.soundfont_test_dialog);
         setIcon(R.drawable.icon_piano);
@@ -19,9 +21,11 @@ public class SoundFontTestDialog extends ContentDialog {
 
         String soundfontPath = GeneralComponents.getDefinitivePath(GeneralComponents.Type.SOUNDFONT, context, soundfont);
 
-        final MIDIHandler midiHandler = new MIDIHandler(null);
-        midiHandler.init();
-        midiHandler.loadSoundFont(soundfontPath);
+        midiHandler = new MIDIHandler(null);
+        boolean initialized = midiHandler.init();
+        if (initialized) {
+            midiHandler.loadSoundFont(soundfontPath);
+        }
 
         int[] channel = {0};
         final Spinner sInstrument = findViewById(R.id.SInstrument);
@@ -30,7 +34,7 @@ public class SoundFontTestDialog extends ContentDialog {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
                 channel[0] = position == 1 ? 9 : 0;
-                midiHandler.programChange(channel[0], sInstrument.getSelectedItemPosition());
+                if (midiHandler != null) midiHandler.programChange(channel[0], sInstrument.getSelectedItemPosition());
             }
 
             @Override
@@ -41,7 +45,7 @@ public class SoundFontTestDialog extends ContentDialog {
         sInstrument.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
-                midiHandler.programChange(0, position);
+                if (midiHandler != null) midiHandler.programChange(0, position);
             }
 
             @Override
@@ -52,15 +56,24 @@ public class SoundFontTestDialog extends ContentDialog {
         pianoKeyboard.setOnKeyListener(new SimplePianoKeyboard.OnKeyListener() {
             @Override
             public void onKeyDown(int index) {
-                midiHandler.noteOn(channel[0], index + 60, 100);
+                if (midiHandler != null) midiHandler.noteOn(channel[0], index + 60, 100);
             }
 
             @Override
             public void onKeyUp(int index) {
-                midiHandler.noteOff(channel[0], index + 60);
+                if (midiHandler != null) midiHandler.noteOff(channel[0], index + 60);
             }
         });
 
         findViewById(R.id.LLBottomBar).setVisibility(View.GONE);
+    }
+
+    @Override
+    public void dismiss() {
+        if (midiHandler != null) {
+            midiHandler.destroy();
+            midiHandler = null;
+        }
+        super.dismiss();
     }
 }

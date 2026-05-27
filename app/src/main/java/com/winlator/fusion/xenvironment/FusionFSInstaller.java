@@ -125,9 +125,10 @@ public abstract class FusionFSInstaller {
                     installWineFromAssets(activity, fusionFS, dialog);
                     installContainerPatternsFromAssets(activity, fusionFS);
                     if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
-                        try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(95); } catch (Exception ignored) {}
+                        try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(90); } catch (Exception ignored) {}
                     });
                     installDriversFromAssets(activity);
+                    extractAdditionalAssets(activity, fusionFS);
                     fusionFS.createVersionFile(LATEST_VERSION);
                     try {
                         resetContainerVersions(activity);
@@ -254,6 +255,21 @@ public abstract class FusionFSInstaller {
             adrenotoolsManager.extractDriverFromResources(driver);
     }
 
+    private static void extractAdditionalAssets(Context context, FusionFS fusionFS) {
+        String[] additionalAssets = {"input_dlls.tzst", "layers.tzst"};
+        for (String asset : additionalAssets) {
+            if (!assetExists(context, asset)) continue;
+            File destDir = fusionFS.getInstalledWineDir();
+            File destFile = new File(destDir, asset);
+            if (destFile.exists()) continue;
+            try {
+                FileUtils.copy(context, asset, destFile);
+            } catch (Exception e) {
+                android.util.Log.w("FusionFSInstaller", "Failed to extract " + asset, e);
+            }
+        }
+    }
+
     public static boolean hasProtonInstalled(Context context) {
         FusionFS fusionFS = FusionFS.find(context);
         File bionicOptDir = new File(fusionFS.getBionicDir(), "opt");
@@ -261,6 +277,20 @@ public abstract class FusionFSInstaller {
         if (optFiles != null) {
             for (File f : optFiles) {
                 if (f.isDirectory() && f.getName().startsWith("proton") && new File(f, "bin").isDirectory()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean hasAnyBionicWineInstalled(Context context) {
+        FusionFS fusionFS = FusionFS.find(context);
+        File bionicOptDir = new File(fusionFS.getBionicDir(), "opt");
+        File[] optFiles = bionicOptDir.listFiles();
+        if (optFiles != null) {
+            for (File f : optFiles) {
+                if (f.isDirectory() && new File(f, "bin").isDirectory()) {
                     return true;
                 }
             }
@@ -452,19 +482,11 @@ public abstract class FusionFSInstaller {
         File imagefsLink = new File(filesDir, "imagefs");
         File rootfsLink = new File(filesDir, "rootfs");
 
-        if (!imagefsLink.exists()) {
-            FileUtils.symlink(fusionFS.getBionicDir().getAbsolutePath(), imagefsLink.getAbsolutePath());
+        if (imagefsLink.exists()) {
+            try { imagefsLink.delete(); } catch (Exception ignored) {}
         }
-        if (!rootfsLink.exists()) {
-            FileUtils.symlink(fusionFS.getGlibcDir().getAbsolutePath(), rootfsLink.getAbsolutePath());
-        }
-
-        File pkgBase = context.getDataDir().getParentFile();
-        if (pkgBase != null) {
-            createCompatSymlinkDir(new File(pkgBase, "com.winlator/files/rootfs"), fusionFS.getGlibcDir());
-            createCompatSymlinkDir(new File(pkgBase, "com.winlator/files/imagefs"), fusionFS.getBionicDir());
-            createCompatSymlinkDir(new File(pkgBase, "com.winlator.cmod/files/imagefs"), fusionFS.getBionicDir());
-            createCompatSymlinkDir(new File(pkgBase, "com.termux/files/usr"), fusionFS.getBionicDir());
+        if (rootfsLink.exists()) {
+            try { rootfsLink.delete(); } catch (Exception ignored) {}
         }
     }
 

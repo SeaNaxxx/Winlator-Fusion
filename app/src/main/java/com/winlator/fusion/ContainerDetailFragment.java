@@ -656,7 +656,10 @@ public class ContainerDetailFragment extends Fragment {
             Spinner sMouseWarpOverride = view.findViewById(R.id.SMouseWarpOverride);
 
             final String[] mouseWarpOverrideValues = new String[]{"disable", "enable", "force"};
-            registryEditor.setStringValue("Software\\Wine\\DirectInput", "MouseWarpOverride", mouseWarpOverrideValues[sMouseWarpOverride.getSelectedItemPosition()]);
+            int warpPosition = sMouseWarpOverride.getSelectedItemPosition();
+            if (warpPosition >= 0 && warpPosition < mouseWarpOverrideValues.length) {
+                registryEditor.setStringValue("Software\\Wine\\DirectInput", "MouseWarpOverride", mouseWarpOverrideValues[warpPosition]);
+            }
 
             registryEditor.setStringValue("Software\\Wine\\Direct3D", "shader_backend", "glsl");
             registryEditor.setStringValue("Software\\Wine\\Direct3D", "UseGLSL", "enabled");

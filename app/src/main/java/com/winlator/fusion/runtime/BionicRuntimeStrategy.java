@@ -272,11 +272,7 @@ public class BionicRuntimeStrategy implements RuntimeStrategy {
     @Override
     public String getWineBinaryPath(WineInfo wineInfo) {
         String wineVersion = container != null ? container.getWineVersion() : WineInfo.MAIN_WINE_INFO.identifier();
-        if (WineInfo.isMainWineVersion(wineVersion) || WineInfo.isBionicDefaultWineVersion(wineVersion)) {
-            return fusionFS.getWinePathForVersion(WineInfo.BIONIC_WINE_IDENTIFIER) + "/bin";
-        } else {
-            return fusionFS.getWinePathForVersion(wineVersion) + "/bin";
-        }
+        return fusionFS.getWinePathForVersion(wineVersion) + "/bin";
     }
 
     @Override

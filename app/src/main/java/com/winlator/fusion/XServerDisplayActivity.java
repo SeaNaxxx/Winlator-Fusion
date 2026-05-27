@@ -196,7 +196,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
             if (container.isBionic()) {
                 rootFS = RootFS.fromDir(FusionFS.find(this).getBionicDir());
-                if (!FusionFSInstaller.hasProtonInstalled(this)) {
+                if (!FusionFSInstaller.hasAnyBionicWineInstalled(this)) {
                     AppUtils.showToast(this, R.string.proton_not_installed);
                     finish();
                     return;
@@ -233,7 +233,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 if (wineInfo != WineInfo.MAIN_WINE_INFO && wineInfo.path != null) {
                     rootFS.setWinePath(wineInfo.path);
                 } else {
-                    rootFS.setWinePath(FusionFS.find(this).getWinePathForVersion(WineInfo.BIONIC_WINE_IDENTIFIER));
+                    rootFS.setWinePath(FusionFS.find(this).getWinePathForVersion(wineVersion));
                 }
             } else if (wineInfo != WineInfo.MAIN_WINE_INFO) {
                 rootFS.setWinePath(wineInfo.path);

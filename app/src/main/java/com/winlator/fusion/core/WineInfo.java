@@ -137,6 +137,7 @@ public class WineInfo implements Parcelable {
             String type = matcher.group(1) != null ? matcher.group(1) : "wine";
             String arch = matcher.group(4) != null ? matcher.group(4) : "x86_64";
             boolean isProton = type.equals("proton");
+            boolean isArm64EC = arch.equals("arm64ec");
 
             com.winlator.fusion.xenvironment.FusionFS fusionFS = com.winlator.fusion.xenvironment.FusionFS.find(context);
 
@@ -145,10 +146,10 @@ public class WineInfo implements Parcelable {
                 return new WineInfo(type, matcher.group(2), matcher.group(3), arch, wineDir.getPath());
             }
 
-            if (isProton) {
-                File imagefsWinePath = new File(fusionFS.getBionicDir(), "opt/" + identifier);
-                if (imagefsWinePath.isDirectory()) {
-                    return new WineInfo(type, matcher.group(2), matcher.group(3), arch, imagefsWinePath.getPath());
+            if (isProton || isArm64EC) {
+                File bionicOptPath = new File(fusionFS.getBionicDir(), "opt/" + identifier);
+                if (bionicOptPath.isDirectory()) {
+                    return new WineInfo(type, matcher.group(2), matcher.group(3), arch, bionicOptPath.getPath());
                 }
             }
 
@@ -158,18 +159,14 @@ public class WineInfo implements Parcelable {
                 return new WineInfo(type, matcher.group(2), matcher.group(3), arch, winePath.getPath());
             }
 
-            if (!isProton) {
+            if (!isProton && !isArm64EC) {
                 File wineDir = fusionFS.getWineDir();
                 if (wineDir.isDirectory()) {
                     return new WineInfo(type, matcher.group(2), matcher.group(3), arch, wineDir.getPath());
                 }
-                File imagefsWinePath = new File(fusionFS.getBionicDir(), "opt/" + identifier);
-                if (imagefsWinePath.isDirectory()) {
-                    return new WineInfo(type, matcher.group(2), matcher.group(3), arch, imagefsWinePath.getPath());
-                }
             }
 
-            File fallbackPath = isProton
+            File fallbackPath = (isProton || isArm64EC)
                 ? new File(fusionFS.getBionicDir(), "opt/" + identifier)
                 : fusionFS.getWineDir();
             return new WineInfo(type, matcher.group(2), matcher.group(3), arch, fallbackPath.getPath());

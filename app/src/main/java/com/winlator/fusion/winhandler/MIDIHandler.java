@@ -53,8 +53,15 @@ public class MIDIHandler {
         this.winHandler = winHandler;
     }
 
+    private static boolean nativeAvailable = false;
     static {
-        System.loadLibrary("midihandler");
+        try {
+            System.loadLibrary("midihandler");
+            nativeAvailable = true;
+        } catch (UnsatisfiedLinkError e) {
+            android.util.Log.w("MIDIHandler", "Native midihandler library not available: " + e.getMessage());
+            nativeAvailable = false;
+        }
     }
 
     public void outputPortConnect() {
@@ -91,6 +98,7 @@ public class MIDIHandler {
     }
 
     public boolean init() {
+        if (!nativeAvailable) return false;
         if (nativePtr != 0) return true;
         long nativePtr = nativeAllocate();
         if (nativePtr != 0) {
@@ -105,9 +113,9 @@ public class MIDIHandler {
     }
 
     public boolean sendShortMsg(byte command, byte channel, byte param1, byte param2) {
-        if (!winHandler.initReceived || midiInClients.isEmpty()) return false;
+        if (!nativeAvailable || !winHandler.initReceived || midiInClients.isEmpty()) return false;
         final ByteBuffer sendData = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
-        sendData.putInt(0, (byte)(command | channel));
+        sendData.put(0, (byte)(command | channel));
         sendData.put(1, param1);
         sendData.put(2, param2);
 
@@ -193,22 +201,27 @@ public class MIDIHandler {
     }
 
     public void noteOn(int channel, int note, int velocity) {
+        if (!nativeAvailable || nativePtr == 0) return;
         noteOn(nativePtr, channel, note, velocity);
     }
 
     public void noteOff(int channel, int note) {
+        if (!nativeAvailable || nativePtr == 0) return;
         noteOff(nativePtr, channel, note);
     }
 
     public void loadSoundFont(String soundfontPath) {
+        if (!nativeAvailable || nativePtr == 0) return;
         loadSoundFont(nativePtr, soundfontPath);
     }
 
     public void programChange(int channel, int program) {
+        if (!nativeAvailable || nativePtr == 0) return;
         programChange(nativePtr, channel, program);
     }
 
     public void destroy() {
+        if (!nativeAvailable) return;
         if (nativePtr != 0) {
             destroy(nativePtr);
             nativePtr = 0;
