@@ -325,8 +325,10 @@ public abstract class FusionFSInstaller {
         new File(glibcDir, "opt").mkdirs();
         new File(glibcDir, "etc").mkdirs();
 
-        fusionFS.getWineGlibcDir().mkdirs();
-        fusionFS.getWineBionicDir().mkdirs();
+        File wineGlibcDir = fusionFS.getWineGlibcDir();
+        File wineBionicDir = fusionFS.getWineBionicDir();
+        if (!wineGlibcDir.isDirectory()) wineGlibcDir.mkdirs();
+        if (!wineBionicDir.isDirectory()) wineBionicDir.mkdirs();
 
         createWineSymlink(fusionFS);
         createCompatibilitySymlinks(context, fusionFS);
@@ -361,8 +363,10 @@ public abstract class FusionFSInstaller {
             imagefsDir.renameTo(bionicDir);
         }
 
-        new File(rootDir, "wine.glibc").mkdirs();
-        new File(rootDir, "wine.bionic").mkdirs();
+        File wineGlibc = new File(rootDir, "wine.glibc");
+        File wineBionic = new File(rootDir, "wine.bionic");
+        if (!wineGlibc.isDirectory()) wineGlibc.mkdirs();
+        if (!wineBionic.isDirectory()) wineBionic.mkdirs();
 
         populateEtcBionicIfNeeded(rootDir);
         ensureBionicSymlinks(rootDir);
