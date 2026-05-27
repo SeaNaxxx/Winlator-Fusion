@@ -117,7 +117,7 @@ public abstract class FusionFSInstaller {
                 try {
                     renameExtractedDirs(rootDir);
                     applyPatches(activity, rootDir);
-                    copySharedRuntimeLibraries(fusionFS);
+                    ensureGlibcSysvshm(fusionFS);
                     if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
                         try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(75); } catch (Exception ignored) {}
                     });
@@ -432,17 +432,14 @@ public abstract class FusionFSInstaller {
         } catch (Exception e) {}
     }
 
-    private static void copySharedRuntimeLibraries(FusionFS fusionFS) {
-        File bionicLibDir = new File(fusionFS.getBionicDir(), "/usr/lib");
+    private static void ensureGlibcSysvshm(FusionFS fusionFS) {
         File glibcLibDir = new File(fusionFS.getGlibcDir(), "/usr/lib");
-        if (!glibcLibDir.isDirectory()) glibcLibDir.mkdirs();
-
-        String[] sharedLibs = {"libandroid-sysvshm.so"};
-        for (String libName : sharedLibs) {
-            File src = new File(bionicLibDir, libName);
-            File dst = new File(glibcLibDir, libName);
-            if (src.exists() && !dst.exists()) {
-                FileUtils.copy(src, dst);
+        File sysvshmSrc = new File(glibcLibDir, "libandroid-sysvshm.so");
+        if (!sysvshmSrc.exists()) {
+            File glibcLibX8664Dir = new File(fusionFS.getGlibcDir(), "/usr/lib/x86_64-linux-gnu");
+            File altSrc = new File(glibcLibX8664Dir, "libandroid-sysvshm.so");
+            if (altSrc.exists()) {
+                FileUtils.copy(altSrc, sysvshmSrc);
             }
         }
     }
@@ -457,6 +454,21 @@ public abstract class FusionFSInstaller {
         }
         if (!rootfsLink.exists()) {
             FileUtils.symlink(fusionFS.getGlibcDir().getAbsolutePath(), rootfsLink.getAbsolutePath());
+        }
+
+        File dataDir = context.getDataDir();
+        createCompatSymlinkDir(new File(dataDir, "com.winlator/files"), fusionFS.getGlibcDir());
+        createCompatSymlinkDir(new File(dataDir, "com.winlator.cmod/files"), fusionFS.getBionicDir());
+        createCompatSymlinkDir(new File(dataDir, "com.termux/files"), fusionFS.getBionicDir());
+    }
+
+    private static void createCompatSymlinkDir(File linkDir, File targetDir) {
+        if (linkDir.exists()) return;
+        linkDir.getParentFile().mkdirs();
+        try {
+            FileUtils.symlink(targetDir.getAbsolutePath(), linkDir.getAbsolutePath());
+        } catch (Exception e) {
+            android.util.Log.w("FusionFSInstaller", "Cannot create compat symlink " + linkDir + ": " + e.getMessage());
         }
     }
 
