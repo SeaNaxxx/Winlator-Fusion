@@ -934,7 +934,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             FileUtils.delete(new File(libDir, "libvulkan_vortek.so"));
             FileUtils.delete(new File(libDir, "libGL.so.1.7.0"));
 
-            File vulkanICDDir = new File(rootDir, "/usr/share/vulkan/icd.d");
+            File vulkanICDDir = new File(rootDir, "usr/share/vulkan/icd.d");
             FileUtils.delete(vulkanICDDir);
             vulkanICDDir.mkdirs();
 
@@ -1212,8 +1212,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         boolean isArm64EC = wineInfo != null && wineInfo.isArm64EC();
         String system32Arch = isArm64EC ? "aarch64-windows" : "x86_64-windows";
         
-        File wineSystem32Dir = new File(wineDir, "/lib/wine/" + system32Arch);
-        File wineSysWoW64Dir = new File(wineDir, "/lib/wine/i386-windows");
+        File wineSystem32Dir = new File(wineDir, "lib/wine/" + system32Arch);
+        File wineSysWoW64Dir = new File(wineDir, "lib/wine/i386-windows");
         File containerSystem32Dir = new File(rootDir, RootFS.WINEPREFIX+"/drive_c/windows/system32");
         File containerSysWoW64Dir = new File(rootDir, RootFS.WINEPREFIX+"/drive_c/windows/syswow64");
 
@@ -1353,7 +1353,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
     private void applyGeneralPatches(Container container) {
         File rootDir = rootFS.getRootDir();
-        FileUtils.delete(new File(rootDir, "/opt/apps"));
+        FileUtils.delete(new File(rootDir, "opt/apps"));
 
         TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, FusionFS.ASSET_CONTAINER_PATTERN_COMMON, rootDir);
 

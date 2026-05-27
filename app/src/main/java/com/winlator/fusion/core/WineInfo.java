@@ -146,7 +146,7 @@ public class WineInfo implements Parcelable {
             }
 
             if (isProton) {
-                File imagefsWinePath = new File(fusionFS.getBionicDir(), "/opt/" + identifier);
+                File imagefsWinePath = new File(fusionFS.getBionicDir(), "opt/" + identifier);
                 if (imagefsWinePath.isDirectory()) {
                     return new WineInfo(type, matcher.group(2), matcher.group(3), arch, imagefsWinePath.getPath());
                 }
@@ -163,14 +163,14 @@ public class WineInfo implements Parcelable {
                 if (wineDir.isDirectory()) {
                     return new WineInfo(type, matcher.group(2), matcher.group(3), arch, wineDir.getPath());
                 }
-                File imagefsWinePath = new File(fusionFS.getBionicDir(), "/opt/" + identifier);
+                File imagefsWinePath = new File(fusionFS.getBionicDir(), "opt/" + identifier);
                 if (imagefsWinePath.isDirectory()) {
                     return new WineInfo(type, matcher.group(2), matcher.group(3), arch, imagefsWinePath.getPath());
                 }
             }
 
             File fallbackPath = isProton
-                ? new File(fusionFS.getBionicDir(), "/opt/" + identifier)
+                ? new File(fusionFS.getBionicDir(), "opt/" + identifier)
                 : fusionFS.getWineDir();
             return new WineInfo(type, matcher.group(2), matcher.group(3), arch, fallbackPath.getPath());
         }

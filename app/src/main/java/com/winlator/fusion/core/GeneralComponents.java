@@ -158,7 +158,7 @@ public abstract class GeneralComponents {
     }
 
     public static File getComponentDir(Type type, Context context) {
-        File file = new File(context.getFilesDir(), "/installed_components/"+type.lowerName());
+        File file = new File(context.getFilesDir(), "installed_components/"+type.lowerName());
         if (!file.isDirectory()) file.mkdirs();
         return file;
     }
@@ -289,7 +289,7 @@ public abstract class GeneralComponents {
 
         String filename = type.lowerName()+"-"+identifier+".tzst";
         File destination = new File(componentDir, filename);
-        TarCompressorUtils.compress(TarCompressorUtils.Type.ZSTD, new File(tempDir, "/."), destination, MainActivity.CONTAINER_PATTERN_COMPRESSION_LEVEL);
+        TarCompressorUtils.compress(TarCompressorUtils.Type.ZSTD, new File(tempDir, "."), destination, MainActivity.CONTAINER_PATTERN_COMPRESSION_LEVEL);
         FileUtils.delete(tempDir);
     }
 

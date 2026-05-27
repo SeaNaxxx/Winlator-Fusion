@@ -76,7 +76,7 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
 
     @Override
     public File getBinDir() {
-        return new File(getRootDir(), "/usr/local/bin");
+        return new File(getRootDir(), "usr/local/bin");
     }
 
     @Override

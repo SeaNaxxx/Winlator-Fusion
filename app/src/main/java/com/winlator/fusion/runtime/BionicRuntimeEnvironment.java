@@ -47,10 +47,10 @@ public class BionicRuntimeEnvironment implements RuntimeEnvironment {
         File tmpDir = profile.getTmpDir();
         if (!tmpDir.isDirectory()) tmpDir.mkdirs();
 
-        File socketTmpDir = new File(profile.getRootDir(), "/tmp");
+        File socketTmpDir = new File(profile.getRootDir(), "tmp");
         if (!socketTmpDir.isDirectory()) socketTmpDir.mkdirs();
 
-        File usrTmpDir = new File(profile.getRootDir(), "/usr/tmp");
+        File usrTmpDir = new File(profile.getRootDir(), "usr/tmp");
         if (!usrTmpDir.isDirectory()) usrTmpDir.mkdirs();
     }
 
@@ -129,7 +129,7 @@ public class BionicRuntimeEnvironment implements RuntimeEnvironment {
     @Override
     public void postSetup(XEnvironment environment, Container container) {
         if (container != null) {
-            File fexConfigDir = new File(ImageFs.find(context).getRootDir(), "/home/xuser/.fex-emu");
+            File fexConfigDir = new File(ImageFs.find(context).getRootDir(), "home/xuser/.fex-emu");
             if (!fexConfigDir.isDirectory()) fexConfigDir.mkdirs();
             File fexConfigFile = new File(fexConfigDir, "Config.json");
             FEXCoreManager.writeToConfigFile(fexConfigFile, container.getFEXCorePreset(), context);

@@ -48,8 +48,8 @@ public class NetworkInfoUpdateComponent extends EnvironmentComponent {
 
     private void updateIFAddrsFile(List<NetworkHelper.IFAddress> ifAddresses) {
         FusionFS fusionFS = FusionFS.find(environment.getContext());
-        File bionicTmp = new File(fusionFS.getBionicDir(), "/usr/tmp");
-        File glibcTmp = new File(fusionFS.getGlibcDir(), "/tmp");
+        File bionicTmp = new File(fusionFS.getBionicDir(), "usr/tmp");
+        File glibcTmp = new File(fusionFS.getGlibcDir(), "tmp");
 
         String content = "";
         if (!ifAddresses.isEmpty()) {
@@ -73,8 +73,8 @@ public class NetworkInfoUpdateComponent extends EnvironmentComponent {
 
         FusionFS fusionFS = FusionFS.find(environment.getContext());
 
-        File bionicEtcHosts = new File(fusionFS.getBionicDir(), "/usr/etc/hosts");
-        File glibcEtcHosts = new File(fusionFS.getGlibcDir(), "/etc/hosts");
+        File bionicEtcHosts = new File(fusionFS.getBionicDir(), "usr/etc/hosts");
+        File glibcEtcHosts = new File(fusionFS.getGlibcDir(), "etc/hosts");
 
         FileUtils.writeString(bionicEtcHosts, hostsContent);
         FileUtils.writeString(glibcEtcHosts, hostsContent);

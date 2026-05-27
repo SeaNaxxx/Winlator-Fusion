@@ -160,7 +160,7 @@ public class BionicProgramLauncherComponent extends EnvironmentComponent {
             }
         }
 
-        File box64File = new File(rootDir, "/usr/bin/box64");
+        File box64File = new File(rootDir, "usr/bin/box64");
         if (box64File.exists()) {
             FileUtils.chmod(box64File, 0755);
         }
@@ -169,7 +169,7 @@ public class BionicProgramLauncherComponent extends EnvironmentComponent {
     private void copyDefaultBox64RCFile() {
         Context context = environment.getContext();
         ImageFs imageFs = ImageFs.find(context);
-        File rcFile = new File(imageFs.getRootDir(), "/etc/config.box64rc");
+        File rcFile = new File(imageFs.getRootDir(), "etc/config.box64rc");
         if (!rcFile.exists()) {
             FileUtils.copy(context, "box64/default.box64rc", rcFile);
         }
@@ -305,7 +305,7 @@ public class BionicProgramLauncherComponent extends EnvironmentComponent {
             command = imageFs.getBinDir() + "/box64 " + guestExecutable;
         }
 
-        File box64File = new File(rootDir, "/usr/bin/box64");
+        File box64File = new File(rootDir, "usr/bin/box64");
         if (box64File.exists()) {
             FileUtils.chmod(box64File, 0755);
         }
@@ -336,7 +336,7 @@ public class BionicProgramLauncherComponent extends EnvironmentComponent {
         envVars.putAll(Box64PresetManager.getEnvVars(context, box64Preset));
 
         ImageFs imageFs = ImageFs.find(context);
-        File box64RCFile = new File(imageFs.getRootDir(), "/etc/config.box64rc");
+        File box64RCFile = new File(imageFs.getRootDir(), "etc/config.box64rc");
         envVars.put("BOX64_RCFILE", box64RCFile.getPath());
     }
 
