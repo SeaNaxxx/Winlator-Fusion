@@ -82,7 +82,7 @@ public class FusionFS {
 
     public boolean isFullyInstalled() {
         if (!isValid()) return false;
-        return isWineInstalled() && isBionicInstalled();
+        return (isGlibcInstalled() || isBionicInstalled()) && isWineInstalled();
     }
 
     public int getVersion() {
