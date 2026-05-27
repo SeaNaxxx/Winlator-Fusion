@@ -11,28 +11,33 @@ import java.util.Iterator;
 public class XEnvironment implements Iterable<EnvironmentComponent> {
     private final Context context;
     private final FusionFS fusionFS;
+    private final RootFS rootFS;
     private com.winlator.fusion.xserver.XServer xServer;
     private final ArrayList<EnvironmentComponent> components = new ArrayList<>();
 
     public XEnvironment(Context context, FusionFS fusionFS) {
         this.context = context;
         this.fusionFS = fusionFS;
+        this.rootFS = RootFS.fromDir(fusionFS.getGlibcDir());
     }
 
     public XEnvironment(Context context, FusionFS fusionFS, com.winlator.fusion.xserver.XServer xServer) {
         this.context = context;
         this.fusionFS = fusionFS;
+        this.rootFS = RootFS.fromDir(fusionFS.getGlibcDir());
         this.xServer = xServer;
     }
 
     public XEnvironment(Context context, RootFS rootFS) {
         this.context = context;
         this.fusionFS = FusionFS.fromDir(rootFS.getRootDir().getParentFile());
+        this.rootFS = rootFS;
     }
 
     public XEnvironment(Context context, RootFS rootFS, com.winlator.fusion.xserver.XServer xServer) {
         this.context = context;
         this.fusionFS = FusionFS.fromDir(rootFS.getRootDir().getParentFile());
+        this.rootFS = rootFS;
         this.xServer = xServer;
     }
 
@@ -45,7 +50,7 @@ public class XEnvironment implements Iterable<EnvironmentComponent> {
     }
 
     public RootFS getRootFS() {
-        return RootFS.fromDir(fusionFS.getGlibcDir());
+        return rootFS;
     }
 
     public ImageFs getImageFs() {

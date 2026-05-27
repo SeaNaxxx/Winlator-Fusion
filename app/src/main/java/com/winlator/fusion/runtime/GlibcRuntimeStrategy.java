@@ -129,7 +129,22 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
 
     @Override
     public String getBox64LdLibraryPath() {
-        return runtimeFS.getBox64LdLibraryPathForVariant(Container.GLIBC);
+        StringBuilder path = new StringBuilder();
+        // Add wine library directories for box64 library resolution
+        String winePath = getWinePath();
+        if (winePath != null && !winePath.isEmpty()) {
+            File rootDir = getRootDir();
+            File wineLibDir = new File(rootDir, winePath + "/lib");
+            if (wineLibDir.isDirectory()) path.append(wineLibDir.getPath());
+            File wineLib64Dir = new File(rootDir, winePath + "/lib64");
+            if (wineLib64Dir.isDirectory()) {
+                if (path.length() > 0) path.append(":");
+                path.append(wineLib64Dir.getPath());
+            }
+        }
+        if (path.length() > 0) path.append(":");
+        path.append(runtimeFS.getBox64LdLibraryPathForVariant(Container.GLIBC));
+        return path.toString();
     }
 
     @Override
@@ -186,7 +201,22 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
 
     @Override
     public String getLdLibraryPath() {
-        return runtimeFS.getLdLibraryPathForGlibc();
+        StringBuilder path = new StringBuilder();
+        // Add wine library directories so the wine binary can find its shared libraries
+        String winePath = getWinePath();
+        if (winePath != null && !winePath.isEmpty()) {
+            File rootDir = getRootDir();
+            File wineLibDir = new File(rootDir, winePath + "/lib");
+            if (wineLibDir.isDirectory()) path.append(wineLibDir.getPath());
+            File wineLib64Dir = new File(rootDir, winePath + "/lib64");
+            if (wineLib64Dir.isDirectory()) {
+                if (path.length() > 0) path.append(":");
+                path.append(wineLib64Dir.getPath());
+            }
+        }
+        if (path.length() > 0) path.append(":");
+        path.append(runtimeFS.getLdLibraryPathForGlibc());
+        return path.toString();
     }
 
     @Override
@@ -232,6 +262,13 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
         if (wineInfo != null && wineInfo.path != null) {
             return wineInfo.path + "/bin";
         }
+        // If wineInfo is null, derive it from the container's wine version
+        if (container != null) {
+            WineInfo containerWineInfo = WineInfo.fromIdentifier(context, container.getWineVersion());
+            if (containerWineInfo.path != null) {
+                return containerWineInfo.path + "/bin";
+            }
+        }
         File wineDir = fusionFS.getWineDir();
         if (wineDir.isDirectory()) {
             return wineDir.getPath() + "/bin";
@@ -251,7 +288,8 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
 
     @Override
     public String buildLaunchCommand(String guestExecutable, WineInfo wineInfo) {
-        return getBox64Path() + " " + guestExecutable;
+        String wineBinaryPath = getWineBinaryPath(wineInfo);
+        return getBox64Path() + " " + wineBinaryPath + "/" + guestExecutable;
     }
 
     @Override

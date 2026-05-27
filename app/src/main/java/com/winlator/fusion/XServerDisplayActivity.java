@@ -609,6 +609,20 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
         com.winlator.fusion.runtime.RuntimeProfile profile = runtimeEnv.getProfile();
         rootFS = runtimeEnv.getRootFSAdapter().getRootFS();
+
+        // Preserve the wine path that was set on the previous rootFS instance
+        if (wineInfo != null) {
+            if (isBionic) {
+                if (wineInfo != WineInfo.MAIN_WINE_INFO && wineInfo.path != null) {
+                    rootFS.setWinePath(wineInfo.path);
+                } else {
+                    rootFS.setWinePath(FusionFS.find(this).getWinePathForVersion(container.getWineVersion()));
+                }
+            } else if (wineInfo != WineInfo.MAIN_WINE_INFO) {
+                rootFS.setWinePath(wineInfo.path);
+            }
+        }
+
         String rootPath = profile.getRootDir().getPath();
 
         boolean enableWineDebug = preferences.getBoolean("enable_wine_debug", false);

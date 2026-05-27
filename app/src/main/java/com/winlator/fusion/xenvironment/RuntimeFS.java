@@ -209,7 +209,27 @@ public class RuntimeFS {
     }
 
     public String getPathForGlibc(String winePath) {
-        return fusionFS.getPathForGlibc();
+        StringBuilder path = new StringBuilder();
+        // Add the wine binary directory first so the correct wine version is found
+        if (winePath != null && !winePath.isEmpty()) {
+            File wineBinDir = new File(fusionFS.getGlibcDir(), winePath + "/bin");
+            if (wineBinDir.isDirectory()) {
+                path.append(wineBinDir.getPath());
+            } else {
+                // winePath might be absolute or relative to root
+                File absWineBinDir = new File(winePath + "/bin");
+                if (absWineBinDir.isDirectory()) {
+                    path.append(absWineBinDir.getPath());
+                } else {
+                    path.append(fusionFS.getWineDir().getPath()).append("/bin");
+                }
+            }
+        } else {
+            path.append(fusionFS.getWineDir().getPath()).append("/bin");
+        }
+        path.append(":").append(fusionFS.getGlibcDir()).append("/usr/local/bin");
+        path.append(":").append(fusionFS.getGlibcDir()).append("/usr/bin");
+        return path.toString();
     }
 
     public String getPathForBionic(String wineBinaryPath) {

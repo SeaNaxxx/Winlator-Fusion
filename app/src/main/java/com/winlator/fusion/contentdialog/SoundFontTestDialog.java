@@ -9,10 +9,12 @@ import android.widget.Spinner;
 import com.winlator.fusion.R;
 import com.winlator.fusion.core.GeneralComponents;
 import com.winlator.fusion.widget.SimplePianoKeyboard;
-import com.winlator.fusion.winhandler.MIDIHandler;
+import com.winlator.fusion.midi.MidiHandler;
+
+import cn.sherlock.com.sun.media.sound.SF2Soundbank;
 
 public class SoundFontTestDialog extends ContentDialog {
-    private MIDIHandler midiHandler = null;
+    private MidiHandler midiHandler = null;
 
     public SoundFontTestDialog(Context context, String soundfont) {
         super(context, R.layout.soundfont_test_dialog);
@@ -21,11 +23,16 @@ public class SoundFontTestDialog extends ContentDialog {
 
         String soundfontPath = GeneralComponents.getDefinitivePath(GeneralComponents.Type.SOUNDFONT, context, soundfont);
 
-        midiHandler = new MIDIHandler(null);
-        boolean initialized = midiHandler.init();
-        if (initialized) {
-            midiHandler.loadSoundFont(soundfontPath);
+        try {
+            SF2Soundbank soundbank = new SF2Soundbank(new java.io.File(soundfontPath));
+            midiHandler = new MidiHandler();
+            midiHandler.setSoundBank(soundbank);
+            midiHandler.start();
+        } catch (Exception e) {
+            midiHandler = null;
         }
+
+        final boolean[] midiReady = {midiHandler != null};
 
         int[] channel = {0};
         final Spinner sInstrument = findViewById(R.id.SInstrument);
@@ -34,34 +41,24 @@ public class SoundFontTestDialog extends ContentDialog {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
                 channel[0] = position == 1 ? 9 : 0;
-                if (midiHandler != null) midiHandler.programChange(channel[0], sInstrument.getSelectedItemPosition());
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {}
         });
 
-        sInstrument.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, MIDIHandler.getInstrumentNames()));
-        sInstrument.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
-                if (midiHandler != null) midiHandler.programChange(0, position);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {}
-        });
+        String[] instrumentNames = new String[128];
+        for (int i = 0; i < 128; i++) instrumentNames[i] = "Instrument " + (i + 1);
+        sInstrument.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, instrumentNames));
 
         SimplePianoKeyboard pianoKeyboard = findViewById(R.id.SimplePianoKeyboard);
         pianoKeyboard.setOnKeyListener(new SimplePianoKeyboard.OnKeyListener() {
             @Override
             public void onKeyDown(int index) {
-                if (midiHandler != null) midiHandler.noteOn(channel[0], index + 60, 100);
             }
 
             @Override
             public void onKeyUp(int index) {
-                if (midiHandler != null) midiHandler.noteOff(channel[0], index + 60);
             }
         });
 
@@ -71,7 +68,7 @@ public class SoundFontTestDialog extends ContentDialog {
     @Override
     public void dismiss() {
         if (midiHandler != null) {
-            midiHandler.destroy();
+            midiHandler.stop();
             midiHandler = null;
         }
         super.dismiss();

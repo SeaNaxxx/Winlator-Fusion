@@ -666,12 +666,18 @@ public class ContainerDetailFragment extends Fragment {
         }
 
         Spinner sWinVersion = view.findViewById(R.id.SWinVersion);
-        int oldPosition = (byte)sWinVersion.getTag();
+        Object tagObj = sWinVersion.getTag();
+        int oldPosition = -1;
+        if (tagObj instanceof Byte) oldPosition = (Byte)tagObj;
+        else if (tagObj instanceof Integer) oldPosition = (Integer)tagObj;
         if (oldPosition != -1) {
             int newPosition = sWinVersion.getSelectedItemPosition();
-            if (oldPosition != newPosition) {
-                WineUtils.setWinVersion(container, newPosition);
-                container.setWinVersion(WinVersions.getWinVersions()[newPosition].version);
+            if (newPosition >= 0 && oldPosition != newPosition) {
+                WinVersions.WinVersion[] versions = WinVersions.getWinVersions();
+                if (newPosition < versions.length) {
+                    WineUtils.setWinVersion(container, newPosition);
+                    container.setWinVersion(versions[newPosition].version);
+                }
             }
         }
 

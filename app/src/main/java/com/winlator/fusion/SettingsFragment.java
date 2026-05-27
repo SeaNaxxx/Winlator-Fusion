@@ -163,7 +163,12 @@ public class SettingsFragment extends Fragment {
         rgAppTheme.check(oldAppThemeId);
 
         final CheckBox cbDarkMode = view.findViewById(R.id.CBDarkMode);
-        if (cbDarkMode != null) cbDarkMode.setChecked(preferences.getBoolean("dark_mode", true));
+        if (cbDarkMode != null) {
+            cbDarkMode.setChecked(preferences.getInt("app_theme", APP_THEME_DARK) == APP_THEME_DARK);
+            cbDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                rgAppTheme.check(isChecked ? R.id.RBDark : R.id.RBLight);
+            });
+        }
 
         final CheckBox cbEnableBigPictureMode = view.findViewById(R.id.CBEnableBigPictureMode);
         if (cbEnableBigPictureMode != null) cbEnableBigPictureMode.setChecked(preferences.getBoolean("enable_big_picture_mode", false));
@@ -426,7 +431,9 @@ public class SettingsFragment extends Fragment {
             editor.putBoolean("use_android_clipboard_on_wine", cbUseAndroidClipboardOnWine.isChecked());
             putGamepadPlayerConfigs(view, editor);
 
-            if (cbDarkMode != null) editor.putBoolean("dark_mode", cbDarkMode.isChecked());
+            if (cbDarkMode != null) {
+                editor.putInt("app_theme", cbDarkMode.isChecked() ? APP_THEME_DARK : APP_THEME_LIGHT);
+            }
             if (cbEnableBigPictureMode != null) editor.putBoolean("enable_big_picture_mode", cbEnableBigPictureMode.isChecked());
             if (cbEnableCustomApiKey != null) {
                 editor.putBoolean("enable_custom_api_key", cbEnableCustomApiKey.isChecked());

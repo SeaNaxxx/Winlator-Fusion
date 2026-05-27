@@ -128,6 +128,9 @@ public abstract class FusionFSInstaller {
                         try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(90); } catch (Exception ignored) {}
                     });
                     installDriversFromAssets(activity);
+                    if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
+                        try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(95); } catch (Exception ignored) {}
+                    });
                     extractAdditionalAssets(activity, fusionFS);
                     fusionFS.createVersionFile(LATEST_VERSION);
                     try {
@@ -259,11 +262,17 @@ public abstract class FusionFSInstaller {
         String[] additionalAssets = {"input_dlls.tzst", "layers.tzst"};
         for (String asset : additionalAssets) {
             if (!assetExists(context, asset)) continue;
-            File destDir = fusionFS.getInstalledWineDir();
-            File destFile = new File(destDir, asset);
+            File installedWineDir = fusionFS.getInstalledWineDir();
+            File destFile = new File(installedWineDir, asset);
+
             if (destFile.exists()) continue;
             try {
                 FileUtils.copy(context, asset, destFile);
+                File extractDir = new File(installedWineDir, asset.replace(".tzst", ""));
+                if (!extractDir.isDirectory()) {
+                    extractDir.mkdirs();
+                    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, destFile.getAbsolutePath(), extractDir);
+                }
             } catch (Exception e) {
                 android.util.Log.w("FusionFSInstaller", "Failed to extract " + asset, e);
             }
@@ -479,14 +488,30 @@ public abstract class FusionFSInstaller {
 
     private static void createCompatibilitySymlinks(Context context, FusionFS fusionFS) {
         File filesDir = context.getFilesDir();
-        File imagefsLink = new File(filesDir, "imagefs");
-        File rootfsLink = new File(filesDir, "rootfs");
+        File imagefsDir = new File(filesDir, "imagefs");
+        File rootfsDir = new File(filesDir, "rootfs");
 
-        if (imagefsLink.exists()) {
-            try { imagefsLink.delete(); } catch (Exception ignored) {}
+        if (imagefsDir.exists()) {
+            try {
+                if (imagefsDir.isDirectory()) {
+                    FileUtils.delete(imagefsDir);
+                } else {
+                    imagefsDir.delete();
+                }
+            } catch (Exception e) {
+                android.util.Log.w("FusionFSInstaller", "Failed to remove legacy imagefs: " + e.getMessage());
+            }
         }
-        if (rootfsLink.exists()) {
-            try { rootfsLink.delete(); } catch (Exception ignored) {}
+        if (rootfsDir.exists()) {
+            try {
+                if (rootfsDir.isDirectory()) {
+                    FileUtils.delete(rootfsDir);
+                } else {
+                    rootfsDir.delete();
+                }
+            } catch (Exception e) {
+                android.util.Log.w("FusionFSInstaller", "Failed to remove legacy rootfs: " + e.getMessage());
+            }
         }
     }
 
@@ -543,7 +568,9 @@ public abstract class FusionFSInstaller {
                 for (File file : files) {
                     if (file.isDirectory()) {
                         String name = file.getName();
-                        if (!fullClean && (name.equals("home") || name.equals("opt") || name.equals("installed-wine"))) continue;
+                        if (!fullClean && (name.equals("home") || name.equals("opt") || name.equals("installed-wine")
+                            || name.equals("bionic") || name.equals("glibc") || name.equals("wine.glibc")
+                            || name.equals("wine.bionic") || name.equals("wine"))) continue;
                     }
                     FileUtils.delete(file);
                 }

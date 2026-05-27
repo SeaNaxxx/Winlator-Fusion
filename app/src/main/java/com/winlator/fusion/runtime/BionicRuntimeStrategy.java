@@ -313,6 +313,30 @@ public class BionicRuntimeStrategy implements RuntimeStrategy {
             } else {
                 envVars.put("HODLL", "wowbox64.dll");
             }
+
+            // For arm64EC wine, add wine library directories to LD_LIBRARY_PATH
+            // since it runs as a native ARM64 binary without box64
+            WineInfo effectiveWineInfo = wineInfo != null ? wineInfo :
+                (container != null ? WineInfo.fromIdentifier(context, container.getWineVersion()) : null);
+            if (effectiveWineInfo != null) {
+                String wineBinaryPath = getWineBinaryPath(effectiveWineInfo);
+                File wineLibDir = new File(wineBinaryPath.replace("/bin", "/lib"));
+                File wineLib64Dir = new File(wineBinaryPath.replace("/bin", "/lib64"));
+                StringBuilder ldPath = new StringBuilder();
+                if (wineLibDir.isDirectory()) ldPath.append(wineLibDir.getPath());
+                if (wineLib64Dir.isDirectory()) {
+                    if (ldPath.length() > 0) ldPath.append(":");
+                    ldPath.append(wineLib64Dir.getPath());
+                }
+                if (ldPath.length() > 0) {
+                    String existingLdPath = envVars.get("LD_LIBRARY_PATH");
+                    if (existingLdPath != null && !existingLdPath.isEmpty()) {
+                        envVars.put("LD_LIBRARY_PATH", ldPath + ":" + existingLdPath);
+                    } else {
+                        envVars.put("LD_LIBRARY_PATH", ldPath.toString());
+                    }
+                }
+            }
         }
 
         if (container != null) {
