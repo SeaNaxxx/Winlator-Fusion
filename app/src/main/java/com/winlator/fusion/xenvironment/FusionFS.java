@@ -38,7 +38,7 @@ public class FusionFS {
         this.wineGlibcDir = new File(rootDir, "wine.glibc");
         this.wineBionicDir = new File(rootDir, "wine.bionic");
         File legacyWineDir = new File(rootDir, "wine");
-        this.wineDir = (legacyWineDir.isDirectory() && new File(legacyWineDir, "bin").isDirectory()) ? legacyWineDir : wineGlibcDir;
+        this.wineDir = (wineGlibcDir.isDirectory() && new File(wineGlibcDir, "bin").isDirectory()) ? wineGlibcDir : legacyWineDir;
     }
 
     public static FusionFS find(Context context) {
@@ -64,8 +64,7 @@ public class FusionFS {
     public File getWineDir() {
         if (wineGlibcDir.isDirectory() && new File(wineGlibcDir, "bin").isDirectory()) return wineGlibcDir;
         if (wineBionicDir.isDirectory() && new File(wineBionicDir, "bin").isDirectory()) return wineBionicDir;
-        if (wineDir.isDirectory() && new File(wineDir, "bin").isDirectory()) return wineDir;
-        return wineGlibcDir;
+        return wineDir;
     }
 
     public File getWineGlibcDir() {
