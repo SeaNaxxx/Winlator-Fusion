@@ -184,6 +184,10 @@ public abstract class TarCompressorUtils {
                         File parent = file.getParentFile();
                         if (parent != null && !parent.isDirectory()) parent.mkdirs();
                         FileUtils.symlink(entry.getLinkName(), file.getAbsolutePath());
+                        // Skip chmod on symlinks: Android has no lchmod() and chmod()
+                        // would follow the link to a target that may not exist yet
+                        // (dangling link mid-extraction), throwing ENOENT we'd just swallow.
+                        continue;
                     }
                     else {
                         File parent = file.getParentFile();

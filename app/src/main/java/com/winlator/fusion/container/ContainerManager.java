@@ -38,6 +38,11 @@ public class ContainerManager {
         File rootfsDir = fusionFS.getGlibcDir();
         File imagefsDir = fusionFS.getBionicDir();
         try {
+            if (!rootfsDir.isDirectory()) rootfsDir.mkdirs();
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to create glibc directory: " + rootfsDir, e);
+        }
+        try {
             if (!imagefsDir.isDirectory()) imagefsDir.mkdirs();
         } catch (Exception e) {
             Log.w(TAG, "Failed to create bionic directory: " + imagefsDir, e);

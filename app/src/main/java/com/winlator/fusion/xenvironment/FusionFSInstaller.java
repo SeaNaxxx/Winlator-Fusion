@@ -75,7 +75,36 @@ public abstract class FusionFSInstaller {
         dialog.show(R.string.installing_system_files);
         dialog.setShowStatus(true);
 
+        // Keep the screen on for the full install. Install takes 5-15 min on slow devices;
+        // if the screen sleeps Android may kill our process mid-extraction. setKeepScreenOn
+        // must run on the UI thread.
+        activity.runOnUiThread(() -> {
+            try {
+                android.view.Window w = activity.getWindow();
+                if (w != null) w.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            } catch (Exception ignored) {}
+        });
+
+        // Partial wake lock so the CPU survives screen-off too. Released in the finally branch.
+        final android.os.PowerManager.WakeLock wakeLock;
+        android.os.PowerManager.WakeLock tmpLock = null;
+        try {
+            android.os.PowerManager pm =
+                (android.os.PowerManager) activity.getSystemService(Context.POWER_SERVICE);
+            if (pm != null) {
+                tmpLock = pm.newWakeLock(
+                    android.os.PowerManager.PARTIAL_WAKE_LOCK,
+                    "WinlatorFusion:install");
+                tmpLock.setReferenceCounted(false);
+                tmpLock.acquire(30L * 60L * 1000L); // 30-min safety timeout
+            }
+        } catch (Throwable t) {
+            android.util.Log.w("FusionFSInstaller", "Could not acquire wake lock", t);
+        }
+        wakeLock = tmpLock;
+
         Executors.newSingleThreadExecutor().execute(() -> {
+            try {
             clearFusionDir(rootDir, false);
             rootDir.mkdirs();
 
@@ -155,6 +184,23 @@ public abstract class FusionFSInstaller {
             if (!activity.isFinishing() && !activity.isDestroyed()) {
                 try { dialog.closeOnUiThread(); } catch (Exception ignored) {}
             }
+            } finally {
+                // Always release the wake lock and clear keepScreenOn, even on success path,
+                // exception path, or activity-already-finished path.
+                if (wakeLock != null) {
+                    try { if (wakeLock.isHeld()) wakeLock.release(); } catch (Throwable ignored) {}
+                }
+                try {
+                    if (!activity.isFinishing() && !activity.isDestroyed()) {
+                        activity.runOnUiThread(() -> {
+                            try {
+                                android.view.Window w = activity.getWindow();
+                                if (w != null) w.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                            } catch (Exception ignored) {}
+                        });
+                    }
+                } catch (Throwable ignored) {}
+            }
         });
     }
 
@@ -173,15 +219,41 @@ public abstract class FusionFSInstaller {
             int baseProgress = 75;
             int versionProgress = baseProgress + (int)(((float)(i + 1) / totalVersions) * 20);
 
-            if (assetExists(activity, version + ".txz")) {
-                File outFile = getWineInstallDir(fusionFS, version, isProton, isArm64EC);
-                outFile.mkdirs();
-                installed = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, activity, version + ".txz", outFile);
-            }
-            if (!installed && assetExists(activity, version + ".tzst")) {
-                File outFile = getWineInstallDir(fusionFS, version, isProton, isArm64EC);
-                outFile.mkdirs();
-                installed = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, activity, version + ".tzst", outFile);
+            // Free decompressor buffers from previous iteration before tackling another ~50MB archive.
+            // On 4GB devices, four wine/proton .txz extractions back-to-back can OOM otherwise.
+            System.gc();
+            try { Thread.sleep(50); } catch (InterruptedException ignored) {}
+
+            try {
+                if (assetExists(activity, version + ".txz")) {
+                    File outFile = getWineInstallDir(fusionFS, version, isProton, isArm64EC);
+                    outFile.mkdirs();
+                    installed = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, activity, version + ".txz", outFile);
+                }
+                if (!installed && assetExists(activity, version + ".tzst")) {
+                    File outFile = getWineInstallDir(fusionFS, version, isProton, isArm64EC);
+                    outFile.mkdirs();
+                    installed = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, activity, version + ".tzst", outFile);
+                }
+            } catch (OutOfMemoryError oom) {
+                android.util.Log.e("FusionFSInstaller", "OOM extracting " + version + ", retrying after GC", oom);
+                System.gc();
+                try { Thread.sleep(200); } catch (InterruptedException ignored) {}
+                try {
+                    if (assetExists(activity, version + ".txz")) {
+                        File outFile = getWineInstallDir(fusionFS, version, isProton, isArm64EC);
+                        outFile.mkdirs();
+                        installed = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, activity, version + ".txz", outFile);
+                    } else if (assetExists(activity, version + ".tzst")) {
+                        File outFile = getWineInstallDir(fusionFS, version, isProton, isArm64EC);
+                        outFile.mkdirs();
+                        installed = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, activity, version + ".tzst", outFile);
+                    }
+                } catch (Throwable retryFail) {
+                    android.util.Log.e("FusionFSInstaller", "Retry of " + version + " failed", retryFail);
+                }
+            } catch (Throwable t) {
+                android.util.Log.e("FusionFSInstaller", "Failed to install " + version, t);
             }
 
             if (!installed) {
@@ -194,7 +266,7 @@ public abstract class FusionFSInstaller {
             if (dialog != null && !activity.isFinishing() && !activity.isDestroyed()) {
                 int progress = Math.min(versionProgress, 94);
                 activity.runOnUiThread(() -> {
-                    if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(progress);
+                    try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(progress); } catch (Exception ignored) {}
                 });
             }
         }
@@ -448,6 +520,8 @@ public abstract class FusionFSInstaller {
     }
 
     private static void createCompatibilitySymlinks(Context context, FusionFS fusionFS) {
+        // In-app rootfs/imagefs compatibility symlinks. These live inside our own
+        // filesDir so they always work.
         File filesDir = context.getFilesDir();
         File imagefsLink = new File(filesDir, "imagefs");
         File rootfsLink = new File(filesDir, "rootfs");
@@ -459,23 +533,11 @@ public abstract class FusionFSInstaller {
             FileUtils.symlink(fusionFS.getGlibcDir().getAbsolutePath(), rootfsLink.getAbsolutePath());
         }
 
-        File pkgBase = context.getDataDir().getParentFile();
-        if (pkgBase != null) {
-            createCompatSymlinkDir(new File(pkgBase, "com.winlator/files/rootfs"), fusionFS.getGlibcDir());
-            createCompatSymlinkDir(new File(pkgBase, "com.winlator/files/imagefs"), fusionFS.getBionicDir());
-            createCompatSymlinkDir(new File(pkgBase, "com.winlator.cmod/files/imagefs"), fusionFS.getBionicDir());
-            createCompatSymlinkDir(new File(pkgBase, "com.termux/files/usr"), fusionFS.getBionicDir());
-        }
-    }
-
-    private static void createCompatSymlinkDir(File linkDir, File targetDir) {
-        if (linkDir.exists()) return;
-        linkDir.getParentFile().mkdirs();
-        try {
-            FileUtils.symlink(targetDir.getAbsolutePath(), linkDir.getAbsolutePath());
-        } catch (Exception e) {
-            android.util.Log.w("FusionFSInstaller", "Cannot create compat symlink " + linkDir + ": " + e.getMessage());
-        }
+        // NOTE: previously we also tried to symlink into /data/data/com.winlator/,
+        // /data/data/com.winlator.cmod/ and /data/data/com.termux/. Starting from
+        // Android 10 (API 29) every app's data dir is sandboxed and writes from
+        // another UID fail with EACCES. The attempts only spammed warnings, so
+        // they were removed.
     }
 
     private static void createWineSymlink(FusionFS fusionFS) {
