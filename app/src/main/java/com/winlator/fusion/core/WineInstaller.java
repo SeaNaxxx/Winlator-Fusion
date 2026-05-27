@@ -264,7 +264,7 @@ public abstract class WineInstaller {
                     if (optFiles != null) {
                         for (File file : optFiles) {
                             String name = file.getName();
-                            if (name.startsWith("proton") && file.isDirectory()) {
+                            if ((name.startsWith("proton") || name.startsWith("wine")) && file.isDirectory()) {
                                 File binDir = new File(file, "bin");
                                 if (binDir.isDirectory()) {
                                     wineInfos.add(WineInfo.fromIdentifier(context, name));
@@ -277,6 +277,12 @@ public abstract class WineInstaller {
                     try {
                         context.getAssets().open("proton-9.0-x86_64_container_pattern.tzst").close();
                         wineInfos.add(WineInfo.BIONIC_WINE_INFO);
+                    } catch (Exception e) {
+                    }
+                    try {
+                        context.getAssets().open("wine-10.10-arm64ec_container_pattern.tzst").close();
+                        WineInfo arm64ecInfo = new WineInfo("wine", WineInfo.MAIN_WINE_VERSION, null, "arm64ec", null);
+                        if (!wineInfos.contains(arm64ecInfo)) wineInfos.add(arm64ecInfo);
                     } catch (Exception e) {
                     }
                 }

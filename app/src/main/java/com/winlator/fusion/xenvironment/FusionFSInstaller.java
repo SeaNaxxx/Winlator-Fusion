@@ -128,6 +128,8 @@ public abstract class FusionFSInstaller {
                         try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(95); } catch (Exception ignored) {}
                     });
                     installDriversFromAssets(activity);
+                    installInputDlls(activity, fusionFS);
+                    installVulkanLayers(activity, fusionFS);
                     fusionFS.createVersionFile(LATEST_VERSION);
                     try {
                         resetContainerVersions(activity);
@@ -314,6 +316,7 @@ public abstract class FusionFSInstaller {
 
     public static void ensureMinimalFusionFSStructure(Context context) {
         FusionFS fusionFS = FusionFS.find(context);
+        cleanupLegacyDirs(context, fusionFS);
         File bionicDir = fusionFS.getBionicDir();
         File glibcDir = fusionFS.getGlibcDir();
 
@@ -367,6 +370,8 @@ public abstract class FusionFSInstaller {
             installWineFromAssets((MainActivity) context, fusionFS);
             installContainerPatternsFromAssets(context, fusionFS);
             installDriversFromAssets((MainActivity) context);
+            installInputDlls(context, fusionFS);
+            installVulkanLayers(context, fusionFS);
             if ((hasProtonInstalled(context) || fusionFS.isWineInstalled()) && fusionFS.getVersion() == 0) {
                 fusionFS.createVersionFile(LATEST_VERSION);
             }
@@ -471,6 +476,33 @@ public abstract class FusionFSInstaller {
         }
     }
 
+    public static void installInputDlls(Context context, FusionFS fusionFS) {
+        if (!assetExists(context, FusionFS.ASSET_INPUT_DLLS)) return;
+        try {
+            TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FusionFS.ASSET_INPUT_DLLS, fusionFS.getInstalledWineDir());
+        } catch (Exception e) {
+            android.util.Log.w("FusionFSInstaller", "Failed to extract input DLLs", e);
+        }
+    }
+
+    public static void installVulkanLayers(Context context, FusionFS fusionFS) {
+        if (!assetExists(context, FusionFS.ASSET_VULKAN_LAYERS)) return;
+        try {
+            File bionicExplicitDir = new File(fusionFS.getBionicDir(), "usr/share/vulkan/explicit_layer.d");
+            File bionicImplicitDir = new File(fusionFS.getBionicDir(), "usr/share/vulkan/implicit_layer.d");
+            bionicExplicitDir.mkdirs();
+            bionicImplicitDir.mkdirs();
+            TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FusionFS.ASSET_VULKAN_LAYERS, fusionFS.getBionicDir());
+            File glibcExplicitDir = new File(fusionFS.getGlibcDir(), "usr/share/vulkan/explicit_layer.d");
+            File glibcImplicitDir = new File(fusionFS.getGlibcDir(), "usr/share/vulkan/implicit_layer.d");
+            glibcExplicitDir.mkdirs();
+            glibcImplicitDir.mkdirs();
+            TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FusionFS.ASSET_VULKAN_LAYERS, fusionFS.getGlibcDir());
+        } catch (Exception e) {
+            android.util.Log.w("FusionFSInstaller", "Failed to extract Vulkan layers", e);
+        }
+    }
+
     private static void cleanupLegacyDirs(Context context, FusionFS fusionFS) {
         File filesDir = context.getFilesDir();
         String[] legacyNames = {"rootfs", "imagefs"};
@@ -485,6 +517,23 @@ public abstract class FusionFSInstaller {
                     }
                 } catch (Exception e) {
                     android.util.Log.w("FusionFSInstaller", "Cannot remove legacy dir " + legacy + ": " + e.getMessage());
+                }
+            }
+        }
+        File fusionRoot = fusionFS.getRootDir();
+        for (String name : legacyNames) {
+            File legacy = new File(fusionRoot, name);
+            if (legacy.exists()) {
+                try {
+                    if (java.nio.file.Files.isSymbolicLink(legacy.toPath())) {
+                        java.nio.file.Files.delete(legacy.toPath());
+                    } else if (!new File(fusionRoot, name.equals("rootfs") ? "glibc" : "bionic").isDirectory()) {
+                        legacy.renameTo(new File(fusionRoot, name.equals("rootfs") ? "glibc" : "bionic"));
+                    } else {
+                        FileUtils.delete(legacy);
+                    }
+                } catch (Exception e) {
+                    android.util.Log.w("FusionFSInstaller", "Cannot remove legacy fusion dir " + legacy + ": " + e.getMessage());
                 }
             }
         }

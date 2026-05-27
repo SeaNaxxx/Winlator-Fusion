@@ -171,7 +171,7 @@ public class WineInfo implements Parcelable {
 
             File fallbackPath = isProton
                 ? new File(fusionFS.getBionicDir(), "opt/" + identifier)
-                : fusionFS.getWineDir();
+                : (arch.equals("arm64ec") ? new File(fusionFS.getBionicDir(), "opt/" + identifier) : fusionFS.getWineDir());
             return new WineInfo(type, matcher.group(2), matcher.group(3), arch, fallbackPath.getPath());
         }
         com.winlator.fusion.xenvironment.FusionFS fusionFS = com.winlator.fusion.xenvironment.FusionFS.find(context);

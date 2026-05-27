@@ -23,6 +23,8 @@ public class FusionFS {
     public static final String ASSET_CONTAINER_PATTERN_COMMON = "container_pattern_common.tzst";
     public static final String ASSET_PULSEAUDIO = "pulseaudio.tzst";
     public static final String ASSET_PULSEAUDIO_FULL = "pulseaudio-full.tzst";
+    public static final String ASSET_INPUT_DLLS = "input_dlls.tzst";
+    public static final String ASSET_VULKAN_LAYERS = "layers.tzst";
 
     private final File rootDir;
     private final File bionicDir;
