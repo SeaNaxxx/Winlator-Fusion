@@ -76,7 +76,7 @@ public class FusionFS {
     }
 
     public boolean isValid() {
-        return rootDir.isDirectory() && bionicDir.isDirectory() && (getVersionFile().exists() || getLegacyVersionFile().exists());
+        return rootDir.isDirectory() && (bionicDir.isDirectory() || glibcDir.isDirectory()) && (getVersionFile().exists() || getLegacyVersionFile().exists());
     }
 
     public boolean isFullyInstalled() {

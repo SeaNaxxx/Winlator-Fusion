@@ -75,36 +75,7 @@ public abstract class FusionFSInstaller {
         dialog.show(R.string.installing_system_files);
         dialog.setShowStatus(true);
 
-        // Keep the screen on for the full install. Install takes 5-15 min on slow devices;
-        // if the screen sleeps Android may kill our process mid-extraction. setKeepScreenOn
-        // must run on the UI thread.
-        activity.runOnUiThread(() -> {
-            try {
-                android.view.Window w = activity.getWindow();
-                if (w != null) w.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            } catch (Exception ignored) {}
-        });
-
-        // Partial wake lock so the CPU survives screen-off too. Released in the finally branch.
-        final android.os.PowerManager.WakeLock wakeLock;
-        android.os.PowerManager.WakeLock tmpLock = null;
-        try {
-            android.os.PowerManager pm =
-                (android.os.PowerManager) activity.getSystemService(Context.POWER_SERVICE);
-            if (pm != null) {
-                tmpLock = pm.newWakeLock(
-                    android.os.PowerManager.PARTIAL_WAKE_LOCK,
-                    "WinlatorFusion:install");
-                tmpLock.setReferenceCounted(false);
-                tmpLock.acquire(30L * 60L * 1000L); // 30-min safety timeout
-            }
-        } catch (Throwable t) {
-            android.util.Log.w("FusionFSInstaller", "Could not acquire wake lock", t);
-        }
-        wakeLock = tmpLock;
-
         Executors.newSingleThreadExecutor().execute(() -> {
-            try {
             clearFusionDir(rootDir, false);
             rootDir.mkdirs();
 
@@ -183,23 +154,6 @@ public abstract class FusionFSInstaller {
             }
             if (!activity.isFinishing() && !activity.isDestroyed()) {
                 try { dialog.closeOnUiThread(); } catch (Exception ignored) {}
-            }
-            } finally {
-                // Always release the wake lock and clear keepScreenOn, even on success path,
-                // exception path, or activity-already-finished path.
-                if (wakeLock != null) {
-                    try { if (wakeLock.isHeld()) wakeLock.release(); } catch (Throwable ignored) {}
-                }
-                try {
-                    if (!activity.isFinishing() && !activity.isDestroyed()) {
-                        activity.runOnUiThread(() -> {
-                            try {
-                                android.view.Window w = activity.getWindow();
-                                if (w != null) w.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                            } catch (Exception ignored) {}
-                        });
-                    }
-                } catch (Throwable ignored) {}
             }
         });
     }
@@ -361,9 +315,18 @@ public abstract class FusionFSInstaller {
 
     public static void ensureMinimalFusionFSStructure(Context context) {
         FusionFS fusionFS = FusionFS.find(context);
+        File rootDir = fusionFS.getRootDir();
         File bionicDir = fusionFS.getBionicDir();
         File glibcDir = fusionFS.getGlibcDir();
-        File wineDir = fusionFS.getWineDir();
+
+        // Only create wine.glibc/wine.bionic if they don't exist at all.
+        // Do NOT mkdirs() if they already exist as empty dirs — that would
+        // cause getWineDir() to prefer the empty wine.glibc over a populated
+        // legacy wine/ directory.
+        File wineGlibcDir = fusionFS.getWineGlibcDir();
+        File wineBionicDir = fusionFS.getWineBionicDir();
+        if (!wineGlibcDir.exists()) wineGlibcDir.mkdirs();
+        if (!wineBionicDir.exists()) wineBionicDir.mkdirs();
 
         new File(bionicDir, "usr/bin").mkdirs();
         new File(bionicDir, "usr/lib").mkdirs();
@@ -395,11 +358,6 @@ public abstract class FusionFSInstaller {
         new File(glibcDir, "home").mkdirs();
         new File(glibcDir, "opt").mkdirs();
         new File(glibcDir, "etc").mkdirs();
-
-        File wineGlibcDir = fusionFS.getWineGlibcDir();
-        File wineBionicDir = fusionFS.getWineBionicDir();
-        if (!wineGlibcDir.isDirectory()) wineGlibcDir.mkdirs();
-        if (!wineBionicDir.isDirectory()) wineBionicDir.mkdirs();
 
         createWineSymlink(fusionFS);
         createCompatibilitySymlinks(context, fusionFS);
@@ -436,8 +394,8 @@ public abstract class FusionFSInstaller {
 
         File wineGlibc = new File(rootDir, "wine.glibc");
         File wineBionic = new File(rootDir, "wine.bionic");
-        if (!wineGlibc.isDirectory()) wineGlibc.mkdirs();
-        if (!wineBionic.isDirectory()) wineBionic.mkdirs();
+        if (!wineGlibc.exists()) wineGlibc.mkdirs();
+        if (!wineBionic.exists()) wineBionic.mkdirs();
 
         populateEtcBionicIfNeeded(rootDir);
         ensureBionicSymlinks(rootDir);
@@ -581,9 +539,19 @@ public abstract class FusionFSInstaller {
             File[] files = rootDir.listFiles();
             if (files != null) {
                 for (File file : files) {
-                    if (file.isDirectory()) {
+                    if (file.isDirectory() && !fullClean) {
                         String name = file.getName();
-                        if (!fullClean && (name.equals("home") || name.equals("opt") || name.equals("installed-wine"))) continue;
+                        // Preserve variant home dirs and installed-wine across reinstalls.
+                        // home dirs live inside bionic/ and glibc/ (symlinks resolve to
+                        // usr.bionic/home, usr.glibc/home). The installed-wine dir holds
+                        // additional wine versions extracted by the user.
+                        if (name.equals("installed-wine")) continue;
+                        // Skip deleting bionic/glibc variant dirs entirely — their home/
+                        // and opt/ subdirs contain user data.
+                        if (name.equals("bionic") || name.equals("glibc")) continue;
+                        // The shared usr.* and etc.* dirs contain the runtime; those get
+                        // replaced. But preserve wine namespace dirs.
+                        if (name.equals("wine.glibc") || name.equals("wine.bionic") || name.equals("wine")) continue;
                     }
                     FileUtils.delete(file);
                 }
