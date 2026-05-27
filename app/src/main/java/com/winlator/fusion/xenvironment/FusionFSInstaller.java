@@ -207,7 +207,7 @@ public abstract class FusionFSInstaller {
 
     private static File getWineInstallDir(FusionFS fusionFS, String version, boolean isProton, boolean isArm64EC) {
         if (isProton || isArm64EC) {
-            return new File(fusionFS.getBionicDir(), "/opt/" + version);
+            return new File(fusionFS.getBionicDir(), "opt/" + version);
         }
         if (WineInfo.isMainWineVersion(version)) {
             return fusionFS.getWineDir();
@@ -238,7 +238,7 @@ public abstract class FusionFSInstaller {
         boolean isArm64EC = version.endsWith("-arm64ec");
 
         if (isProton || isArm64EC) {
-            File outFile = new File(fusionFS.getBionicDir(), "/opt/" + version);
+            File outFile = new File(fusionFS.getBionicDir(), "opt/" + version);
             return outFile.isDirectory() && new File(outFile, "bin").isDirectory();
         }
         if (WineInfo.isMainWineVersion(version)) {
@@ -257,7 +257,7 @@ public abstract class FusionFSInstaller {
 
     public static boolean hasProtonInstalled(Context context) {
         FusionFS fusionFS = FusionFS.find(context);
-        File bionicOptDir = new File(fusionFS.getBionicDir(), "/opt");
+        File bionicOptDir = new File(fusionFS.getBionicDir(), "opt");
         File[] optFiles = bionicOptDir.listFiles();
         if (optFiles != null) {
             for (File f : optFiles) {
@@ -294,36 +294,36 @@ public abstract class FusionFSInstaller {
         File glibcDir = fusionFS.getGlibcDir();
         File wineDir = fusionFS.getWineDir();
 
-        new File(bionicDir, "/usr/bin").mkdirs();
-        new File(bionicDir, "/usr/lib").mkdirs();
-        new File(bionicDir, "/usr/tmp").mkdirs();
-        new File(bionicDir, "/usr/etc/fonts").mkdirs();
-        new File(bionicDir, "/usr/etc/xdg").mkdirs();
-        new File(bionicDir, "/usr/etc/alsa/conf.d").mkdirs();
-        new File(bionicDir, "/usr/etc/tls").mkdirs();
-        new File(bionicDir, "/usr/share/alsa").mkdirs();
-        new File(bionicDir, "/usr/share/vulkan/icd.d").mkdirs();
-        new File(bionicDir, "/usr/share/vulkan/implicit_layer.d").mkdirs();
-        new File(bionicDir, "/usr/share/vulkan/explicit_layer.d").mkdirs();
-        new File(bionicDir, "/usr/lib/gstreamer-1.0").mkdirs();
-        new File(bionicDir, "/usr/lib/alsa-lib").mkdirs();
-        new File(bionicDir, "/home").mkdirs();
-        new File(bionicDir, "/opt").mkdirs();
-        new File(bionicDir, "/dev/input").mkdirs();
-        new File(bionicDir, "/var/cache").mkdirs();
-        new File(bionicDir, "/etc").mkdirs();
-        new File(bionicDir, "/tmp").mkdirs();
+        new File(bionicDir, "usr/bin").mkdirs();
+        new File(bionicDir, "usr/lib").mkdirs();
+        new File(bionicDir, "usr/tmp").mkdirs();
+        new File(bionicDir, "usr/etc/fonts").mkdirs();
+        new File(bionicDir, "usr/etc/xdg").mkdirs();
+        new File(bionicDir, "usr/etc/alsa/conf.d").mkdirs();
+        new File(bionicDir, "usr/etc/tls").mkdirs();
+        new File(bionicDir, "usr/share/alsa").mkdirs();
+        new File(bionicDir, "usr/share/vulkan/icd.d").mkdirs();
+        new File(bionicDir, "usr/share/vulkan/implicit_layer.d").mkdirs();
+        new File(bionicDir, "usr/share/vulkan/explicit_layer.d").mkdirs();
+        new File(bionicDir, "usr/lib/gstreamer-1.0").mkdirs();
+        new File(bionicDir, "usr/lib/alsa-lib").mkdirs();
+        new File(bionicDir, "home").mkdirs();
+        new File(bionicDir, "opt").mkdirs();
+        new File(bionicDir, "dev/input").mkdirs();
+        new File(bionicDir, "var/cache").mkdirs();
+        new File(bionicDir, "etc").mkdirs();
+        new File(bionicDir, "tmp").mkdirs();
 
-        new File(glibcDir, "/usr/lib").mkdirs();
-        new File(glibcDir, "/usr/lib/x86_64-linux-gnu").mkdirs();
-        new File(glibcDir, "/usr/local/bin").mkdirs();
-        new File(glibcDir, "/usr/bin").mkdirs();
-        new File(glibcDir, "/usr/etc").mkdirs();
-        new File(glibcDir, "/usr/share/fonts").mkdirs();
-        new File(glibcDir, "/tmp").mkdirs();
-        new File(glibcDir, "/home").mkdirs();
-        new File(glibcDir, "/opt").mkdirs();
-        new File(glibcDir, "/etc").mkdirs();
+        new File(glibcDir, "usr/lib").mkdirs();
+        new File(glibcDir, "usr/lib/x86_64-linux-gnu").mkdirs();
+        new File(glibcDir, "usr/local/bin").mkdirs();
+        new File(glibcDir, "usr/bin").mkdirs();
+        new File(glibcDir, "usr/etc").mkdirs();
+        new File(glibcDir, "usr/share/fonts").mkdirs();
+        new File(glibcDir, "tmp").mkdirs();
+        new File(glibcDir, "home").mkdirs();
+        new File(glibcDir, "opt").mkdirs();
+        new File(glibcDir, "etc").mkdirs();
 
         fusionFS.getWineGlibcDir().mkdirs();
         fusionFS.getWineBionicDir().mkdirs();
@@ -433,10 +433,10 @@ public abstract class FusionFSInstaller {
     }
 
     private static void ensureGlibcSysvshm(FusionFS fusionFS) {
-        File glibcLibDir = new File(fusionFS.getGlibcDir(), "/usr/lib");
+        File glibcLibDir = new File(fusionFS.getGlibcDir(), "usr/lib");
         File sysvshmSrc = new File(glibcLibDir, "libandroid-sysvshm.so");
         if (!sysvshmSrc.exists()) {
-            File glibcLibX8664Dir = new File(fusionFS.getGlibcDir(), "/usr/lib/x86_64-linux-gnu");
+            File glibcLibX8664Dir = new File(fusionFS.getGlibcDir(), "usr/lib/x86_64-linux-gnu");
             File altSrc = new File(glibcLibX8664Dir, "libandroid-sysvshm.so");
             if (altSrc.exists()) {
                 FileUtils.copy(altSrc, sysvshmSrc);
@@ -474,7 +474,7 @@ public abstract class FusionFSInstaller {
     }
 
     private static void createWineSymlink(FusionFS fusionFS) {
-        File glibcOptWine = new File(fusionFS.getGlibcDir(), "/opt/wine");
+        File glibcOptWine = new File(fusionFS.getGlibcDir(), "opt/wine");
         File wineDir = fusionFS.getWineDir();
         if (wineDir.isDirectory() && !glibcOptWine.exists()) {
             glibcOptWine.getParentFile().mkdirs();
@@ -483,7 +483,7 @@ public abstract class FusionFSInstaller {
             FileUtils.symlink(target, glibcOptWine.getPath());
         }
 
-        File bionicOptWine = new File(fusionFS.getBionicDir(), "/opt/wine");
+        File bionicOptWine = new File(fusionFS.getBionicDir(), "opt/wine");
         File wineBionicDir = fusionFS.getWineBionicDir();
         if (wineBionicDir.isDirectory() && !bionicOptWine.exists()) {
             bionicOptWine.getParentFile().mkdirs();

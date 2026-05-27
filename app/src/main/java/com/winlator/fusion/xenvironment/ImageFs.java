@@ -47,7 +47,7 @@ public class ImageFs {
     }
 
     public boolean isValid() {
-        return rootDir.isDirectory() && (getImgVersionFile().exists() || new File(rootDir, "/usr/bin").isDirectory());
+        return rootDir.isDirectory() && (getImgVersionFile().exists() || new File(rootDir, "usr/bin").isDirectory());
     }
 
     public int getVersion() {
@@ -85,7 +85,7 @@ public class ImageFs {
     }
 
     public String getWinePathForVersion(String wineVersion) {
-        File optDir = new File(rootDir, "/opt/" + wineVersion);
+        File optDir = new File(rootDir, "opt/" + wineVersion);
         if (optDir.isDirectory()) return optDir.getPath();
 
         FusionFS fusionFS = FusionFS.fromDir(rootDir.getParentFile());
@@ -127,7 +127,7 @@ public class ImageFs {
             } catch (Exception e) {
             }
         }
-        if (new File(rootDir, "/etc/ld.so.cache").exists() || new File(rootDir, "/usr/local/bin").exists()) {
+        if (new File(rootDir, "etc/ld.so.cache").exists() || new File(rootDir, "usr/local/bin").exists()) {
             return "glibc";
         }
         return "bionic";
@@ -150,23 +150,23 @@ public class ImageFs {
     }
 
     public File getTmpDir() {
-        return new File(rootDir, "/usr/tmp");
+        return new File(rootDir, "usr/tmp");
     }
 
     public File getLibDir() {
-        return new File(rootDir, "/usr/lib");
+        return new File(rootDir, "usr/lib");
     }
 
     public File getBinDir() {
-        return new File(rootDir, "/usr/bin");
+        return new File(rootDir, "usr/bin");
     }
 
     public File getEtcDir() {
-        return new File(rootDir, "/usr/etc");
+        return new File(rootDir, "usr/etc");
     }
 
     public File getShareDir() {
-        return new File(rootDir, "/usr/share");
+        return new File(rootDir, "usr/share");
     }
 
     @NonNull

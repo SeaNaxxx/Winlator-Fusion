@@ -83,7 +83,7 @@ public final class FEXCoreManager {
     public static void createAppConfigFiles(Context ctx) {
         String[] programsName = {"winhandler.exe"};
         for (String programName : programsName) {
-            File cfgFile = new File(ImageFs.find(ctx).getRootDir(), "/home/xuser/.fex-emu/AppConfig/" + programName + ".json");
+            File cfgFile = new File(ImageFs.find(ctx).getRootDir(), "home/xuser/.fex-emu/AppConfig/" + programName + ".json");
             if (!cfgFile.exists()) {
                 File cfgDir = cfgFile.getParentFile();
                 if (cfgDir != null && !cfgDir.isDirectory()) cfgDir.mkdirs();
@@ -103,7 +103,7 @@ public final class FEXCoreManager {
             "UplayWebCore.exe", "steamservice.exe", "steamwebhelper.exe", "steam.exe"
         };
 
-        File appConfigDir = new File(ImageFs.find(ctx).getRootDir(), "/home/xuser/.fex-emu/AppConfig");
+        File appConfigDir = new File(ImageFs.find(ctx).getRootDir(), "home/xuser/.fex-emu/AppConfig");
         if (!appConfigDir.isDirectory()) appConfigDir.mkdirs();
 
         for (String exeName : appConfigExeNames) {

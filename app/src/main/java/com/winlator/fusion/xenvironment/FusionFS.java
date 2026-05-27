@@ -123,16 +123,16 @@ public class FusionFS {
     }
 
     public boolean isBionicInstalled() {
-        return bionicDir.isDirectory() && new File(bionicDir, "/usr/bin").isDirectory();
+        return bionicDir.isDirectory() && new File(bionicDir, "usr/bin").isDirectory();
     }
 
     public boolean isGlibcInstalled() {
-        return glibcDir.isDirectory() && new File(glibcDir, "/usr/lib").isDirectory();
+        return glibcDir.isDirectory() && new File(glibcDir, "usr/lib").isDirectory();
     }
 
     public boolean isWineInstalled() {
         File dir = getWineDir();
-        return dir.isDirectory() && new File(dir, "/bin").isDirectory();
+        return dir.isDirectory() && new File(dir, "bin").isDirectory();
     }
 
     public boolean isBionicWineInstalled(String wineIdentifier) {
@@ -142,7 +142,7 @@ public class FusionFS {
 
     private String getBionicWinePathForVersion(String wineVersion) {
         File installedWineDir = getInstalledWineDir();
-        File optDir = new File(bionicDir, "/opt/" + wineVersion);
+        File optDir = new File(bionicDir, "opt/" + wineVersion);
         if (optDir.isDirectory()) return optDir.getPath();
         File versionDir = new File(installedWineDir, wineVersion);
         if (versionDir.isDirectory()) return versionDir.getPath();
@@ -160,7 +160,7 @@ public class FusionFS {
         File installedWineDir = getInstalledWineDir();
         File versionDir = new File(installedWineDir, wineVersion);
         if (versionDir.isDirectory()) return versionDir.getPath();
-        File optDir = new File(bionicDir, "/opt/" + wineVersion);
+        File optDir = new File(bionicDir, "opt/" + wineVersion);
         if (optDir.isDirectory()) return optDir.getPath();
         return getWineDir().getPath();
     }
@@ -194,30 +194,30 @@ public class FusionFS {
     }
 
     public File getBionicLibDir() {
-        return new File(bionicDir, "/usr/lib");
+        return new File(bionicDir, "usr/lib");
     }
 
     public File getBionicBinDir() {
-        return new File(bionicDir, "/usr/bin");
+        return new File(bionicDir, "usr/bin");
     }
 
     public File getGlibcLibDir() {
-        return new File(glibcDir, "/usr/lib");
+        return new File(glibcDir, "usr/lib");
     }
 
     public File getGlibcBinDir() {
-        return new File(glibcDir, "/usr/bin");
+        return new File(glibcDir, "usr/bin");
     }
 
     public File getGlibcLocalBinDir() {
-        return new File(glibcDir, "/usr/local/bin");
+        return new File(glibcDir, "usr/local/bin");
     }
 
     public File getTmpDirForVariant(String variant) {
         if (Container.BIONIC.equals(variant)) {
-            return new File(bionicDir, "/usr/tmp");
+            return new File(bionicDir, "usr/tmp");
         }
-        return new File(glibcDir, "/tmp");
+        return new File(glibcDir, "tmp");
     }
 
     public String getWinePrefixForVariant(String variant) {
@@ -302,16 +302,16 @@ public class FusionFS {
 
     public File getEtcDirForVariant(String variant) {
         if (Container.BIONIC.equals(variant)) {
-            return new File(bionicDir, "/usr/etc");
+            return new File(bionicDir, "usr/etc");
         }
-        return new File(glibcDir, "/usr/etc");
+        return new File(glibcDir, "usr/etc");
     }
 
     public File getShareDirForVariant(String variant) {
         if (Container.BIONIC.equals(variant)) {
-            return new File(bionicDir, "/usr/share");
+            return new File(bionicDir, "usr/share");
         }
-        return new File(glibcDir, "/usr/share");
+        return new File(glibcDir, "usr/share");
     }
 
     @NonNull

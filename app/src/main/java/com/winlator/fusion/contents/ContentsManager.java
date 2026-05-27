@@ -455,7 +455,7 @@ public class ContentsManager {
             String dirName = profile.type.toString().toLowerCase() + "-" + profile.verName;
 
             File fsRootDir = new File(currentFsRoot);
-            File targetDir = new File(fsRootDir, "/opt/" + dirName);
+            File targetDir = new File(fsRootDir, "opt/" + dirName);
             File sourceDir = getInstallDir(context, profile);
             if (!targetDir.isDirectory()) targetDir.mkdirs();
             FileUtils.copy(sourceDir, targetDir, (file) -> FileUtils.chmod(file, 0771));

@@ -327,7 +327,7 @@ public class ContainerManager {
 
     private void copyCommonDlls(String srcName, String dstName, JSONObject commonDlls, File containerDir) throws JSONException {
         FusionFS fusionFS = FusionFS.find(context);
-        File srcDir = new File(fusionFS.getWineDir(), "/lib/wine/"+srcName);
+        File srcDir = new File(fusionFS.getWineDir(), "lib/wine/"+srcName);
         JSONArray dlnames = commonDlls.getJSONArray(dstName);
 
         for (int i = 0; i < dlnames.length(); i++) {

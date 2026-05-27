@@ -47,7 +47,7 @@ public class EvshimPatcher {
             if (file.exists()) return file;
         }
 
-        File optDir = new File(rootDir, "/opt");
+        File optDir = new File(rootDir, "opt");
         if (optDir.isDirectory()) {
             File[] optFiles = optDir.listFiles();
             if (optFiles != null) {
