@@ -100,7 +100,13 @@ public class ContentsManager {
     }
 
     public void setFileSystemRoot(String fsRoot) {
-        this.currentFsRoot = fsRoot;
+        if (fsRoot.equals("rootfs")) {
+            this.currentFsRoot = FusionFS.find(context).getGlibcDir().getAbsolutePath();
+        } else if (fsRoot.equals("imagefs")) {
+            this.currentFsRoot = FusionFS.find(context).getBionicDir().getAbsolutePath();
+        } else {
+            this.currentFsRoot = fsRoot;
+        }
         this.dirTemplateMap = null;
         this.trustedFilesMap = null;
     }

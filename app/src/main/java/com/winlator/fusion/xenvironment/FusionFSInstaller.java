@@ -121,7 +121,7 @@ public abstract class FusionFSInstaller {
                         try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(75); } catch (Exception ignored) {}
                     });
                     createWineSymlink(fusionFS);
-                    createCompatibilitySymlinks(activity, fusionFS);
+                    cleanupLegacyDirs(activity, fusionFS);
                     installWineFromAssets(activity, fusionFS, dialog);
                     installContainerPatternsFromAssets(activity, fusionFS);
                     if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
@@ -173,8 +173,7 @@ public abstract class FusionFSInstaller {
             int baseProgress = 75;
             int versionProgress = baseProgress + (int)(((float)(i + 1) / totalVersions) * 20);
 
-            // Free decompressor buffers from previous iteration before tackling another ~50MB archive.
-            // On 4GB devices, four wine/proton .txz extractions back-to-back can OOM otherwise.
+
             System.gc();
             try { Thread.sleep(50); } catch (InterruptedException ignored) {}
 
@@ -315,14 +314,9 @@ public abstract class FusionFSInstaller {
 
     public static void ensureMinimalFusionFSStructure(Context context) {
         FusionFS fusionFS = FusionFS.find(context);
-        File rootDir = fusionFS.getRootDir();
         File bionicDir = fusionFS.getBionicDir();
         File glibcDir = fusionFS.getGlibcDir();
 
-        // Only create wine.glibc/wine.bionic if they don't exist at all.
-        // Do NOT mkdirs() if they already exist as empty dirs — that would
-        // cause getWineDir() to prefer the empty wine.glibc over a populated
-        // legacy wine/ directory.
         File wineGlibcDir = fusionFS.getWineGlibcDir();
         File wineBionicDir = fusionFS.getWineBionicDir();
         if (!wineGlibcDir.exists()) wineGlibcDir.mkdirs();
@@ -360,7 +354,7 @@ public abstract class FusionFSInstaller {
         new File(glibcDir, "etc").mkdirs();
 
         createWineSymlink(fusionFS);
-        createCompatibilitySymlinks(context, fusionFS);
+        cleanupLegacyDirs(context, fusionFS);
 
         boolean hasProton = hasProtonInstalled(context);
         boolean hasWine = fusionFS.isWineInstalled();
@@ -477,25 +471,23 @@ public abstract class FusionFSInstaller {
         }
     }
 
-    private static void createCompatibilitySymlinks(Context context, FusionFS fusionFS) {
-        // In-app rootfs/imagefs compatibility symlinks. These live inside our own
-        // filesDir so they always work.
+    private static void cleanupLegacyDirs(Context context, FusionFS fusionFS) {
         File filesDir = context.getFilesDir();
-        File imagefsLink = new File(filesDir, "imagefs");
-        File rootfsLink = new File(filesDir, "rootfs");
-
-        if (!imagefsLink.exists()) {
-            FileUtils.symlink(fusionFS.getBionicDir().getAbsolutePath(), imagefsLink.getAbsolutePath());
+        String[] legacyNames = {"rootfs", "imagefs"};
+        for (String name : legacyNames) {
+            File legacy = new File(filesDir, name);
+            if (legacy.exists()) {
+                try {
+                    if (java.nio.file.Files.isSymbolicLink(legacy.toPath())) {
+                        java.nio.file.Files.delete(legacy.toPath());
+                    } else {
+                        FileUtils.delete(legacy);
+                    }
+                } catch (Exception e) {
+                    android.util.Log.w("FusionFSInstaller", "Cannot remove legacy dir " + legacy + ": " + e.getMessage());
+                }
+            }
         }
-        if (!rootfsLink.exists()) {
-            FileUtils.symlink(fusionFS.getGlibcDir().getAbsolutePath(), rootfsLink.getAbsolutePath());
-        }
-
-        // NOTE: previously we also tried to symlink into /data/data/com.winlator/,
-        // /data/data/com.winlator.cmod/ and /data/data/com.termux/. Starting from
-        // Android 10 (API 29) every app's data dir is sandboxed and writes from
-        // another UID fail with EACCES. The attempts only spammed warnings, so
-        // they were removed.
     }
 
     private static void createWineSymlink(FusionFS fusionFS) {
@@ -504,7 +496,7 @@ public abstract class FusionFSInstaller {
         if (wineDir.isDirectory() && !glibcOptWine.exists()) {
             glibcOptWine.getParentFile().mkdirs();
             File wineGlibcDir = fusionFS.getWineGlibcDir();
-            String target = wineGlibcDir.isDirectory() ? "../../wine.glibc" : "../../wine";
+            String target = (wineGlibcDir.isDirectory() && new File(wineGlibcDir, "bin").isDirectory()) ? "../../wine.glibc" : "../../wine";
             FileUtils.symlink(target, glibcOptWine.getPath());
         }
 
@@ -541,16 +533,8 @@ public abstract class FusionFSInstaller {
                 for (File file : files) {
                     if (file.isDirectory() && !fullClean) {
                         String name = file.getName();
-                        // Preserve variant home dirs and installed-wine across reinstalls.
-                        // home dirs live inside bionic/ and glibc/ (symlinks resolve to
-                        // usr.bionic/home, usr.glibc/home). The installed-wine dir holds
-                        // additional wine versions extracted by the user.
                         if (name.equals("installed-wine")) continue;
-                        // Skip deleting bionic/glibc variant dirs entirely — their home/
-                        // and opt/ subdirs contain user data.
                         if (name.equals("bionic") || name.equals("glibc")) continue;
-                        // The shared usr.* and etc.* dirs contain the runtime; those get
-                        // replaced. But preserve wine namespace dirs.
                         if (name.equals("wine.glibc") || name.equals("wine.bionic") || name.equals("wine")) continue;
                     }
                     FileUtils.delete(file);

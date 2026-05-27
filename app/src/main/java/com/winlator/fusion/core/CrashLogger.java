@@ -12,16 +12,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-/**
- * Catches uncaught exceptions and writes them to a file the user can share.
- *
- * Files are written to:
- *   /sdcard/Android/data/<package>/files/crash_logs/crash-<timestamp>.txt
- *
- * That path is reachable from any file manager without root and survives the
- * crash itself because we flush synchronously before delegating to the default
- * handler.
- */
 public final class CrashLogger implements Thread.UncaughtExceptionHandler {
     private static final String TAG = "CrashLogger";
     private static final String DIR_NAME = "crash_logs";

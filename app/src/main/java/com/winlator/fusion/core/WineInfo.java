@@ -15,11 +15,11 @@ import java.util.regex.Pattern;
 public class WineInfo implements Parcelable {
     public static final String MAIN_WINE_VERSION = "10.10";
     public static final String MAIN_WINE_IDENTIFIER = "wine-10.10-x86_64";
-    public static final WineInfo MAIN_WINE_INFO = new WineInfo(MAIN_WINE_IDENTIFIER);
     public static final String BIONIC_WINE_VERSION = "9.0";
     public static final String BIONIC_WINE_IDENTIFIER = "proton-9.0-x86_64";
-    public static final WineInfo BIONIC_WINE_INFO = new WineInfo("proton", BIONIC_WINE_VERSION, null, "x86_64", null);
     private static final Pattern pattern = Pattern.compile("^(wine|proton)\\-([0-9\\.]+)\\-?([0-9\\.]+)?\\-?(x86|x86_64|arm64ec)?$");
+    public static final WineInfo MAIN_WINE_INFO = new WineInfo(MAIN_WINE_IDENTIFIER);
+    public static final WineInfo BIONIC_WINE_INFO = new WineInfo("proton", BIONIC_WINE_VERSION, null, "x86_64", null);
     public final String version;
     public final String subversion;
     public final String path;
