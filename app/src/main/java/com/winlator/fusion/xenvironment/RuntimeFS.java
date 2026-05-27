@@ -73,15 +73,15 @@ public class RuntimeFS {
     }
 
     public File getCoreLibDir() {
-        return new File(coreDir, "/usr/lib");
+        return new File(coreDir, "usr/lib");
     }
 
     public File getCoreShareDir() {
-        return new File(coreDir, "/usr/share");
+        return new File(coreDir, "usr/share");
     }
 
     public File getCoreEtcDir() {
-        return new File(coreDir, "/usr/etc");
+        return new File(coreDir, "usr/etc");
     }
 
     public boolean isCoreInstalled() {
@@ -162,7 +162,7 @@ public class RuntimeFS {
         if (Container.BIONIC.equals(variant)) {
             return imageFs.getBinDir();
         }
-        return new File(fusionFS.getGlibcDir(), "/usr/local/bin");
+        return new File(fusionFS.getGlibcDir(), "usr/local/bin");
     }
 
     public String getWinePathForVariant(String variant) {

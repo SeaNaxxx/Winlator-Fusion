@@ -100,7 +100,13 @@ public class ContentsManager {
     }
 
     public void setFileSystemRoot(String fsRoot) {
-        this.currentFsRoot = fsRoot;
+        if (fsRoot.equals("rootfs")) {
+            this.currentFsRoot = FusionFS.find(context).getGlibcDir().getAbsolutePath();
+        } else if (fsRoot.equals("imagefs")) {
+            this.currentFsRoot = FusionFS.find(context).getBionicDir().getAbsolutePath();
+        } else {
+            this.currentFsRoot = fsRoot;
+        }
         this.dirTemplateMap = null;
         this.trustedFilesMap = null;
     }
@@ -455,7 +461,7 @@ public class ContentsManager {
             String dirName = profile.type.toString().toLowerCase() + "-" + profile.verName;
 
             File fsRootDir = new File(currentFsRoot);
-            File targetDir = new File(fsRootDir, "/opt/" + dirName);
+            File targetDir = new File(fsRootDir, "opt/" + dirName);
             File sourceDir = getInstallDir(context, profile);
             if (!targetDir.isDirectory()) targetDir.mkdirs();
             FileUtils.copy(sourceDir, targetDir, (file) -> FileUtils.chmod(file, 0771));

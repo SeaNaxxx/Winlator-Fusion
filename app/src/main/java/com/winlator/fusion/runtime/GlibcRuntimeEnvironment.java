@@ -45,7 +45,7 @@ public class GlibcRuntimeEnvironment implements RuntimeEnvironment {
     @Override
     public void prepare() {
         FileUtils.clear(profile.getTmpDir());
-        File shmDir = new File(profile.getRootDir(), "/tmp/shm");
+        File shmDir = new File(profile.getRootDir(), "tmp/shm");
         if (!shmDir.isDirectory()) shmDir.mkdirs();
     }
 

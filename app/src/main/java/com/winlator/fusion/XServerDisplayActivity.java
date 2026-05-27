@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.PowerManager;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -35,7 +34,6 @@ import com.winlator.fusion.container.ContainerManager;
 import com.winlator.fusion.container.DXWrappers;
 import com.winlator.fusion.container.GraphicsDrivers;
 import com.winlator.fusion.container.Shortcut;
-import com.winlator.fusion.services.NotificationService;
 import com.winlator.fusion.contentdialog.ActiveWindowsDialog;
 import com.winlator.fusion.contents.AdrenotoolsManager;
 import com.winlator.fusion.contents.ContentsManager;
@@ -162,7 +160,6 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         AppUtils.setActivityTheme(this);
         super.onCreate(savedInstanceState);
         AppUtils.hideSystemUI(this);
-        AppUtils.keepScreenOn(this);
         setContentView(R.layout.xserver_display_activity);
 
         final PreloaderDialog preloaderDialog = new PreloaderDialog(this);
@@ -339,10 +336,6 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             }
         });
 
-        if (!NotificationService.isRunning()) {
-            startForegroundService(new Intent(this, NotificationService.class));
-        }
-
         setupUI();
 
         Executors.newSingleThreadExecutor().execute(() -> {
@@ -395,17 +388,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             xServerView.onResume();
             environment.onResume();
         }
-        if (NotificationService.wakeLock != null && NotificationService.wakeLock.isHeld()) {
-            NotificationService.wakeLock.release();
-        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (NotificationService.wakeLock != null && !NotificationService.wakeLock.isHeld()) {
-            NotificationService.wakeLock.acquire();
-        }
         if (environment != null && !isInPictureInPictureMode()) {
             environment.onPause();
             xServerView.onPause();
@@ -425,9 +412,6 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         if (midiHandler != null) midiHandler.stop();
         winHandler.stop();
         if (environment != null) environment.stopEnvironmentComponents();
-        if (NotificationService.isRunning()) {
-            stopService(new Intent(this, NotificationService.class));
-        }
         super.onDestroy();
     }
 
@@ -934,7 +918,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             FileUtils.delete(new File(libDir, "libvulkan_vortek.so"));
             FileUtils.delete(new File(libDir, "libGL.so.1.7.0"));
 
-            File vulkanICDDir = new File(rootDir, "/usr/share/vulkan/icd.d");
+            File vulkanICDDir = new File(rootDir, "usr/share/vulkan/icd.d");
             FileUtils.delete(vulkanICDDir);
             vulkanICDDir.mkdirs();
 
@@ -1212,8 +1196,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         boolean isArm64EC = wineInfo != null && wineInfo.isArm64EC();
         String system32Arch = isArm64EC ? "aarch64-windows" : "x86_64-windows";
         
-        File wineSystem32Dir = new File(wineDir, "/lib/wine/" + system32Arch);
-        File wineSysWoW64Dir = new File(wineDir, "/lib/wine/i386-windows");
+        File wineSystem32Dir = new File(wineDir, "lib/wine/" + system32Arch);
+        File wineSysWoW64Dir = new File(wineDir, "lib/wine/i386-windows");
         File containerSystem32Dir = new File(rootDir, RootFS.WINEPREFIX+"/drive_c/windows/system32");
         File containerSysWoW64Dir = new File(rootDir, RootFS.WINEPREFIX+"/drive_c/windows/syswow64");
 
@@ -1353,7 +1337,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
     private void applyGeneralPatches(Container container) {
         File rootDir = rootFS.getRootDir();
-        FileUtils.delete(new File(rootDir, "/opt/apps"));
+        FileUtils.delete(new File(rootDir, "opt/apps"));
 
         TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, FusionFS.ASSET_CONTAINER_PATTERN_COMMON, rootDir);
 

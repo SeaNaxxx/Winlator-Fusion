@@ -144,7 +144,9 @@ public class SettingsFragment extends Fragment {
         final Spinner sSoundFont = view.findViewById(R.id.SSoundFont);
         String soundfont = preferences.getString("soundfont", null);
         GeneralComponents.initViews(GeneralComponents.Type.SOUNDFONT, view.findViewById(R.id.SoundFontToolbox), sSoundFont, soundfont, DefaultVersion.SOUNDFONT);
-        view.findViewById(R.id.BTSoundFontTest).setOnClickListener((v) -> (new SoundFontTestDialog(context, sSoundFont.getSelectedItem().toString())).show());
+        view.findViewById(R.id.BTSoundFontTest).setOnClickListener((v) -> {
+            if (sSoundFont.getSelectedItem() != null) (new SoundFontTestDialog(context, sSoundFont.getSelectedItem().toString())).show();
+        });
 
         final Spinner sMIDIInputDevice = view.findViewById(R.id.SMIDIInputDevice);
         String midiInputDevice = preferences.getString("midi_input_device", "auto");
@@ -407,7 +409,7 @@ public class SettingsFragment extends Fragment {
 
         view.findViewById(R.id.BTConfirm).setOnClickListener((v) -> {
             SharedPreferences.Editor editor = preferences.edit();
-            editor.putString("soundfont", sSoundFont.getSelectedItem().toString());
+            editor.putString("soundfont", sSoundFont.getSelectedItem() != null ? sSoundFont.getSelectedItem().toString() : "");
             editor.putString("box64_preset", Box64PresetManager.getSpinnerSelectedId(sBox64Preset));
             editor.putString("fexcore_preset", FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset));
             editor.putBoolean("move_cursor_to_touchpoint", cbMoveCursorToTouchpoint.isChecked());
@@ -451,7 +453,8 @@ public class SettingsFragment extends Fragment {
 
             int midiInputDevicePosition = sMIDIInputDevice.getSelectedItemPosition();
             editor.putString("midi_input_device", midiInputDevicePosition == 0 ? "none" :
-                                                 (midiInputDevicePosition == 1 ? "auto" : sMIDIInputDevice.getSelectedItem().toString()));
+                                                 (midiInputDevicePosition == 1 ? "auto" : (sMIDIInputDevice.getSelectedItem() != null ? sMIDIInputDevice.getSelectedItem().toString() : "auto")));
+
 
             String logPath = etLogFile.getText().toString().trim();
             if (!logPath.equals(defaultLogPath) && !logPath.isEmpty()) {
@@ -647,7 +650,9 @@ public class SettingsFragment extends Fragment {
 
         view.findViewById(R.id.BTInstallWine).setOnClickListener((v) -> selectWineFileForInstall());
         view.findViewById(R.id.BTRemoveWine).setOnClickListener((v) -> {
-            WineInfo wineInfo = wineInfos.get(sWineVersion.getSelectedItemPosition());
+            int pos = sWineVersion.getSelectedItemPosition();
+            if (pos < 0 || pos >= wineInfos.size()) return;
+            WineInfo wineInfo = wineInfos.get(pos);
             if (wineInfo != WineInfo.MAIN_WINE_INFO) {
                 ContentDialog.confirm(getContext(), R.string.do_you_want_to_remove_this_wine_version, () -> {
                     removeInstalledWine(wineInfo, () -> loadWineVersionSpinner(view, sWineVersion));

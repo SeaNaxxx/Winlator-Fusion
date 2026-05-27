@@ -135,10 +135,10 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
 
         addBox64EnvVars(envVars);
 
-        File shmDir = new File(rootDir, "/tmp/shm");
+        File shmDir = new File(rootDir, "tmp/shm");
         if (!shmDir.isDirectory()) shmDir.mkdirs();
 
-        File box64File = new File(rootDir, "/usr/local/bin/box64");
+        File box64File = new File(rootDir, "usr/local/bin/box64");
         if (!box64File.exists()) {
             extractBox64File();
         }
@@ -170,7 +170,7 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         String box64Version = preferences.getString("box64_version", DefaultVersion.BOX64);
 
-        File box64File = new File(environment.getRootFS().getRootDir(), "/usr/local/bin/box64");
+        File box64File = new File(environment.getRootFS().getRootDir(), "usr/local/bin/box64");
         if (!box64File.exists()) {
             GeneralComponents.extractFile(GeneralComponents.Type.BOX64, context, box64Version, DefaultVersion.BOX64);
             preferences.edit().putString("current_box64_version", box64Version).apply();
@@ -187,7 +187,7 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
     private void copyDefaultBox64RCFile() {
         Context context = environment.getContext();
         RootFS rootFS = environment.getRootFS();
-        File rcFile = new File(rootFS.getRootDir(), "/etc/config.box64rc");
+        File rcFile = new File(rootFS.getRootDir(), "etc/config.box64rc");
         if (!rcFile.exists()) {
             FileUtils.copy(context, "box64/default.box64rc", rcFile);
         }
@@ -228,7 +228,7 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
 
         envVars.putAll(Box64PresetManager.getEnvVars(context, box64Preset));
 
-        File box64RCFile = new File(rootFS.getRootDir(), "/etc/config.box64rc");
+        File box64RCFile = new File(rootFS.getRootDir(), "etc/config.box64rc");
         envVars.put("BOX64_RCFILE", box64RCFile.getPath());
     }
 

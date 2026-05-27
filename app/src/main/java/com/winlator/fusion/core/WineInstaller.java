@@ -29,7 +29,7 @@ public abstract class WineInstaller {
         final File installedWineDir = rootFS.getInstalledWineDir();
         rootFS.setWinePath(wineInfo.path);
 
-        final File containerPatternDir = new File(installedWineDir, "/preinstall/container-pattern");
+        final File containerPatternDir = new File(installedWineDir, "preinstall/container-pattern");
         if (containerPatternDir.isDirectory()) FileUtils.delete(containerPatternDir);
         containerPatternDir.mkdirs();
 
@@ -48,7 +48,7 @@ public abstract class WineInstaller {
             bionicProgramLauncherComponent.setTerminationCallback((status) -> Executors.newSingleThreadExecutor().execute(() -> {
                 if (status > 0) {
                     AppUtils.showToast(activity, R.string.unable_to_install_wine);
-                    FileUtils.delete(new File(installedWineDir, "/preinstall"));
+                    FileUtils.delete(new File(installedWineDir, "preinstall"));
                     AppUtils.restartApplication(activity);
                     return;
                 }
@@ -68,16 +68,16 @@ public abstract class WineInstaller {
                     }
                 }
 
-                File containerPatternFile = new File(installedWineDir, "/preinstall/container-pattern-"+wineInfo.fullVersion()+".tzst");
+                File containerPatternFile = new File(installedWineDir, "preinstall/container-pattern-"+wineInfo.fullVersion()+".tzst");
                 TarCompressorUtils.compress(TarCompressorUtils.Type.ZSTD, new File(rootDir, RootFS.WINEPREFIX), containerPatternFile, MainActivity.CONTAINER_PATTERN_COMPRESSION_LEVEL);
 
-                File protonTargetDir = new File(ImageFs.find(activity).getRootDir(), "/opt/" + wineInfo.identifier());
+                File protonTargetDir = new File(ImageFs.find(activity).getRootDir(), "opt/" + wineInfo.identifier());
                 if (!containerPatternFile.renameTo(new File(installedWineDir, containerPatternFile.getName())) ||
                         !(new File(wineInfo.path)).renameTo(protonTargetDir)) {
                     containerPatternFile.delete();
                 }
 
-                FileUtils.delete(new File(installedWineDir, "/preinstall"));
+                FileUtils.delete(new File(installedWineDir, "preinstall"));
 
                 preloaderDialog.closeOnUiThread();
                 AppUtils.RestartApplicationOptions options = new AppUtils.RestartApplicationOptions();
@@ -93,7 +93,7 @@ public abstract class WineInstaller {
             guestProgramLauncherComponent.setTerminationCallback((status) -> Executors.newSingleThreadExecutor().execute(() -> {
                 if (status > 0) {
                     AppUtils.showToast(activity, R.string.unable_to_install_wine);
-                    FileUtils.delete(new File(installedWineDir, "/preinstall"));
+                    FileUtils.delete(new File(installedWineDir, "preinstall"));
                     AppUtils.restartApplication(activity);
                     return;
                 }
@@ -113,7 +113,7 @@ public abstract class WineInstaller {
                     }
                 }
 
-                File containerPatternFile = new File(installedWineDir, "/preinstall/container-pattern-"+wineInfo.fullVersion()+".tzst");
+                File containerPatternFile = new File(installedWineDir, "preinstall/container-pattern-"+wineInfo.fullVersion()+".tzst");
                 TarCompressorUtils.compress(TarCompressorUtils.Type.ZSTD, new File(rootDir, RootFS.WINEPREFIX), containerPatternFile, MainActivity.CONTAINER_PATTERN_COMPRESSION_LEVEL);
 
                 if (!containerPatternFile.renameTo(new File(installedWineDir, containerPatternFile.getName())) ||
@@ -121,7 +121,7 @@ public abstract class WineInstaller {
                     containerPatternFile.delete();
                 }
 
-                FileUtils.delete(new File(installedWineDir, "/preinstall"));
+                FileUtils.delete(new File(installedWineDir, "preinstall"));
 
                 preloaderDialog.closeOnUiThread();
                 AppUtils.RestartApplicationOptions options = new AppUtils.RestartApplicationOptions();
@@ -133,7 +133,7 @@ public abstract class WineInstaller {
 
     public static void extractWineFileForInstallAsync(Context context, Uri uri, Callback<File> callback) {
         Executors.newSingleThreadExecutor().execute(() -> {
-            File destination = new File(RootFS.find(context).getInstalledWineDir(), "/preinstall/wine");
+            File destination = new File(RootFS.find(context).getInstalledWineDir(), "preinstall/wine");
             FileUtils.delete(destination);
             destination.mkdirs();
             boolean success = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, context, uri, destination);
@@ -258,13 +258,13 @@ public abstract class WineInstaller {
 
         if (!glibcOnly) {
             try {
-                File imagefsOptDir = new File(ImageFs.find(context).getRootDir(), "/opt");
+                File imagefsOptDir = new File(ImageFs.find(context).getRootDir(), "opt");
                 if (imagefsOptDir.isDirectory()) {
                     File[] optFiles = imagefsOptDir.listFiles();
                     if (optFiles != null) {
                         for (File file : optFiles) {
                             String name = file.getName();
-                            if (name.startsWith("proton") && file.isDirectory()) {
+                            if ((name.startsWith("proton") || name.startsWith("wine")) && file.isDirectory()) {
                                 File binDir = new File(file, "bin");
                                 if (binDir.isDirectory()) {
                                     wineInfos.add(WineInfo.fromIdentifier(context, name));
@@ -277,6 +277,12 @@ public abstract class WineInstaller {
                     try {
                         context.getAssets().open("proton-9.0-x86_64_container_pattern.tzst").close();
                         wineInfos.add(WineInfo.BIONIC_WINE_INFO);
+                    } catch (Exception e) {
+                    }
+                    try {
+                        context.getAssets().open("wine-10.10-arm64ec_container_pattern.tzst").close();
+                        WineInfo arm64ecInfo = new WineInfo("wine", WineInfo.MAIN_WINE_VERSION, null, "arm64ec", null);
+                        if (!wineInfos.contains(arm64ecInfo)) wineInfos.add(arm64ecInfo);
                     } catch (Exception e) {
                     }
                 }

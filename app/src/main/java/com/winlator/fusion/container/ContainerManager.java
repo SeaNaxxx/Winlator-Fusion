@@ -38,6 +38,11 @@ public class ContainerManager {
         File rootfsDir = fusionFS.getGlibcDir();
         File imagefsDir = fusionFS.getBionicDir();
         try {
+            if (!rootfsDir.isDirectory()) rootfsDir.mkdirs();
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to create glibc directory: " + rootfsDir, e);
+        }
+        try {
             if (!imagefsDir.isDirectory()) imagefsDir.mkdirs();
         } catch (Exception e) {
             Log.w(TAG, "Failed to create bionic directory: " + imagefsDir, e);
@@ -327,7 +332,7 @@ public class ContainerManager {
 
     private void copyCommonDlls(String srcName, String dstName, JSONObject commonDlls, File containerDir) throws JSONException {
         FusionFS fusionFS = FusionFS.find(context);
-        File srcDir = new File(fusionFS.getWineDir(), "/lib/wine/"+srcName);
+        File srcDir = new File(fusionFS.getWineDir(), "lib/wine/"+srcName);
         JSONArray dlnames = commonDlls.getJSONArray(dstName);
 
         for (int i = 0; i < dlnames.length(); i++) {

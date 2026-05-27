@@ -146,11 +146,14 @@ public class ContainerDetailFragment extends Fragment {
         String currentVariant = isEditMode() ? container.getContainerVariant() : Container.DEFAULT_VARIANT;
         boolean isBionic = currentVariant.equals(Container.BIONIC);
 
-        final ArrayList<WineInfo> wineInfos = WineInstaller.getInstalledWineInfos(context, currentVariant);
-        if (wineInfos == null || wineInfos.isEmpty()) {
+        ArrayList<WineInfo> wineInfos = WineInstaller.getInstalledWineInfos(context, currentVariant);
+        if (wineInfos == null) wineInfos = new ArrayList<>();
+        if (wineInfos.isEmpty()) {
             if (!Container.BIONIC.equals(currentVariant)) {
                 currentVariant = Container.BIONIC;
                 isBionic = true;
+                wineInfos = WineInstaller.getInstalledWineInfos(context, currentVariant);
+                if (wineInfos == null) wineInfos = new ArrayList<>();
             }
         }
         final ArrayList<WineInfo>[] wineInfosRef = new ArrayList[]{wineInfos};
@@ -481,7 +484,7 @@ public class ContainerDetailFragment extends Fragment {
                 String dxwrapperConfig = dxwrapperPickerRef[0].getDXWrapperConfig();
                 String graphicsDriverConfig = graphicsDriverPickerRef[0].getGraphicsDriverConfig();
                 String audioDriverConfig = vAudioDriverConfig.getTag().toString();
-                String audioDriver = StringUtils.parseIdentifier(sAudioDriver.getSelectedItem());
+                String audioDriver = sAudioDriver.getSelectedItem() != null ? StringUtils.parseIdentifier(sAudioDriver.getSelectedItem()) : Container.DEFAULT_AUDIO_DRIVER;
                 String wincomponents = getWinComponents(view);
                 String drives = getDrives(view);
                 byte hudMode = (byte)sHUDMode.getSelectedItemPosition();
@@ -497,9 +500,9 @@ public class ContainerDetailFragment extends Fragment {
                 String box64Preset = Box64PresetManager.getSpinnerSelectedId(sBox64Preset);
                 String desktopTheme = getDesktopTheme(view);
 
-                String containerVariant = sContainerVariant != null ? StringUtils.parseIdentifier(sContainerVariant.getSelectedItem()) : Container.DEFAULT_VARIANT;
+                String containerVariant = sContainerVariant != null && sContainerVariant.getSelectedItem() != null ? StringUtils.parseIdentifier(sContainerVariant.getSelectedItem()) : Container.DEFAULT_VARIANT;
                 if (containerVariant == null || containerVariant.isEmpty()) containerVariant = Container.DEFAULT_VARIANT;
-                String emulator = sEmulator != null && sEmulator.getSelectedItem() != null ? sEmulator.getSelectedItem().toString() : container.getDefaultEmulatorForType();
+                String emulator = sEmulator != null && sEmulator.getSelectedItem() != null ? sEmulator.getSelectedItem().toString() : (isEditMode() ? container.getDefaultEmulatorForType() : "Box64");
 
                 if (isEditMode()) {
                     // Prevent changing container variant on existing containers — the filesystem

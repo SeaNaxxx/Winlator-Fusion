@@ -537,7 +537,6 @@
     <string name="installing_content">Installing content...</string>
     <string name="no_items_to_display_content">No items to display</string>
     <string name="profile_cannot_be_recognized">Profile cannot be recognized</string>
-    <string name="notification_running">Winlator Fusion is running, do not kill or swipe this notification</string>
     <string name="controller_1">Controller 1</string>
     <string name="controller_2">Controller 2</string>
 </resources>

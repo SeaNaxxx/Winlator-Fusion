@@ -14,6 +14,7 @@ import com.winlator.fusion.R;
 import com.winlator.fusion.ShortcutsFragment;
 import com.winlator.fusion.box64.Box64PresetManager;
 import com.winlator.fusion.fexcore.FEXCorePresetManager;
+import com.winlator.fusion.container.Container;
 import com.winlator.fusion.container.GraphicsDrivers;
 import com.winlator.fusion.container.Shortcut;
 import com.winlator.fusion.core.AppUtils;
@@ -126,7 +127,7 @@ public class ShortcutSettingsDialog extends ContentDialog {
                 String dxwrapperConfig = dxwrapperPicker.getDXWrapperConfig();
                 String graphicsDriverConfig = graphicsDriverPicker.getGraphicsDriverConfig();
                 String audioDriverConfig = vAudioDriverConfig.getTag().toString();
-                String audioDriver = StringUtils.parseIdentifier(sAudioDriver.getSelectedItem());
+                String audioDriver = sAudioDriver.getSelectedItem() != null ? StringUtils.parseIdentifier(sAudioDriver.getSelectedItem()) : Container.DEFAULT_AUDIO_DRIVER;
                 String screenSize = ContainerDetailFragment.getScreenSize(getContentView());
 
                 String execArgs = etExecArgs.getText().toString();

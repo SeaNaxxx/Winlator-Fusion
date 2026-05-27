@@ -76,7 +76,7 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
 
     @Override
     public File getBinDir() {
-        return new File(getRootDir(), "/usr/local/bin");
+        return new File(getRootDir(), "usr/local/bin");
     }
 
     @Override
@@ -176,10 +176,10 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
         if (new File(sysvPath).exists()) {
             return sysvPath;
         }
-        File bionicLibDir = fusionFS.getBionicLibDir();
-        String bionicSysvPath = new File(bionicLibDir, "libandroid-sysvshm.so").getAbsolutePath();
-        if (new File(bionicSysvPath).exists()) {
-            return bionicSysvPath;
+        File libX8664Dir = new File(getRootDir(), "usr/lib/x86_64-linux-gnu");
+        String altPath = new File(libX8664Dir, "libandroid-sysvshm.so").getAbsolutePath();
+        if (new File(altPath).exists()) {
+            return altPath;
         }
         return "";
     }

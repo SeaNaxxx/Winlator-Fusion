@@ -184,6 +184,8 @@ public abstract class TarCompressorUtils {
                         File parent = file.getParentFile();
                         if (parent != null && !parent.isDirectory()) parent.mkdirs();
                         FileUtils.symlink(entry.getLinkName(), file.getAbsolutePath());
+
+                        continue;
                     }
                     else {
                         File parent = file.getParentFile();

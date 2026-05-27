@@ -127,11 +127,11 @@ public abstract class WineUtils {
 
         File wineDir;
         com.winlator.fusion.xenvironment.FusionFS fusionFS = com.winlator.fusion.xenvironment.FusionFS.fromDir(rootDir.getParentFile());
-        File fusionWineDir = new File(fusionFS.getWineDir(), "/lib/wine");
+        File fusionWineDir = new File(fusionFS.getWineDir(), "lib/wine");
         if (fusionWineDir.isDirectory()) {
             wineDir = fusionWineDir;
         } else {
-            wineDir = new File(rootDir, "/opt/wine/lib/wine");
+            wineDir = new File(rootDir, "opt/wine/lib/wine");
         }
         if (!wineDir.isDirectory() && wineInfo != null && wineInfo.path != null) {
             File protonWineDir = new File(wineInfo.path + "/lib/wine");
@@ -284,7 +284,7 @@ public abstract class WineUtils {
     }
 
     public static boolean isWineprefixWasUpdated(Container container) {
-        File file = new File(container.getRootDir(), "/.wine/.update-timestamp");
+        File file = new File(container.getRootDir(), ".wine/.update-timestamp");
         String content = FileUtils.readString(file);
         
         if (!content.startsWith("disable")) {

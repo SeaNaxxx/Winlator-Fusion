@@ -8,6 +8,8 @@ local.properties
 .externalNativeBuild
 .cxx
 app/build/
+*.keystore
+*.jks
 app/src/main/assets/fusionfs.tzst
 app/src/main/assets/fusionfs_patches.tzst
 app/src/main/assets/wine-10.10-x86_64.txz

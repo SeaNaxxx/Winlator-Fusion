@@ -19,7 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class FusionFSInstaller {
-    public static final byte LATEST_VERSION = 5;
+    public static final byte LATEST_VERSION = 8;
 
     private static boolean assetExists(Context context, String assetName) {
         try {
@@ -68,7 +68,6 @@ public abstract class FusionFSInstaller {
     }
 
     private static void installFromFusionAsset(final MainActivity activity) {
-        AppUtils.keepScreenOn(activity);
         FusionFS fusionFS = FusionFS.find(activity);
         File rootDir = fusionFS.getRootDir();
 
@@ -77,8 +76,11 @@ public abstract class FusionFSInstaller {
         dialog.setShowStatus(true);
 
         Executors.newSingleThreadExecutor().execute(() -> {
-            clearFusionDir(rootDir);
+            clearFusionDir(rootDir, false);
             rootDir.mkdirs();
+
+            System.gc();
+            try { Thread.sleep(100); } catch (InterruptedException ignored) {}
 
             long contentLength = 100000000L;
             try {
@@ -96,29 +98,38 @@ public abstract class FusionFSInstaller {
                         long totalSize = totalSizeRef.addAndGet(size);
                         final int progress = Math.min((int)(((float)totalSize / totalContentLength) * 70), 70);
                         if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
-                            if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(progress);
+                            try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(progress); } catch (Exception ignored) {}
                         });
                     }
                     return file;
                 });
-            } catch (Exception e) { success = false; }
+            } catch (OutOfMemoryError e) {
+                android.util.Log.e("FusionFSInstaller", "OOM during fusionfs extraction", e);
+                System.gc();
+                success = false;
+            } catch (Throwable e) {
+                android.util.Log.e("FusionFSInstaller", "Extraction failed", e);
+                success = false;
+            }
 
             if (success) {
                 try {
                     renameExtractedDirs(rootDir);
                     applyPatches(activity, rootDir);
-                    copySharedRuntimeLibraries(fusionFS);
+                    ensureGlibcSysvshm(fusionFS);
                     if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
-                        if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(75);
+                        try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(75); } catch (Exception ignored) {}
                     });
                     createWineSymlink(fusionFS);
-                    createCompatibilitySymlinks(activity, fusionFS);
+                    cleanupLegacyDirs(activity, fusionFS);
                     installWineFromAssets(activity, fusionFS, dialog);
                     installContainerPatternsFromAssets(activity, fusionFS);
                     if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
-                        if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(95);
+                        try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(95); } catch (Exception ignored) {}
                     });
                     installDriversFromAssets(activity);
+                    installInputDlls(activity, fusionFS);
+                    installVulkanLayers(activity, fusionFS);
                     fusionFS.createVersionFile(LATEST_VERSION);
                     try {
                         resetContainerVersions(activity);
@@ -126,19 +137,26 @@ public abstract class FusionFSInstaller {
                         android.util.Log.w("FusionFSInstaller", "Failed to reset container versions", e);
                     }
                     if (!activity.isFinishing() && !activity.isDestroyed()) activity.runOnUiThread(() -> {
-                        if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(100);
+                        try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(100); } catch (Exception ignored) {}
                     });
                 } catch (Exception e) {
+                    android.util.Log.e("FusionFSInstaller", "Post-extraction setup failed", e);
                     success = false;
                 }
             }
 
             if (!success) {
+                android.util.Log.e("FusionFSInstaller", "System files installation failed, clearing partial data");
+                try { clearFusionDir(rootDir, false); } catch (Exception ignored) {}
                 if (!activity.isFinishing() && !activity.isDestroyed()) {
-                    activity.runOnUiThread(() -> AppUtils.showToast(activity, R.string.unable_to_install_system_files));
+                    activity.runOnUiThread(() -> {
+                        try { AppUtils.showToast(activity, R.string.unable_to_install_system_files); } catch (Exception ignored) {}
+                    });
                 }
             }
-            if (!activity.isFinishing() && !activity.isDestroyed()) dialog.closeOnUiThread();
+            if (!activity.isFinishing() && !activity.isDestroyed()) {
+                try { dialog.closeOnUiThread(); } catch (Exception ignored) {}
+            }
         });
     }
 
@@ -157,15 +175,40 @@ public abstract class FusionFSInstaller {
             int baseProgress = 75;
             int versionProgress = baseProgress + (int)(((float)(i + 1) / totalVersions) * 20);
 
-            if (assetExists(activity, version + ".txz")) {
-                File outFile = getWineInstallDir(fusionFS, version, isProton, isArm64EC);
-                outFile.mkdirs();
-                installed = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, activity, version + ".txz", outFile);
-            }
-            if (!installed && assetExists(activity, version + ".tzst")) {
-                File outFile = getWineInstallDir(fusionFS, version, isProton, isArm64EC);
-                outFile.mkdirs();
-                installed = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, activity, version + ".tzst", outFile);
+
+            System.gc();
+            try { Thread.sleep(50); } catch (InterruptedException ignored) {}
+
+            try {
+                if (assetExists(activity, version + ".txz")) {
+                    File outFile = getWineInstallDir(fusionFS, version, isProton, isArm64EC);
+                    outFile.mkdirs();
+                    installed = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, activity, version + ".txz", outFile);
+                }
+                if (!installed && assetExists(activity, version + ".tzst")) {
+                    File outFile = getWineInstallDir(fusionFS, version, isProton, isArm64EC);
+                    outFile.mkdirs();
+                    installed = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, activity, version + ".tzst", outFile);
+                }
+            } catch (OutOfMemoryError oom) {
+                android.util.Log.e("FusionFSInstaller", "OOM extracting " + version + ", retrying after GC", oom);
+                System.gc();
+                try { Thread.sleep(200); } catch (InterruptedException ignored) {}
+                try {
+                    if (assetExists(activity, version + ".txz")) {
+                        File outFile = getWineInstallDir(fusionFS, version, isProton, isArm64EC);
+                        outFile.mkdirs();
+                        installed = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, activity, version + ".txz", outFile);
+                    } else if (assetExists(activity, version + ".tzst")) {
+                        File outFile = getWineInstallDir(fusionFS, version, isProton, isArm64EC);
+                        outFile.mkdirs();
+                        installed = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, activity, version + ".tzst", outFile);
+                    }
+                } catch (Throwable retryFail) {
+                    android.util.Log.e("FusionFSInstaller", "Retry of " + version + " failed", retryFail);
+                }
+            } catch (Throwable t) {
+                android.util.Log.e("FusionFSInstaller", "Failed to install " + version, t);
             }
 
             if (!installed) {
@@ -178,7 +221,7 @@ public abstract class FusionFSInstaller {
             if (dialog != null && !activity.isFinishing() && !activity.isDestroyed()) {
                 int progress = Math.min(versionProgress, 94);
                 activity.runOnUiThread(() -> {
-                    if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(progress);
+                    try { if (!activity.isFinishing() && !activity.isDestroyed()) dialog.setProgress(progress); } catch (Exception ignored) {}
                 });
             }
         }
@@ -190,7 +233,7 @@ public abstract class FusionFSInstaller {
 
     private static File getWineInstallDir(FusionFS fusionFS, String version, boolean isProton, boolean isArm64EC) {
         if (isProton || isArm64EC) {
-            return new File(fusionFS.getBionicDir(), "/opt/" + version);
+            return new File(fusionFS.getBionicDir(), "opt/" + version);
         }
         if (WineInfo.isMainWineVersion(version)) {
             return fusionFS.getWineDir();
@@ -221,7 +264,7 @@ public abstract class FusionFSInstaller {
         boolean isArm64EC = version.endsWith("-arm64ec");
 
         if (isProton || isArm64EC) {
-            File outFile = new File(fusionFS.getBionicDir(), "/opt/" + version);
+            File outFile = new File(fusionFS.getBionicDir(), "opt/" + version);
             return outFile.isDirectory() && new File(outFile, "bin").isDirectory();
         }
         if (WineInfo.isMainWineVersion(version)) {
@@ -240,7 +283,7 @@ public abstract class FusionFSInstaller {
 
     public static boolean hasProtonInstalled(Context context) {
         FusionFS fusionFS = FusionFS.find(context);
-        File bionicOptDir = new File(fusionFS.getBionicDir(), "/opt");
+        File bionicOptDir = new File(fusionFS.getBionicDir(), "opt");
         File[] optFiles = bionicOptDir.listFiles();
         if (optFiles != null) {
             for (File f : optFiles) {
@@ -273,43 +316,48 @@ public abstract class FusionFSInstaller {
 
     public static void ensureMinimalFusionFSStructure(Context context) {
         FusionFS fusionFS = FusionFS.find(context);
+        cleanupLegacyDirs(context, fusionFS);
         File bionicDir = fusionFS.getBionicDir();
         File glibcDir = fusionFS.getGlibcDir();
-        File wineDir = fusionFS.getWineDir();
 
-        new File(bionicDir, "/usr/bin").mkdirs();
-        new File(bionicDir, "/usr/lib").mkdirs();
-        new File(bionicDir, "/usr/tmp").mkdirs();
-        new File(bionicDir, "/usr/etc/fonts").mkdirs();
-        new File(bionicDir, "/usr/etc/xdg").mkdirs();
-        new File(bionicDir, "/usr/etc/alsa/conf.d").mkdirs();
-        new File(bionicDir, "/usr/etc/tls").mkdirs();
-        new File(bionicDir, "/usr/share/alsa").mkdirs();
-        new File(bionicDir, "/usr/share/vulkan/icd.d").mkdirs();
-        new File(bionicDir, "/usr/share/vulkan/implicit_layer.d").mkdirs();
-        new File(bionicDir, "/usr/share/vulkan/explicit_layer.d").mkdirs();
-        new File(bionicDir, "/usr/lib/gstreamer-1.0").mkdirs();
-        new File(bionicDir, "/usr/lib/alsa-lib").mkdirs();
-        new File(bionicDir, "/home").mkdirs();
-        new File(bionicDir, "/opt").mkdirs();
-        new File(bionicDir, "/dev/input").mkdirs();
-        new File(bionicDir, "/var/cache").mkdirs();
-        new File(bionicDir, "/etc").mkdirs();
-        new File(bionicDir, "/tmp").mkdirs();
+        File wineGlibcDir = fusionFS.getWineGlibcDir();
+        File wineBionicDir = fusionFS.getWineBionicDir();
+        if (!wineGlibcDir.exists()) wineGlibcDir.mkdirs();
+        if (!wineBionicDir.exists()) wineBionicDir.mkdirs();
 
-        new File(glibcDir, "/usr/lib").mkdirs();
-        new File(glibcDir, "/usr/lib/x86_64-linux-gnu").mkdirs();
-        new File(glibcDir, "/usr/local/bin").mkdirs();
-        new File(glibcDir, "/usr/bin").mkdirs();
-        new File(glibcDir, "/usr/etc").mkdirs();
-        new File(glibcDir, "/usr/share/fonts").mkdirs();
-        new File(glibcDir, "/tmp").mkdirs();
-        new File(glibcDir, "/home").mkdirs();
-        new File(glibcDir, "/opt").mkdirs();
-        new File(glibcDir, "/etc").mkdirs();
+        new File(bionicDir, "usr/bin").mkdirs();
+        new File(bionicDir, "usr/lib").mkdirs();
+        new File(bionicDir, "usr/tmp").mkdirs();
+        new File(bionicDir, "usr/etc/fonts").mkdirs();
+        new File(bionicDir, "usr/etc/xdg").mkdirs();
+        new File(bionicDir, "usr/etc/alsa/conf.d").mkdirs();
+        new File(bionicDir, "usr/etc/tls").mkdirs();
+        new File(bionicDir, "usr/share/alsa").mkdirs();
+        new File(bionicDir, "usr/share/vulkan/icd.d").mkdirs();
+        new File(bionicDir, "usr/share/vulkan/implicit_layer.d").mkdirs();
+        new File(bionicDir, "usr/share/vulkan/explicit_layer.d").mkdirs();
+        new File(bionicDir, "usr/lib/gstreamer-1.0").mkdirs();
+        new File(bionicDir, "usr/lib/alsa-lib").mkdirs();
+        new File(bionicDir, "home").mkdirs();
+        new File(bionicDir, "opt").mkdirs();
+        new File(bionicDir, "dev/input").mkdirs();
+        new File(bionicDir, "var/cache").mkdirs();
+        new File(bionicDir, "etc").mkdirs();
+        new File(bionicDir, "tmp").mkdirs();
+
+        new File(glibcDir, "usr/lib").mkdirs();
+        new File(glibcDir, "usr/lib/x86_64-linux-gnu").mkdirs();
+        new File(glibcDir, "usr/local/bin").mkdirs();
+        new File(glibcDir, "usr/bin").mkdirs();
+        new File(glibcDir, "usr/etc").mkdirs();
+        new File(glibcDir, "usr/share/fonts").mkdirs();
+        new File(glibcDir, "tmp").mkdirs();
+        new File(glibcDir, "home").mkdirs();
+        new File(glibcDir, "opt").mkdirs();
+        new File(glibcDir, "etc").mkdirs();
 
         createWineSymlink(fusionFS);
-        createCompatibilitySymlinks(context, fusionFS);
+        cleanupLegacyDirs(context, fusionFS);
 
         boolean hasProton = hasProtonInstalled(context);
         boolean hasWine = fusionFS.isWineInstalled();
@@ -322,6 +370,8 @@ public abstract class FusionFSInstaller {
             installWineFromAssets((MainActivity) context, fusionFS);
             installContainerPatternsFromAssets(context, fusionFS);
             installDriversFromAssets((MainActivity) context);
+            installInputDlls(context, fusionFS);
+            installVulkanLayers(context, fusionFS);
             if ((hasProtonInstalled(context) || fusionFS.isWineInstalled()) && fusionFS.getVersion() == 0) {
                 fusionFS.createVersionFile(LATEST_VERSION);
             }
@@ -340,6 +390,11 @@ public abstract class FusionFSInstaller {
         if (imagefsDir.isDirectory() && !bionicDir.isDirectory()) {
             imagefsDir.renameTo(bionicDir);
         }
+
+        File wineGlibc = new File(rootDir, "wine.glibc");
+        File wineBionic = new File(rootDir, "wine.bionic");
+        if (!wineGlibc.exists()) wineGlibc.mkdirs();
+        if (!wineBionic.exists()) wineBionic.mkdirs();
 
         populateEtcBionicIfNeeded(rootDir);
         ensureBionicSymlinks(rootDir);
@@ -409,45 +464,92 @@ public abstract class FusionFSInstaller {
         } catch (Exception e) {}
     }
 
-    private static void copySharedRuntimeLibraries(FusionFS fusionFS) {
-        File bionicLibDir = new File(fusionFS.getBionicDir(), "/usr/lib");
-        File glibcLibDir = new File(fusionFS.getGlibcDir(), "/usr/lib");
-        if (!glibcLibDir.isDirectory()) glibcLibDir.mkdirs();
-
-        String[] sharedLibs = {"libandroid-sysvshm.so"};
-        for (String libName : sharedLibs) {
-            File src = new File(bionicLibDir, libName);
-            File dst = new File(glibcLibDir, libName);
-            if (src.exists() && !dst.exists()) {
-                FileUtils.copy(src, dst);
+    private static void ensureGlibcSysvshm(FusionFS fusionFS) {
+        File glibcLibDir = new File(fusionFS.getGlibcDir(), "usr/lib");
+        File sysvshmSrc = new File(glibcLibDir, "libandroid-sysvshm.so");
+        if (!sysvshmSrc.exists()) {
+            File glibcLibX8664Dir = new File(fusionFS.getGlibcDir(), "usr/lib/x86_64-linux-gnu");
+            File altSrc = new File(glibcLibX8664Dir, "libandroid-sysvshm.so");
+            if (altSrc.exists()) {
+                FileUtils.copy(altSrc, sysvshmSrc);
             }
         }
     }
 
-    private static void createCompatibilitySymlinks(Context context, FusionFS fusionFS) {
-        File filesDir = context.getFilesDir();
-        File imagefsLink = new File(filesDir, "imagefs");
-        File rootfsLink = new File(filesDir, "rootfs");
-
-        if (!imagefsLink.exists()) {
-            FileUtils.symlink(fusionFS.getBionicDir().getAbsolutePath(), imagefsLink.getAbsolutePath());
+    public static void installInputDlls(Context context, FusionFS fusionFS) {
+        if (!assetExists(context, FusionFS.ASSET_INPUT_DLLS)) return;
+        try {
+            TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FusionFS.ASSET_INPUT_DLLS, fusionFS.getInstalledWineDir());
+        } catch (Exception e) {
+            android.util.Log.w("FusionFSInstaller", "Failed to extract input DLLs", e);
         }
-        if (!rootfsLink.exists()) {
-            FileUtils.symlink(fusionFS.getGlibcDir().getAbsolutePath(), rootfsLink.getAbsolutePath());
+    }
+
+    public static void installVulkanLayers(Context context, FusionFS fusionFS) {
+        if (!assetExists(context, FusionFS.ASSET_VULKAN_LAYERS)) return;
+        try {
+            File bionicExplicitDir = new File(fusionFS.getBionicDir(), "usr/share/vulkan/explicit_layer.d");
+            File bionicImplicitDir = new File(fusionFS.getBionicDir(), "usr/share/vulkan/implicit_layer.d");
+            bionicExplicitDir.mkdirs();
+            bionicImplicitDir.mkdirs();
+            TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FusionFS.ASSET_VULKAN_LAYERS, fusionFS.getBionicDir());
+            File glibcExplicitDir = new File(fusionFS.getGlibcDir(), "usr/share/vulkan/explicit_layer.d");
+            File glibcImplicitDir = new File(fusionFS.getGlibcDir(), "usr/share/vulkan/implicit_layer.d");
+            glibcExplicitDir.mkdirs();
+            glibcImplicitDir.mkdirs();
+            TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FusionFS.ASSET_VULKAN_LAYERS, fusionFS.getGlibcDir());
+        } catch (Exception e) {
+            android.util.Log.w("FusionFSInstaller", "Failed to extract Vulkan layers", e);
+        }
+    }
+
+    private static void cleanupLegacyDirs(Context context, FusionFS fusionFS) {
+        File filesDir = context.getFilesDir();
+        String[] legacyNames = {"rootfs", "imagefs"};
+        for (String name : legacyNames) {
+            File legacy = new File(filesDir, name);
+            if (legacy.exists()) {
+                try {
+                    if (java.nio.file.Files.isSymbolicLink(legacy.toPath())) {
+                        java.nio.file.Files.delete(legacy.toPath());
+                    } else {
+                        FileUtils.delete(legacy);
+                    }
+                } catch (Exception e) {
+                    android.util.Log.w("FusionFSInstaller", "Cannot remove legacy dir " + legacy + ": " + e.getMessage());
+                }
+            }
+        }
+        File fusionRoot = fusionFS.getRootDir();
+        for (String name : legacyNames) {
+            File legacy = new File(fusionRoot, name);
+            if (legacy.exists()) {
+                try {
+                    if (java.nio.file.Files.isSymbolicLink(legacy.toPath())) {
+                        java.nio.file.Files.delete(legacy.toPath());
+                    } else if (!new File(fusionRoot, name.equals("rootfs") ? "glibc" : "bionic").isDirectory()) {
+                        legacy.renameTo(new File(fusionRoot, name.equals("rootfs") ? "glibc" : "bionic"));
+                    } else {
+                        FileUtils.delete(legacy);
+                    }
+                } catch (Exception e) {
+                    android.util.Log.w("FusionFSInstaller", "Cannot remove legacy fusion dir " + legacy + ": " + e.getMessage());
+                }
+            }
         }
     }
 
     private static void createWineSymlink(FusionFS fusionFS) {
-        File glibcOptWine = new File(fusionFS.getGlibcDir(), "/opt/wine");
+        File glibcOptWine = new File(fusionFS.getGlibcDir(), "opt/wine");
         File wineDir = fusionFS.getWineDir();
         if (wineDir.isDirectory() && !glibcOptWine.exists()) {
             glibcOptWine.getParentFile().mkdirs();
             File wineGlibcDir = fusionFS.getWineGlibcDir();
-            String target = wineGlibcDir.isDirectory() ? "../../wine.glibc" : "../../wine";
+            String target = (wineGlibcDir.isDirectory() && new File(wineGlibcDir, "bin").isDirectory()) ? "../../wine.glibc" : "../../wine";
             FileUtils.symlink(target, glibcOptWine.getPath());
         }
 
-        File bionicOptWine = new File(fusionFS.getBionicDir(), "/opt/wine");
+        File bionicOptWine = new File(fusionFS.getBionicDir(), "opt/wine");
         File wineBionicDir = fusionFS.getWineBionicDir();
         if (wineBionicDir.isDirectory() && !bionicOptWine.exists()) {
             bionicOptWine.getParentFile().mkdirs();
@@ -470,13 +572,19 @@ public abstract class FusionFSInstaller {
     }
 
     private static void clearFusionDir(File rootDir) {
+        clearFusionDir(rootDir, false);
+    }
+
+    private static void clearFusionDir(File rootDir, boolean fullClean) {
         if (rootDir.isDirectory()) {
             File[] files = rootDir.listFiles();
             if (files != null) {
                 for (File file : files) {
-                    if (file.isDirectory()) {
+                    if (file.isDirectory() && !fullClean) {
                         String name = file.getName();
-                        if (name.equals("home") || name.equals("opt") || name.equals("installed-wine") || name.equals("bionic") || name.equals("glibc") || name.equals("wine") || name.equals("wine.glibc") || name.equals("wine.bionic") || name.equals("usr.glibc") || name.equals("usr.bionic") || name.equals("etc.glibc") || name.equals("etc.bionic")) continue;
+                        if (name.equals("installed-wine")) continue;
+                        if (name.equals("bionic") || name.equals("glibc")) continue;
+                        if (name.equals("wine.glibc") || name.equals("wine.bionic") || name.equals("wine")) continue;
                     }
                     FileUtils.delete(file);
                 }

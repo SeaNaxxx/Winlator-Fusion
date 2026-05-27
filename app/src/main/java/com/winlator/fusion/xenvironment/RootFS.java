@@ -38,7 +38,7 @@ public class RootFS {
     }
 
     public boolean isValid() {
-        return rootDir.isDirectory() && (getRFSVersionFile().exists() || new File(rootDir, "/usr/lib").isDirectory());
+        return rootDir.isDirectory() && (getRFSVersionFile().exists() || new File(rootDir, "usr/lib").isDirectory());
     }
 
     public int getVersion() {
@@ -95,25 +95,25 @@ public class RootFS {
     }
 
     public File getTmpDir() {
-        return new File(rootDir, "/tmp");
+        return new File(rootDir, "tmp");
     }
 
     public File getLibDir() {
-        return new File(rootDir, "/usr/lib");
+        return new File(rootDir, "usr/lib");
     }
 
     public File getBinDir() {
-        return new File(rootDir, "/usr/bin");
+        return new File(rootDir, "usr/bin");
     }
 
     public File getEtcDir() {
-        File usrEtc = new File(rootDir, "/usr/etc");
+        File usrEtc = new File(rootDir, "usr/etc");
         if (usrEtc.isDirectory()) return usrEtc;
-        return new File(rootDir, "/etc");
+        return new File(rootDir, "etc");
     }
 
     public File getShareDir() {
-        return new File(rootDir, "/usr/share");
+        return new File(rootDir, "usr/share");
     }
 
     @NonNull
