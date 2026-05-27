@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.PowerManager;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -35,7 +34,6 @@ import com.winlator.fusion.container.ContainerManager;
 import com.winlator.fusion.container.DXWrappers;
 import com.winlator.fusion.container.GraphicsDrivers;
 import com.winlator.fusion.container.Shortcut;
-import com.winlator.fusion.services.NotificationService;
 import com.winlator.fusion.contentdialog.ActiveWindowsDialog;
 import com.winlator.fusion.contents.AdrenotoolsManager;
 import com.winlator.fusion.contents.ContentsManager;
@@ -162,7 +160,6 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         AppUtils.setActivityTheme(this);
         super.onCreate(savedInstanceState);
         AppUtils.hideSystemUI(this);
-        AppUtils.keepScreenOn(this);
         setContentView(R.layout.xserver_display_activity);
 
         final PreloaderDialog preloaderDialog = new PreloaderDialog(this);
@@ -339,10 +336,6 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             }
         });
 
-        if (!NotificationService.isRunning()) {
-            startForegroundService(new Intent(this, NotificationService.class));
-        }
-
         setupUI();
 
         Executors.newSingleThreadExecutor().execute(() -> {
@@ -395,17 +388,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             xServerView.onResume();
             environment.onResume();
         }
-        if (NotificationService.wakeLock != null && NotificationService.wakeLock.isHeld()) {
-            NotificationService.wakeLock.release();
-        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (NotificationService.wakeLock != null && !NotificationService.wakeLock.isHeld()) {
-            NotificationService.wakeLock.acquire();
-        }
         if (environment != null && !isInPictureInPictureMode()) {
             environment.onPause();
             xServerView.onPause();
@@ -425,9 +412,6 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         if (midiHandler != null) midiHandler.stop();
         winHandler.stop();
         if (environment != null) environment.stopEnvironmentComponents();
-        if (NotificationService.isRunning()) {
-            stopService(new Intent(this, NotificationService.class));
-        }
         super.onDestroy();
     }
 
