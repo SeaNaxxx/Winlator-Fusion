@@ -71,7 +71,7 @@ android {
     }
 }
 
-final String RELEASE_BASE = "https://github.com/SeaNaxxx/wine-10.10-custom/releases/download/fusionfs-v7"
+final String RELEASE_BASE = "https://github.com/SeaNaxxx/wine-10.10-custom/releases/download/fusionfs-v8"
 final long MIN_FUSIONFS_SIZE = 100_000_000L
 final long MIN_WINE_SIZE = 10_000_000L
 final long MIN_PATTERN_SIZE = 1_000_000L
