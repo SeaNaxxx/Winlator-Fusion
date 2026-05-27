@@ -176,7 +176,7 @@ public class GlibcRuntimeStrategy implements RuntimeStrategy {
         if (new File(sysvPath).exists()) {
             return sysvPath;
         }
-        File libX8664Dir = new File(getRootDir(), "/usr/lib/x86_64-linux-gnu");
+        File libX8664Dir = new File(getRootDir(), "usr/lib/x86_64-linux-gnu");
         String altPath = new File(libX8664Dir, "libandroid-sysvshm.so").getAbsolutePath();
         if (new File(altPath).exists()) {
             return altPath;

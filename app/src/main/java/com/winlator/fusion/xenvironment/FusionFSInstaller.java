@@ -77,7 +77,7 @@ public abstract class FusionFSInstaller {
         dialog.setShowStatus(true);
 
         Executors.newSingleThreadExecutor().execute(() -> {
-            clearFusionDir(rootDir, true);
+            clearFusionDir(rootDir, false);
             rootDir.mkdirs();
 
             System.gc();
@@ -146,7 +146,7 @@ public abstract class FusionFSInstaller {
 
             if (!success) {
                 android.util.Log.e("FusionFSInstaller", "System files installation failed, clearing partial data");
-                try { clearFusionDir(rootDir, true); } catch (Exception ignored) {}
+                try { clearFusionDir(rootDir, false); } catch (Exception ignored) {}
                 if (!activity.isFinishing() && !activity.isDestroyed()) {
                     activity.runOnUiThread(() -> {
                         try { AppUtils.showToast(activity, R.string.unable_to_install_system_files); } catch (Exception ignored) {}
@@ -456,10 +456,11 @@ public abstract class FusionFSInstaller {
             FileUtils.symlink(fusionFS.getGlibcDir().getAbsolutePath(), rootfsLink.getAbsolutePath());
         }
 
-        File dataDir = context.getDataDir();
-        createCompatSymlinkDir(new File(dataDir, "com.winlator/files"), fusionFS.getGlibcDir());
-        createCompatSymlinkDir(new File(dataDir, "com.winlator.cmod/files"), fusionFS.getBionicDir());
-        createCompatSymlinkDir(new File(dataDir, "com.termux/files"), fusionFS.getBionicDir());
+        File dataDataDir = new File("/data/data");
+        createCompatSymlinkDir(new File(dataDataDir, "com.winlator/files/rootfs"), fusionFS.getGlibcDir());
+        createCompatSymlinkDir(new File(dataDataDir, "com.winlator/files/imagefs"), fusionFS.getBionicDir());
+        createCompatSymlinkDir(new File(dataDataDir, "com.winlator.cmod/files/imagefs"), fusionFS.getBionicDir());
+        createCompatSymlinkDir(new File(dataDataDir, "com.termux/files/usr"), fusionFS.getBionicDir());
     }
 
     private static void createCompatSymlinkDir(File linkDir, File targetDir) {

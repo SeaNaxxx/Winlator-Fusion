@@ -41,7 +41,7 @@ jobs:
     - name: Download large assets
       run: |
         ASSET_DIR=app/src/main/assets
-        FUSIONFS_URL="https://github.com/SeaNaxxx/wine-10.10-custom/releases/download/fusionfs-v7"
+        FUSIONFS_URL="https://github.com/SeaNaxxx/wine-10.10-custom/releases/download/fusionfs-v8"
         
         mkdir -p "$ASSET_DIR"
         
