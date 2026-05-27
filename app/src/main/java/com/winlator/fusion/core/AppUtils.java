@@ -21,7 +21,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -51,10 +50,6 @@ public abstract class AppUtils {
         public int selectedMenuItemId;
         public int containerId;
         public String startPath;
-    }
-
-    public static void keepScreenOn(Activity activity) {
-        activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     public static void restartActivity(Activity activity) {

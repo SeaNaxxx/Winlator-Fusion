@@ -68,7 +68,6 @@ public abstract class FusionFSInstaller {
     }
 
     private static void installFromFusionAsset(final MainActivity activity) {
-        AppUtils.keepScreenOn(activity);
         FusionFS fusionFS = FusionFS.find(activity);
         File rootDir = fusionFS.getRootDir();
 
