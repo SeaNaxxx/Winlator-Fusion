@@ -456,11 +456,13 @@ public abstract class FusionFSInstaller {
             FileUtils.symlink(fusionFS.getGlibcDir().getAbsolutePath(), rootfsLink.getAbsolutePath());
         }
 
-        File dataDataDir = new File("/data/data");
-        createCompatSymlinkDir(new File(dataDataDir, "com.winlator/files/rootfs"), fusionFS.getGlibcDir());
-        createCompatSymlinkDir(new File(dataDataDir, "com.winlator/files/imagefs"), fusionFS.getBionicDir());
-        createCompatSymlinkDir(new File(dataDataDir, "com.winlator.cmod/files/imagefs"), fusionFS.getBionicDir());
-        createCompatSymlinkDir(new File(dataDataDir, "com.termux/files/usr"), fusionFS.getBionicDir());
+        File pkgBase = context.getDataDir().getParentFile();
+        if (pkgBase != null) {
+            createCompatSymlinkDir(new File(pkgBase, "com.winlator/files/rootfs"), fusionFS.getGlibcDir());
+            createCompatSymlinkDir(new File(pkgBase, "com.winlator/files/imagefs"), fusionFS.getBionicDir());
+            createCompatSymlinkDir(new File(pkgBase, "com.winlator.cmod/files/imagefs"), fusionFS.getBionicDir());
+            createCompatSymlinkDir(new File(pkgBase, "com.termux/files/usr"), fusionFS.getBionicDir());
+        }
     }
 
     private static void createCompatSymlinkDir(File linkDir, File targetDir) {
