@@ -271,7 +271,7 @@ public abstract class FusionFSInstaller {
                 File extractDir = new File(installedWineDir, asset.replace(".tzst", ""));
                 if (!extractDir.isDirectory()) {
                     extractDir.mkdirs();
-                    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, destFile.getAbsolutePath(), extractDir);
+                    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, destFile, extractDir);
                 }
             } catch (Exception e) {
                 android.util.Log.w("FusionFSInstaller", "Failed to extract " + asset, e);
