@@ -1,108 +1,157 @@
-name: Build
+name: Build APK
 
 on:
   push:
-    branches: [ dev ]
+    branches:
+      - '**'
+  pull_request:
   workflow_dispatch:
+    inputs:
+      build_type:
+        description: Gradle build variant to assemble
+        required: true
+        default: debug
+        type: choice
+        options:
+          - debug
+          - release
 
 permissions:
   contents: read
 
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  build-apk:
+    name: Assemble ${{ github.event.inputs.build_type || 'debug' }} APK
     runs-on: ubuntu-latest
+    env:
+      BUILD_TYPE: ${{ github.event.inputs.build_type || 'debug' }}
+      HAS_RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: gradle
 
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
-    - name: Install Android SDK components
-      run: |
-        sdkmanager --install "platforms;android-34"
-        sdkmanager --install "build-tools;34.0.0"
-        sdkmanager --install "ndk;24.0.8215888"
-        sdkmanager --install "cmake;3.22.1"
+      - name: Install Android SDK components
+        run: |
+          sdkmanager --install \
+            "platforms;android-34" \
+            "build-tools;34.0.0" \
+            "ndk;24.0.8215888" \
+            "cmake;3.22.1"
+          yes | sdkmanager --licenses
 
-    - name: Install Shader Compiler
-      run: sudo apt-get update && sudo apt-get install -y glslang-tools
+      - name: Install native build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y glslang-tools
 
-    - name: Download large assets
-      run: |
-        ASSET_DIR=app/src/main/assets
-        FUSIONFS_URL="https://github.com/SeaNaxxx/wine-10.10-custom/releases/download/fusionfs-v8"
-        
-        mkdir -p "$ASSET_DIR"
-        
-        download() {
-          local filename="$1"
-          local minsize="$2"
-          local source_url="$3"
-          local target="$ASSET_DIR/$filename"
-          
-          if [ -f "$target" ] && [ "$(stat -c%s "$target" 2>/dev/null || echo 0)" -ge "$minsize" ]; then
-            echo "$filename already present ($(stat -c%s "$target") bytes), skipping."
-            return 0
-          fi
-          
-          echo "Downloading $filename from $source_url..."
-          if curl -fSL --retry 3 -o "$target" "$source_url/$filename" 2>/dev/null; then
-            actual_size=$(stat -c%s "$target" 2>/dev/null || echo 0)
-            if [ "$actual_size" -lt "$minsize" ]; then
-              echo "WARNING: $filename is only $actual_size bytes (expected >= $minsize), removing"
-              rm -f "$target"
+      - name: Download APK runtime assets
+        run: |
+          ASSET_DIR=app/src/main/assets
+          FUSIONFS_URL="https://github.com/SeaNaxxx/wine-10.10-custom/releases/download/fusionfs-v8"
+
+          mkdir -p "$ASSET_DIR"
+
+          download() {
+            local filename="$1"
+            local minsize="$2"
+            local required="$3"
+            local target="$ASSET_DIR/$filename"
+
+            if [ -f "$target" ] && [ "$(stat -c%s "$target" 2>/dev/null || echo 0)" -ge "$minsize" ]; then
+              echo "$filename already present ($(stat -c%s "$target") bytes), skipping."
+              return 0
+            fi
+
+            echo "Downloading $filename..."
+            if curl -fL --retry 3 --retry-delay 5 --connect-timeout 30 -o "$target" "$FUSIONFS_URL/$filename"; then
+              actual_size=$(stat -c%s "$target" 2>/dev/null || echo 0)
+              if [ "$actual_size" -lt "$minsize" ]; then
+                echo "ERROR: $filename is only $actual_size bytes; expected at least $minsize bytes."
+                rm -f "$target"
+                [ "$required" = "required" ] && return 1 || return 0
+              fi
+              echo "$filename download complete ($actual_size bytes)."
+              return 0
+            fi
+
+            rm -f "$target"
+            if [ "$required" = "required" ]; then
+              echo "ERROR: required asset $filename failed to download."
               return 1
             fi
-            echo "$filename download complete ($actual_size bytes)."
+
+            echo "WARNING: optional asset $filename failed to download."
             return 0
+          }
+
+          download "fusionfs.tzst" 100000000 required
+          download "container_pattern_common.tzst" 5000000 required
+          download "input_dlls.tzst" 10000 required
+          download "pulseaudio.tzst" 10000 required
+          download "pulseaudio-full.tzst" 10000 required
+          download "layers.tzst" 10000 required
+          download "wine-10.10-x86_64.txz" 10000000 required
+          download "wine-10.10-x86_64_container_pattern.tzst" 1000000 required
+          download "wine-10.10-arm64ec.txz" 10000000 required
+          download "wine-10.10-arm64ec_container_pattern.tzst" 1000000 required
+          download "proton-9.0-x86_64.txz" 10000000 required
+          download "proton-9.0-x86_64_container_pattern.tzst" 1000000 required
+          download "proton-9.0-arm64ec.txz" 10000000 required
+          download "proton-9.0-arm64ec_container_pattern.tzst" 1000000 required
+
+      - name: Decode release keystore
+        if: ${{ env.BUILD_TYPE == 'release' && env.HAS_RELEASE_KEYSTORE == 'true' }}
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          echo "$RELEASE_KEYSTORE_BASE64" | base64 --decode > release.keystore
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build APK with Gradle
+        env:
+          STEAMGRID_API_KEY: ${{ secrets.STEAMGRID_API_KEY }}
+          RELEASE_STORE_FILE: ${{ github.workspace }}/release.keystore
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          if [ "$BUILD_TYPE" = "release" ]; then
+            if [ -f release.keystore ]; then
+              ./gradlew :app:assembleRelease --no-daemon \
+                -PRELEASE_STORE_FILE="$RELEASE_STORE_FILE" \
+                -PRELEASE_STORE_PASSWORD="$RELEASE_STORE_PASSWORD" \
+                -PRELEASE_KEY_ALIAS="$RELEASE_KEY_ALIAS" \
+                -PRELEASE_KEY_PASSWORD="$RELEASE_KEY_PASSWORD"
+            else
+              echo "ERROR: release build requires RELEASE_KEYSTORE_BASE64 and signing password secrets."
+              exit 1
+            fi
           else
-            echo "WARNING: $filename not found at $source_url"
-            rm -f "$target"
-            return 1
+            ./gradlew :app:assembleDebug --no-daemon
           fi
-        }
-        
-        FAILED=0
-        
-        download "fusionfs.tzst" 100000000 "$FUSIONFS_URL" || FAILED=1
-        download "pulseaudio.tzst" 10000 "$FUSIONFS_URL" || true
-        download "pulseaudio-full.tzst" 10000 "$FUSIONFS_URL" || true
-        download "container_pattern_common.tzst" 1000000 "$FUSIONFS_URL" || true
-        download "wine-10.10-x86_64_container_pattern.tzst" 1000000 "$FUSIONFS_URL" || true
-        download "wine-10.10-arm64ec_container_pattern.tzst" 1000000 "$FUSIONFS_URL" || true
-        download "proton-9.0-x86_64_container_pattern.tzst" 1000000 "$FUSIONFS_URL" || true
-        download "proton-9.0-arm64ec_container_pattern.tzst" 1000000 "$FUSIONFS_URL" || true
-        download "wine-10.10-x86_64.txz" 30000000 "$FUSIONFS_URL" || true
-        download "wine-10.10-arm64ec.txz" 50000000 "$FUSIONFS_URL" || true
-        download "proton-9.0-x86_64.txz" 40000000 "$FUSIONFS_URL" || true
-        download "proton-9.0-arm64ec.txz" 50000000 "$FUSIONFS_URL" || true
-        download "input_dlls.tzst" 100000 "$FUSIONFS_URL" || true
-        download "layers.tzst" 100000 "$FUSIONFS_URL" || true
-        
-        if [ "$FAILED" -ne 0 ]; then
-          echo "ERROR: Required asset fusionfs.tzst failed to download"
-          exit 1
-        fi
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-
-    - name: Build with Gradle
-      run: ./gradlew assembleDebug
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: winlator-fusion-debug
-        path: app/build/outputs/apk/debug/*.apk
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: winlator-fusion-${{ env.BUILD_TYPE }}-apk
+          path: app/build/outputs/apk/**/*.apk
+          if-no-files-found: error

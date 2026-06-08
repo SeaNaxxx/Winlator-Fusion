@@ -19,6 +19,27 @@ Winlator is an Android application that lets you to run Windows (x86_64) applica
 
 ----
 
+
+# Build APK with GitHub Actions
+
+The repository contains a GitHub Actions workflow that assembles the Android APK automatically.
+
+1. Push any branch to GitHub or open **Actions -> Build APK -> Run workflow**.
+2. Select `debug` for a regular debug APK. Select `release` only after adding signing secrets.
+3. After the workflow finishes, download the APK from the `winlator-fusion-*-apk` artifact.
+
+The workflow installs JDK 17, Android SDK 34, NDK `24.0.8215888`, CMake `3.22.1`, native shader tools, downloads the required runtime assets, runs Gradle, and uploads the generated APK.
+
+For a signed release APK, add these repository secrets before running the `release` variant:
+
+- `RELEASE_KEYSTORE_BASE64` - base64-encoded Android keystore file.
+- `RELEASE_STORE_PASSWORD` - keystore password.
+- `RELEASE_KEY_ALIAS` - signing key alias.
+- `RELEASE_KEY_PASSWORD` - signing key password.
+- `STEAMGRID_API_KEY` - optional SteamGridDB API key used at build time.
+
+----
+
 [![Play on Youtube](https://img.youtube.com/vi/ETYDgKz4jBQ/3.jpg)](https://www.youtube.com/watch?v=ETYDgKz4jBQ)
 [![Play on Youtube](https://img.youtube.com/vi/9E4wnKf2OsI/2.jpg)](https://www.youtube.com/watch?v=9E4wnKf2OsI)
 [![Play on Youtube](https://img.youtube.com/vi/czEn4uT3Ja8/2.jpg)](https://www.youtube.com/watch?v=czEn4uT3Ja8)
